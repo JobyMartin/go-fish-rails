@@ -1,0 +1,39 @@
+
+.game {
+  --gf-grid-column-width: calc(var(--op-size-unit) * 83.5);
+  /* --gf-grid-row-height: calc(var(--op-size-unit) * 65.5); */
+
+  display: grid;
+  grid-template-columns: 1fr var(--gf-grid-column-width);
+  grid-template-rows: 1fr min-content;
+
+  grid-template-areas: 
+    "players feed"
+    "hand books";
+  height: 100dvh;
+
+  .game__players {
+    grid-area: players;
+    overflow: auto;
+    background-color: var(--op-color-neutral-plus-max);
+  }
+
+  .game__feed {
+    grid-area: feed;
+    background-color: var(--op-color-primary-plus-eight);
+    border-inline-start: var(--op-border-width) solid var(--op-color-border);
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+  }
+
+  .game__hand {
+    grid-area: hand;
+    background-color: var(--op-color-neutral-plus-eight);
+  }
+
+  .game__books {
+    grid-area: books;
+    background-color: var(--op-color-neutral-plus-eight);
+  }
+}

@@ -1,0 +1,81 @@
+
+.accordion {
+  border: var(--op-border-width) solid var(--op-color-primary-plus-four);
+  background-color: var(--op-color-primary-plus-eight);
+  border-radius: var(--op-radius-medium);
+  border-radius: calc(var(--op-size-unit) * 5);
+
+  .accordion__title {
+    padding-inline-start: var(--op-space-x-small);
+    padding-inline-end: var(--op-space-medium);
+    padding-block: var(--op-space-x-small);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    
+    .arrow-button {
+      background-color: var(--op-color-primary-plus-five);
+      padding: var(--op-space-2x-small);
+      height: var(--op-input-height-small);
+      width: var(--op-input-height-small);
+      border-radius: var(--op-radius-medium);
+      border: var(--op-border-width) solid var(--op-color-primary-plus-three);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .player-name {
+      color: var(--op-color-primary-on-plus-eight);
+      gap: var(--op-space-x-small);
+      display: flex;
+      align-items: center;
+    }
+
+    .player-details {
+      display: flex;
+      gap: var(--op-space-x-small);
+      color: var(--op-color-primary-on-plus-eight-alt);
+    }
+  }
+
+  .accordion__body {
+    padding-block: var(--op-space-small);
+    padding-inline: var(--op-space-medium);
+    display: flex;
+    justify-content: space-between;
+
+    &.accordion__body--history {
+      align-items: center;
+    }
+
+    .game-details {
+      display: flex;
+      flex-direction: column;
+      gap: var(--op-space-x-small);
+    }
+
+    .btn {
+      height: calc(var(--op-size-unit) * 11);
+    }
+
+    .card-collection {
+      margin-inline-start: var(--gf-card-margin-shift);
+      display: flex;
+    }
+
+    .book-collection {
+      display: flex;
+    }
+  }
+
+  &[open] {
+    .accordion__title {
+      background-color: var(--op-color-primary-plus-eight);
+    }
+
+    .accordion__body {
+      background-color: var(--op-color-neutral-plus-eight);
+    }
+  }
+}

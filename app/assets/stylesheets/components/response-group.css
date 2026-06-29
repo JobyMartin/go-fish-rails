@@ -1,0 +1,29 @@
+
+.response-group {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--op-space-x-small);
+  font-size: var(--op-font-x-small);
+
+  .response-group__reply-arrow {
+    color: var(--op-color-primary-on-plus-eight-alt)
+  }
+
+  .response-group__player-response {
+    background-color: var(--op-color-alerts-warning-plus-seven);
+    color: var(--op-color-alerts-warning-on-plus-seven-alt);
+    padding: var(--op-space-x-small);
+    border: var(--op-border-width) solid var(--op-color-alerts-warning-plus-five);
+    border-radius: var(--op-radius-medium);
+    width: stretch;
+  }
+
+  .response-group__game-response {
+    background-color: var(--op-color-primary-plus-max);
+    padding: var(--op-space-x-small);
+    width: stretch;
+    border: var(--op-border-width) solid var(--op-color-primary-plus-seven);
+    border-radius: var(--op-radius-medium);
+  }
+}

@@ -1,0 +1,86 @@
+
+.panel {
+  background-color: var(--op-color-neutral-plus-max);
+  display: flex;
+  flex-direction: column;
+  border-inline-start: var(--op-border-width) solid var(--op-color-border);
+
+  .panel__header {
+    height: 60px;
+    padding-inline: var(--op-space-medium);
+    padding-block-start: var(--op-space-small);
+    padding-block-end: var(--op-space-x-small);
+    display: flex;
+    align-items: flex-end;
+    font-weight: var(--op-font-weight-semi-bold);
+    font-size: var(--op-font-small);
+    border-block: var(--op-border-width) solid var(--op-color-border);
+  }
+
+  .panel__content {
+    padding: var(--op-space-medium);
+  }
+
+  &.panel--players {
+    .panel__header {
+      display: flex;
+      align-items: center;
+      font-size: var(--op-font-large);
+      font-weight: var(--op-font-weight-semi-bold);
+
+      .btn {
+        padding-inline: var(--op-space-x-small);
+      }
+    }
+
+    .panel__content {
+      padding-inline: var(--op-space-3x-large);
+      overflow-y: auto;
+    }
+  }
+
+  &.panel--feed {
+    .panel__header {
+      color: var(--op-color-primary-on-plus-eight-alt);
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: var(--op-border-width) solid var(--op-color-border);
+
+      .badge {
+        background-color: var(--op-color-primary-base);
+        border: var(--op-border-width-x-large) solid var(--op-color-neutral-plus-eight);
+        padding-block: var(--op-space-3x-small);
+        padding-inline: var(--op-space-2x-small);
+      }
+    }
+
+    .panel__content {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+      overflow: hidden;
+      padding-block-start: 0;
+    }
+  }
+
+  &.panel--hand {
+    .panel__header {
+      color: var(--op-color-neutral-on-plus-eight-alt);
+    }
+    .panel__content {
+      margin-inline-start: var(--gf-card-margin-shift);
+    }
+  }
+
+  &.panel--books {
+    .panel__header {
+      color: var(--op-color-neutral-on-plus-eight-alt);
+    }
+
+    .panel__content {
+      margin-inline-start: var(--gf-card-margin-shift);
+      display: flex;
+    }
+  }
+}

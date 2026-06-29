@@ -1,0 +1,30 @@
+
+.playing-card {
+  margin-inline-start: var(--gf-negative-card-margin-shift);
+  border: var(--op-border-width) solid var(--op-color-neutral-minus-two);
+
+  &.playing-card--small {
+    border-radius: var(--op-radius-small);
+    --gf-card-height: calc(var(--op-size-unit) * 24);
+    height: var(--gf-card-height);
+  }
+
+  &.playing-card--medium {
+    border-radius: var(--op-radius-medium);
+    --gf-card-height: calc(var(--op-size-unit) * 29.75);
+    height: var(--gf-card-height);
+  }
+
+  &.playing-card--large {
+    border-radius: var(--op-radius-large);
+    --gf-card-height: calc(var(--op-size-unit) * 35.25);
+    height: var(--gf-card-height);
+  }
+
+  &.playing-card--large:hover {
+    transition: var(--op-transition-modal);
+    margin-top: var(--gf-negative-card-margin-shift);
+    
+    --animate-duration: 2s;
+  }
+}

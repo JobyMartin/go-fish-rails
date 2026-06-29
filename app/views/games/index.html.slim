@@ -1,2 +1,65 @@
-h1 Your Games
-h2 All Games
+
+.op-page
+  .op-page__sidebar
+    nav.sidebar.sidebar--drawer.sidebar--padded
+      h2.sidebar__brand.text-center
+        |  Go Fish The Logo 
+      .sidebar__content.sidebar__content--start
+        button.btn.btn--no-border.btn--active
+          | Games
+        button.btn.btn--no-border
+          | Stats
+      .sidebar__content.sidebar__content--end
+        button.btn.btn--no-border
+          | Profile
+        button.btn.btn--no-border
+          | Log Out
+  .op-page__main
+    main.op-page__main-content
+      header.op-page__main-header
+        header.content-header
+          .content-header__details
+            h1.content-header__title
+              | Your Games
+          .content-header__aside
+            button.btn.btn--primary
+              | New Game
+      .op-stack
+        .divider
+        .card.card--padded.card--shadow-large.flex.justify-between.items-center
+          p.margin-none
+            | Game 2
+          p.margin-none
+            em
+              | (Full)
+          button.btn
+            | Play Now
+        .card.card--padded.card--shadow-large.flex.justify-between.items-center
+          p.margin-none
+            | Game 1
+          p.margin-none
+            em
+              | (2/3 players)
+          button.btn.btn--disabled
+            | Waiting...
+      header.content-header.margin-top-lg
+        .content-header__details
+          h1.content-header__title
+            | All Games
+      .divider
+      .card.card--padded.card--shadow-large.flex.justify-between.items-center.margin-bottom-md.margin-top-md
+        p.margin-none
+          | Game 0
+        p.margin-none
+          em
+            | (1/5 players)
+        button.btn
+          | Join
+      .card.card--padded.card--shadow-large.flex.justify-between.items-center.margin-bottom-md
+        p.margin-none
+          | Game 1
+        p.margin-none
+          em
+            | (2/3 players)
+        button.btn
+          | Join

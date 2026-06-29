@@ -1,0 +1,29 @@
+
+.action-options {
+  background-color: var(--op-color-primary-plus-seven);
+
+  border: var(--op-border-width) solid var(--op-color-primary-plus-six);
+  border-radius: var(--op-radius-medium);
+  border-radius: calc(var(--op-size-unit) * 5);
+
+  padding: var(--op-space-small);
+  gap: var(--op-space-small);
+
+  display: flex;
+  flex-direction: column;
+
+  .action-options__inputs {
+    display: flex;
+    gap: calc(var(--op-space-scale-unit) * 0.6); 
+
+    .input-collection {
+      display: flex;
+      flex-direction: column;
+      gap: var(--op-space-2x-small);
+
+      .form-label {
+        color: var(--op-color-primary-on-plus-seven)
+      }
+    }
+  }
+}

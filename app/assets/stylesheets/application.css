@@ -1,11 +1,16 @@
-@import '@rolemodel/optics/dist/css/optics';
-/*
- * This is a manifest file that'll be compiled into application.css.
- *
- * With Propshaft, assets are served efficiently without preprocessing steps. You can still include
- * application-wide styles in this file, but keep in mind that CSS precedence will follow the standard
- * cascading order, meaning styles declared later in the document or manifest will override earlier ones,
- * depending on specificity.
- *
- * Consider organizing styles into separate files for maintainability.
- */
+/* @import '@rolemodel/optics/dist/css/optics'; */
+
+@import url("https://cdn.jsdelivr.net/npm/@rolemodel/optics@2.3.1/dist/css/optics+phosphor_icons.min.css");
+
+:root {
+  --op-color-primary-h: 156;
+  --op-color-primary-s: 58%;
+  --op-color-primary-l: 38%;
+
+  --op-space-scale-unit: 2rem;
+  --gf-card-margin-shift: 25px;
+  --gf-negative-card-margin-shift: -25px;
+
+  
+  --animate-duration: 0s;
+}

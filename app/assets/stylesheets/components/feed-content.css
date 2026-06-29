@@ -1,0 +1,14 @@
+
+.feed-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--op-space-x-small);
+  overflow: auto;
+  padding-block: var(--op-space-medium);
+
+  .feed-content__player-action {
+    background-color: var(--op-color-primary-plus-five);
+    padding: var(--op-space-x-small);
+    border-radius: var(--op-radius-medium);
+  }
+}
