@@ -1,19 +1,8 @@
 
 .op-page
   .op-page__sidebar
-    nav.sidebar.sidebar--drawer.sidebar--padded
-      h2.sidebar__brand.text-center
-        |  Go Fish The Logo 
-      .sidebar__content.sidebar__content--start
-        button.btn.btn--no-border.btn--active
-          | Games
-        button.btn.btn--no-border
-          | Stats
-      .sidebar__content.sidebar__content--end
-        button.btn.btn--no-border
-          | Profile
-        button.btn.btn--no-border
-          | Log Out
+    = render "sidebar"
+    
   .op-page__main
     main.op-page__main-content
       header.op-page__main-header
