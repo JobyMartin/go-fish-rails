@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe 'Session', type: :system do
+RSpec.fdescribe 'Session', type: :system do
   let(:user) { create(:user) }
 
   it 'shows the login page' do
@@ -30,6 +30,18 @@ RSpec.describe 'Session', type: :system do
       expect(page).to have_current_path root_path
       expect(page).to have_content 'Your Games'
       expect(page).to have_content 'All Games'
+    end
+  end
+
+  context 'when the user clicks sign up' do
+    before do
+      visit new_session_path
+      click_on 'Sign up'
+    end
+
+    it 'redirects to the sign up page' do
+      expect(page).to have_current_path users_new_path
+      expect(page).to have_content 'Already have an account?'
     end
   end
 end
