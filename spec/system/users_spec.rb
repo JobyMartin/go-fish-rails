@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.fdescribe 'Users', type: :system do
+RSpec.describe 'Users', type: :system do
   it 'shows the sign up content' do
     visit users_new_path
     expect(page).to have_current_path users_new_path
