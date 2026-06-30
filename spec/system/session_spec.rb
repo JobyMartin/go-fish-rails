@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.fdescribe 'Session', type: :system do
+RSpec.describe 'Session', type: :system do
   let(:user) { create(:user) }
 
   it 'shows the login page' do

@@ -1,2 +1,15 @@
-h1 Users#new
-p Find me in app/views/users/new.html.slim
+
+.simple-page
+  = form_with url: users_path do |form|
+    .form-group
+      = form.label :email, class: "form-label"
+      = form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: 'form-control'
+      
+    .form-group
+      = form.label :password, class: "form-label"
+      = form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: 'form-control'
+
+    = form.submit "Sign up"
+
+    | Already have an account?
+    = link_to "Sign in", new_session_path
