@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.fdescribe User, type: :model do
+RSpec.describe User, type: :model do
   let(:valid_password) { 'grilledcheese' }
   let(:invalid_password) { 'cheeseburger' }
 
