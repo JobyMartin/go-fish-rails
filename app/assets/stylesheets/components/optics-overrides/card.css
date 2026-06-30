@@ -2,4 +2,8 @@
 .card {
   background-color: var(--op-color-primary-plus-eight);
   color: var(--op-color-primary-on-plus-eight);
+
+  &.card--stat {
+    width: calc(var(--op-size-unit) * 70);
+  }
 }

@@ -8,3 +8,7 @@
         .content-header__details
           h1.content-header__title
             | Your Go Fish Statistics
+
+      .flex.flex-wrap.gap-md
+        - 6.times do |index|
+          = render 'stat-card', stat_name: "Statistic #{index + 1}"
