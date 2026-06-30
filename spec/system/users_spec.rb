@@ -19,4 +19,21 @@ RSpec.describe 'Users', type: :system do
       expect(page).to have_content 'Password'
     end
   end
+
+  context 'when the user signs up correctly' do
+    it 'sends them to the home page and adds them to the database' do
+      expect do
+        sign_up
+        expect(page).to have_current_path root_path
+      end.to change(User, :count).by 1
+    end
+  end
+
+  context 'when the user signs up incorrectly' do
+    it 'throw an error' do
+      invalid_sign_up
+
+      expect(page).to have_content 'Invalid signup'
+    end
+  end
 end
