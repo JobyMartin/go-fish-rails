@@ -20,4 +20,16 @@ RSpec.fdescribe 'Session', type: :system do
       expect(page).to have_content 'Forgot your password?'
     end
   end
+
+  context 'when they sign in' do
+    before do
+      sign_in(user)
+    end
+
+    it 'sends them to the home page' do
+      expect(page).to have_current_path root_path
+      expect(page).to have_content 'Your Games'
+      expect(page).to have_content 'All Games'
+    end
+  end
 end
