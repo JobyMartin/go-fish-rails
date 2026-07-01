@@ -11,8 +11,7 @@
             h1.content-header__title
               | Your Games
           .content-header__aside
-            button.btn.btn--primary
-              | New Game
+            = link_to "New Game", new_game_path, class: 'btn.btn--primary'
       .op-stack
         .divider
         .card.card--padded.card--shadow-large.flex.justify-between.items-center

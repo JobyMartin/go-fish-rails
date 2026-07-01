@@ -1,0 +1,12 @@
+.modal-wrapper.modal-wrapper--active
+  .modal-wrapper__backdrop
+  .modal.modal--login
+    = simple_form_for @game do |f|
+      .modal__header
+        | Setup Game
+
+      .modal__body
+          = f.input :name
+          = f.input :type, collection: ['Go Fish', 'Secret Hitler'], selected: 'Go Fish'
+      .modal__footer
+        = f.button :submit, "Create Game"
