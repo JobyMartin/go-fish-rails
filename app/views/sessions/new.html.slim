@@ -3,21 +3,28 @@
   = tag.div(flash[:alert], style: "color:red") if flash[:alert]
   = tag.div(flash[:notice], style: "color:green") if flash[:notice]
 
-  = form_with url: session_path do |form|
-    .form-group
-      = form.label :email, class: "form-label"
-      = form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: 'form-control'
+  / = form_with url: session_path do |form|
+  /   .form-group
+  /     = form.label :email, class: "form-label"
+  /     = form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: 'form-control'
       
-    .form-group
-      = form.label :password, class: "form-label"
-      = form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: 'form-control'
+  /   .form-group
+  /     = form.label :password, class: "form-label"
+  /     = form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: 'form-control'
 
-      = form.submit "Sign in", class: 'btn btn--primary'
+  /     = form.submit "Sign in", class: 'btn btn--primary'
 
-    = link_to "Forgot password?", new_password_path
 
-    br
+  = simple_form_for :session, url: session_path do |f|
 
-    | Don't have an account? 
+    = f.input :email_address
+    = f.input :password
+    = f.button :submit, 'Sign in'
 
-    = link_to "Sign up", users_new_path
+  = link_to "Forgot password?", new_password_path
+  
+  br
+
+  | Don't have an account? 
+
+  = link_to "Sign up", users_new_path

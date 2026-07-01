@@ -24,6 +24,7 @@ RSpec.describe 'Session', type: :system do
   context 'when they sign in' do
     before do
       sign_in(user)
+      # sign_in_as(user)
     end
 
     it 'sends them to the home page' do
