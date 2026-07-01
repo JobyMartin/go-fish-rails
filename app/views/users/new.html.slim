@@ -1,7 +1,7 @@
 
 .simple-page
   = tag.div(flash[:alert], style: "color:red") if flash[:alert]
-  
+
   = form_with url: users_path do |form|
     .form-group
       = form.label :email, class: "form-label"
@@ -17,6 +17,8 @@
 
 
     = form.submit "Sign up"
+
+    br
 
     | Already have an account?
     = link_to "Sign in", new_session_path
