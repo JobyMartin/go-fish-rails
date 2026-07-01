@@ -44,4 +44,16 @@ RSpec.describe 'Session', type: :system do
       expect(page).to have_content 'Already have an account?'
     end
   end
+
+  context 'when the user signs out' do
+    before do
+      sign_in(user)
+      click_on 'Log out'
+    end
+    it 'redirects them to the sign in page' do
+      expect(page).to have_current_path new_session_path
+      expect(page).to have_content 'Email'
+      expect(page).to have_content 'Password'
+    end
+  end
 end
