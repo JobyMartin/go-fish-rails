@@ -78,3 +78,4 @@ group :test do
   gem "marsh_grass"
   gem "pry"
 end
+gem "simple_form", "~> 5.4"

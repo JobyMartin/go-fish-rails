@@ -41,10 +41,37 @@ RSpec.describe 'Users', type: :system do
   end
 
   context 'when the user signs up incorrectly' do
-    it 'throw an error' do
+    it 'throws an error' do
       invalid_sign_up
 
       expect(page).to have_content 'Invalid signup'
+    end
+  end
+
+  context 'when the email is already taken' do
+    it 'shows user the error' do
+      existing_user = create(:user, email_address: 'user@example.com')
+      sign_up
+
+      expect(page).to have_content 'has already been taken'
+    end
+  end
+
+  xcontext 'when the password is invalid' do
+    it 'shows user the error' do
+      existing_user = create(:user, password: 'asdf')
+      sign_up
+
+      expect(page).to have_content 'Password is too short'
+    end
+  end
+
+  xcontext 'when password confirmation does not match the password' do
+    it 'shows user the error' do
+      existing_user = create(:user, password: 'eightchars', confirm_password: 'eightchar')
+      sign_up
+
+      expect(page).to have_content 'must be equal to'
     end
   end
 end
