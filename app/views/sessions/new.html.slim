@@ -12,7 +12,7 @@
       = form.label :password, class: "form-label"
       = form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: 'form-control'
 
-      = form.submit "Sign in"
+      = form.submit "Sign in", class: 'btn btn--primary'
 
     = link_to "Forgot password?", new_password_path
 
