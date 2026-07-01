@@ -12,9 +12,10 @@ nav.sidebar.sidebar--drawer.sidebar--padded
     a.btn.btn--no-border href=pages_rules_path class=class_names('btn--active' => request.path == pages_rules_path )
       | Rules
   .sidebar__content.sidebar__content--end
-    a.btn.btn--no-border
-      | Profile
+    / a.btn.btn--no-border
+    /   | Profile
     / a.btn.btn--no-border
     /   | Log Out
 
-    = button_to 'Log out', session_path, method: :delete, class: 'btn btn--no-border'
+    = button_to 'Profile', users_show_path, method: :get, class: 'btn btn--no-border full-width'
+    = button_to 'Log out', session_path, method: :delete, class: 'btn btn--no-border full-width'

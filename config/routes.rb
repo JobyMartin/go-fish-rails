@@ -24,5 +24,6 @@ Rails.application.routes.draw do
   get "stats", to: "stats#index"
   resources :stats, only: [:index]
 
+  get "users/show", to: "users#show"
   resources :users, only: [:new, :create]
 end

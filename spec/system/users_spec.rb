@@ -27,6 +27,17 @@ RSpec.describe 'Users', type: :system do
         expect(page).to have_current_path root_path
       end.to change(User, :count).by 1
     end
+
+    context 'when the user clicks profile' do
+      before do
+        sign_up
+        click_on 'Profile'
+      end
+      it 'sends them to their profile' do
+        expect(page).to have_current_path users_show_path
+        expect(page).to have_content 'Your profile'
+      end
+    end
   end
 
   context 'when the user signs up incorrectly' do
