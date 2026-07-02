@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe Game, type: :model do
-  fdescribe '#status' do
+  describe '#status' do
     let!(:game) { create :game }
 
     context 'when the game has not started' do
