@@ -73,22 +73,4 @@ RSpec.describe 'Games', type: :system do
       expect(page).to have_current_path game_path(game)
     end
   end
-
-  describe '#start' do
-    let!(:game) { create(:game) }
-
-    it 'adds the start time' do
-      game.start
-      expect(game.started_at).not_to be_nil
-    end
-  end
-
-  describe '#end' do
-    let!(:game) { create(:game) }
-
-    it 'adds the end time' do
-      game.end
-      expect(game.ended_at).not_to be_nil
-    end
-  end
 end

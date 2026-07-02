@@ -31,4 +31,22 @@ RSpec.describe Game, type: :model do
       end
     end
   end
+
+  describe '#start' do
+    let!(:game) { create(:game) }
+
+    it 'adds the start time' do
+      game.start
+      expect(game.started_at).not_to be_nil
+    end
+  end
+
+  describe '#end' do
+    let!(:game) { create(:game) }
+
+    it 'adds the end time' do
+      game.end
+      expect(game.ended_at).not_to be_nil
+    end
+  end
 end
