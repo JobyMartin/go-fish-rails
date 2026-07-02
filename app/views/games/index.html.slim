@@ -14,40 +14,17 @@
             = link_to "New Game", new_game_path, class: 'btn.btn--primary'
       .op-stack
         .divider
-        .card.card--padded.card--shadow-large.flex.justify-between.items-center
-          p.margin-none
-            | Game 2
-          p.margin-none
-            em
-              | (Full)
-          button.btn
-            | Play Now
-        .card.card--padded.card--shadow-large.flex.justify-between.items-center
-          p.margin-none
-            | Game 1
-          p.margin-none
-            em
-              | (2/3 players)
-          button.btn.btn--disabled
-            | Waiting...
+        
+        / - @games.each do |game|
+        /   = render 'game-card', name: game.name, status: game.status, button_text: 'View'
+
+
       header.content-header.margin-top-lg
         .content-header__details
           h1.content-header__title
             | All Games
       .divider
-      .card.card--padded.card--shadow-large.flex.justify-between.items-center.margin-bottom-md.margin-top-md
-        p.margin-none
-          | Game 0
-        p.margin-none
-          em
-            | (1/5 players)
-        button.btn
-          | Join
-      .card.card--padded.card--shadow-large.flex.justify-between.items-center.margin-bottom-md
-        p.margin-none
-          | Game 1
-        p.margin-none
-          em
-            | (2/3 players)
-        button.btn
-          | Join
+
+      .op-stack
+        - @games.each do |game|
+          = render 'game-card', name: game.name, status: game.status, button_text: 'View'
