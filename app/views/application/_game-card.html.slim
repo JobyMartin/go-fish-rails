@@ -5,5 +5,4 @@
   p.margin-none
     em
       | #{status}
-  button.btn
-    | #{button_text}
+  = button_to 'Join', game_players_path(game), method: :post, class: 'btn full-width'

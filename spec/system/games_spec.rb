@@ -60,4 +60,17 @@ RSpec.describe 'Games', type: :system do
       end
     end
   end
+
+  context 'when there is an open game' do
+    let!(:game) { create(:game) }
+
+    before do
+      visit games_path
+      click_on 'Join'
+    end
+
+    it 'allows them to join' do
+      expect(page).to have_current_path game_path(game)
+    end
+  end
 end

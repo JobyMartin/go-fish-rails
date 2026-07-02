@@ -16,7 +16,10 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "games#index"
   get "games/history", to: "games#history"
-  resources :games
+  
+  resources :games do
+    resources :players, only: [:create]
+  end
 
   get "pages/rules", to: "pages#rules"
   resources :pages, only: [:index]

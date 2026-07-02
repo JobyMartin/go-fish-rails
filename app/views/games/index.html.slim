@@ -16,7 +16,7 @@
         .divider
 
         - @user.games.each do |game|
-          = render 'game-card', name: game.name, status: game.status, button_text: 'View'
+          = render 'game-card', name: game.name, status: game.status, button_text: 'View', game: game
 
 
       header.content-header.margin-top-lg
@@ -27,4 +27,4 @@
 
       .op-stack data-testid='all-games'
         - (@games - @user.games).each do |game|
-          = render 'game-card', name: game.name, status: game.status, button_text: 'View'
+          = render 'game-card', name: game.name, status: game.status, button_text: 'Join', game: game
