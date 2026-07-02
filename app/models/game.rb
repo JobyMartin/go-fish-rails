@@ -16,4 +16,12 @@ class Game < ApplicationRecord
     return IN_PROGRESS_MESSAGE if !started_at.nil? && ended_at.nil?
     return FINISHED_MESSAGE if !ended_at.nil?
   end
+
+  def start
+    self.started_at = Time.current
+  end
+
+  def end
+    self.ended_at = Time.current
+  end
 end
