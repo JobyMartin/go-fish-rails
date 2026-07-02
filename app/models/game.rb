@@ -1,4 +1,7 @@
 class Game < ApplicationRecord
+  has_many :players
+  has_many :users, through: :players
+
   WAITING_MESSAGE = 'Waiting...'
   IN_PROGRESS_MESSAGE = 'In progress'
   FINISHED_MESSAGE = 'Finished'

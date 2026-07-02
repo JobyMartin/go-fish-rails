@@ -1,5 +1,7 @@
 class User < ApplicationRecord
   has_many :sessions, dependent: :destroy
+  has_many :players
+  has_many :games, through: :players
 
   attribute :confirm_password
 
