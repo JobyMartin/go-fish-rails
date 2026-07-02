@@ -1,6 +1,16 @@
 class Game < ApplicationRecord
+  WAITING_MESSAGE = 'Waiting...'
+  IN_PROGRESS_MESSAGE = 'In progress'
+  FINISHED_MESSAGE = 'Finished'
+
   enum :game_type, {
     go_fish: 0,
     secret_hitler: 1
   }
+
+  def status
+    return WAITING_MESSAGE if started_at.nil?
+    return IN_PROGRESS_MESSAGE if !started_at.nil? && ended_at.nil?
+    return FINISHED_MESSAGE if !ended_at.nil?
+  end
 end
