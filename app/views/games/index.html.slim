@@ -12,11 +12,11 @@
               | Your Games
           .content-header__aside
             = link_to "New Game", new_game_path, class: 'btn.btn--primary'
-      .op-stack
+      .op-stack data-testid='your-games'
         .divider
-        
-        / - @games.each do |game|
-        /   = render 'game-card', name: game.name, status: game.status, button_text: 'View'
+
+        - @user.games.each do |game|
+          = render 'game-card', name: game.name, status: game.status, button_text: 'View'
 
 
       header.content-header.margin-top-lg
@@ -25,6 +25,6 @@
             | All Games
       .divider
 
-      .op-stack
-        - @games.each do |game|
+      .op-stack data-testid='all-games'
+        - (@games - @user.games).each do |game|
           = render 'game-card', name: game.name, status: game.status, button_text: 'View'

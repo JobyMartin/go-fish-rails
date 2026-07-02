@@ -36,4 +36,28 @@ RSpec.describe 'Games', type: :system do
       expect(page).to have_content game_name
     end
   end
+
+  context 'when a new game is created' do
+    let!(:game_name1) { "Tony Stark's Game" }
+    let!(:game_name2) { "Steve Rogers' Game" }
+    let!(:game) { create(:game, name: game_name1) }
+    let!(:player) { create(:player, user:, game:) }
+    let!(:game2) { create(:game, name: game_name2) }
+
+    before do
+      # create_game(game_name)
+      visit games_path
+    end
+
+    it 'updates the games page correctly' do
+      within '[data-testid="your-games"]' do
+        expect(page).to have_content game_name1
+      end
+
+      within '[data-testid="all-games"]' do
+        expect(page).not_to have_content game_name1
+        expect(page).to have_content game_name2
+      end
+    end
+  end
 end

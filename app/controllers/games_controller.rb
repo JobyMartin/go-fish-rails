@@ -1,6 +1,7 @@
 
 class GamesController < ApplicationController
   def index
+    @user = Current.session.user
     @games = Game.all
   end
 
