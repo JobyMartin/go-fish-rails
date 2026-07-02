@@ -7,6 +7,6 @@
 
       .modal__body
           = f.input :name
-          = f.input :type, collection: ['Go Fish', 'Secret Hitler'], selected: 'Go Fish'
+          = f.input :game_type, collection: Game.game_types.keys.map { it.titleize }
       .modal__footer
         = f.button :submit, "Create Game"

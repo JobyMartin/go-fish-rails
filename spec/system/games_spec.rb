@@ -20,17 +20,13 @@ RSpec.describe 'Games', type: :system do
 
   it 'allows user to go to game creation form' do
     click_on 'New Game'
-    expect(page).to have_content 'Create a game'
+    expect(page).to have_content 'Setup Game'
   end
 
-  fcontext 'when a game is created' do
-    let(:game) { create :game }
-    it 'redirects and adds to the database' do
+  context 'when a game is created' do
+    it 'adds to the database' do
       expect do
-        visit new_game_path
-        fill_in 'Name', with: game.name
-        select 'Go Fish', from: 'Type'
-        click_on 'Create Game'
+        create_game
       end.to change(Game, :count).by 1
     end
   end

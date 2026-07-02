@@ -11,4 +11,5 @@ RSpec.configure do |c|
   c.include TestElementHelper, type: :system
   c.include SignInHelper, type: :system
   c.include SignUpHelper, type: :system
+  c.include CreateGameHelper, type: :system
 end

@@ -19,6 +19,8 @@ class GamesController < ApplicationController
   private
 
   def game_params
-    params.require(:game).permit( :name, :type )
+    data = params.require(:game).permit(:name, :game_type)
+    data[:game_type] = data[:game_type].parameterize(separator: '_')
+    data
   end
 end
