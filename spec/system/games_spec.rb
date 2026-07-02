@@ -29,5 +29,11 @@ RSpec.describe 'Games', type: :system do
         create_game
       end.to change(Game, :count).by 1
     end
+
+    it 'sends them to the show page' do
+      game_name = "Spiderman's Game"
+      create_game(game_name)
+      expect(page).to have_content game_name
+    end
   end
 end
