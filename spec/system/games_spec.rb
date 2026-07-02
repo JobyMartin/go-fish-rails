@@ -73,4 +73,18 @@ RSpec.describe 'Games', type: :system do
       expect(page).to have_current_path game_path(game)
     end
   end
+
+  context 'when user creates a game and views their games' do
+    let(:game_name) { 'hippity hoppity this code is now my property' }
+    before do
+      create_game(name: game_name)
+      visit games_path
+    end
+
+    it 'is listed under their games' do
+      within '[data-testid="your-games"]' do
+        expect(page).to have_content game_name
+      end
+    end
+  end
 end
