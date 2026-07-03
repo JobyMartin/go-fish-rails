@@ -86,5 +86,15 @@ RSpec.describe 'Games', type: :system do
         expect(page).to have_content game_name
       end
     end
+
+    fcontext 'when they view a game they are in' do
+      before do
+        click_on 'View'
+      end
+      it 'lets them in and shows the game' do
+        content = 'UTC'
+        expect(page).to have_content content 
+      end
+    end
   end
 end

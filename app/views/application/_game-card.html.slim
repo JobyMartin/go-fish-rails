@@ -5,4 +5,7 @@
   p.margin-none
     em
       | #{status}
-  = button_to 'Join', game_players_path(game), method: :post, class: 'btn full-width'
+  - if button_text == 'View'
+    = button_to button_text, game_path(game), method: :get, class: 'btn full-width'
+  - else
+    = button_to button_text, game_players_path(game), method: :post, class: 'btn full-width'
