@@ -62,15 +62,21 @@ RSpec.describe 'Games', type: :system do
   end
 
   context 'when there is an open game' do
+    let(:time_content) { "UTC" }
     let!(:game) { create(:game) }
 
     before do
       visit games_path
-      click_on 'Join'
     end
-
+    
     it 'allows them to join' do
-      expect(page).to have_current_path game_path(game)
+      expect do
+        click_on 'Join'
+        expect(page).to have_current_path game_path(game)
+        expect(page).to have_content time_content
+      end.to change(Player, :count).by 1
+      # that's kinda spicy
+      expect(Player.last.game).to eq game
     end
   end
 
