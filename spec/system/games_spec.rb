@@ -87,7 +87,7 @@ RSpec.describe 'Games', type: :system do
       end
     end
 
-    fcontext 'when they view a game they are in' do
+    context 'when they view a game they are in' do
       before do
         click_on 'View'
       end
