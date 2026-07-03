@@ -25,6 +25,10 @@ class GamesController < ApplicationController
     @game = Game.find(params[:id])
   end
 
+  def history
+    @user_games = Current.session.user.games
+  end
+
   private
 
   def game_params

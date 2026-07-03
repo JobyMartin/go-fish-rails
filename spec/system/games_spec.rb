@@ -103,4 +103,20 @@ RSpec.describe 'Games', type: :system do
       end
     end
   end
+
+  context 'when the player has played games' do
+    let(:game_name) { "Joby's game" }
+    let(:game_name1) { "Gabe's game" }
+
+    before do
+      create_game(game_name)
+      create_game(game_name1)
+      visit games_history_path
+    end
+
+    it 'displays those games' do
+      expect(page).to have_content game_name
+      expect(page).to have_content game_name1
+    end
+  end
 end

@@ -4,31 +4,23 @@ details.accordion
     .player-name
       i.ph.ph-caret-right.icon--small.accordion__marker.arrow-button
       span
-        | Game #{game_num + 1}
+        | #{accordion.name}
     .player-details
       span
         | Players 
         strong
-          | 3
+          | #{accordion.players.count}
       span
-        | Elapsed Time 
+        | Ended at 
         strong
-          | 7:43
+          - binding.irb
+          | #{accordion.ended_at}
   .accordion__body.accordion__body--history
     .game-details
       span
         | Players - 
-        strong
-          | You
-        | , 
-        strong
-          | William
-        | , 
-        strong
-          | Silas
-      span
-        | Winner - 
-        strong
-          | William
+        - accordion.players.each do |player|
+          strong
+            | #{player.user.email_address}
     button.btn.btn--small
       | View Feed

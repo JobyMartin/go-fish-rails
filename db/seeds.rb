@@ -7,3 +7,13 @@
 #   ["Action", "Comedy", "Drama", "Horror"].each do |genre_name|
 #     MovieGenre.find_or_create_by!(name: genre_name)
 #   end
+
+include FactoryBot::Syntax::Methods
+
+if Rails.env.development?
+  create(:game)
+  create(:game, :in_progress)
+  create(:game, :ended)
+
+  create(:player)
+end

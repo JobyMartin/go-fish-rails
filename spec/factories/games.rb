@@ -1,6 +1,8 @@
 FactoryBot.define do
   factory :game do
-    name { 'My game' }
+    sequence :name do |n|
+      "Game #{n}"
+    end
     game_type { 'go_fish' }
 
     trait :in_progress do

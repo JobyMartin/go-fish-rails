@@ -11,6 +11,4 @@
             | Your Go Fish History
       .op-stack
         .divider
-
-        - 5.times do |index|
-          = render 'accordion', game_num: index
+        = render partial: 'accordion', collection: @user_games
