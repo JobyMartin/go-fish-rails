@@ -1,5 +1,7 @@
 
 class StatsController < ApplicationController
+  NO_STATS = '0%'
+
   def index
     @user = Current.session.user
     @win_percentage = win_percentage
@@ -9,6 +11,7 @@ class StatsController < ApplicationController
   private
 
   def win_percentage
+    return NO_STATS if player_count.zero?
     "#{((winner_count / player_count) * 100).to_i}%"
   end
 

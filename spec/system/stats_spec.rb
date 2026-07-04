@@ -35,4 +35,13 @@ RSpec.describe 'Stats', type: :system do
       expect(page).to have_content win_percentage
     end
   end
+
+  context 'when the user has not played any games' do
+    it 'correctly shows nothing' do
+      no_stats_content = '0%'
+      visit stats_path
+      expect(page).to have_current_path stats_path
+      expect(page).to have_content no_stats_content
+    end
+  end
 end
