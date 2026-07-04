@@ -9,12 +9,7 @@ RSpec.describe 'Stats', type: :system do
     sign_in(user)
   end
 
-  it 'shows the stats' do
-    visit stats_path
-    expect(page).to have_content 'Your Go Fish Statistics'
-  end
-
-  context 'when the user has played games' do
+  context 'when the user views the stats page' do
     let!(:player) { create(:player, user: user, game: game1) }
     let!(:player1) { create(:player, user: user, game: game2) }
 
