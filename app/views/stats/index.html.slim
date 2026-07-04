@@ -10,5 +10,6 @@
             | Your Go Fish Statistics
 
       .flex.flex-wrap.gap-md
-        - 6.times do |index|
-          = render 'stat-card', stat_name: "Statistic #{index + 1}"
+        = render 'stat-card', header: 'Games played', body: @user.games.count
+        = render 'stat-card', header: 'Games won', body: @games_won
+        = render 'stat-card', header: 'Win percentage', body: @win_percentage
