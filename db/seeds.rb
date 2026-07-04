@@ -16,4 +16,5 @@ if Rails.env.development?
   create(:game, :ended)
 
   create(:player)
+  create(:player, :winner)
 end
