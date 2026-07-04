@@ -62,7 +62,7 @@ RSpec.describe 'Games', type: :system do
   end
 
   context 'when there is an open game' do
-    let(:time_content) { "UTC" }
+    let(:time_content) { "Created at" }
     let!(:game) { create(:game) }
 
     before do
@@ -98,7 +98,7 @@ RSpec.describe 'Games', type: :system do
         click_on 'View'
       end
       it 'lets them in and shows the game' do
-        content = 'UTC'
+        content = 'Created at'
         expect(page).to have_content content 
       end
     end
