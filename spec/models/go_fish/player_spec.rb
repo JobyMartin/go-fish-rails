@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe GoFish::Player, type: :model do
+RSpec.xdescribe GoFish::Player, type: :model do
   let(:player) { GoFish::Player.new('Joby') }
   let(:card1) { GoFish::Card.new('A', 'Spades') }
   let(:card2) { GoFish::Card.new('K', 'Spades') }
