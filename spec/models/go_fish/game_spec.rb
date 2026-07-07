@@ -25,12 +25,15 @@ RSpec.describe GoFish::Game, type: :model do
     it 'preserves round-trip player state' do
       go_fish_game.deal!
       original_first_hand = go_fish_game.players.first.hand
+      original_first_books = go_fish_game.players.first.books
       json = described_class.dump(go_fish_game)
       game = described_class.load(json)
       new_first_hand = game.players.first.hand
+      new_first_books = game.players.first.books
 
       expect(game.players).to all be_a GoFish::Player
       expect(new_first_hand).to eq original_first_hand
+      expect(new_first_books).to eq original_first_books
     end
 
     it 'preserves round-trip deck state' do
