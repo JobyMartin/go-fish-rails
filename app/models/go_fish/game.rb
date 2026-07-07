@@ -3,26 +3,28 @@ module GoFish
     NUM_OF_CARDS = 5
 
     attr_reader :deck
-    attr_accessor :players, :current_player_index
+    attr_accessor :players, :current_player_index, :round_results
 
-    def initialize(players, deck = Deck.new, current_player_index = 0)
+    def initialize(players, deck = Deck.new, current_player_index = 0, round_results = [])
       @players = players
       @deck = deck
       @current_player_index = current_player_index
+      @round_results = round_results
     end
 
     def as_json
       {
         players: players.map(&:as_json),
         current_player_index: current_player_index,
-        deck: deck.as_json
+        deck: deck.as_json,
+        round_results: round_results.as_json
       }
     end
 
     def self.from_json(json)
       players = json['players'].map { |player_hash| Player.load(player_hash) }
       deck = Deck.load(json['deck'])
-      self.new(players, deck, json['current_player_index'])
+      self.new(players, deck, json['current_player_index'], json['round_results'])
     end
 
     def self.load(json)
