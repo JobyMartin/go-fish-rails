@@ -73,7 +73,7 @@ RSpec.describe GoFish::Player, type: :model do
     end
   end
 
-  xdescribe '#hand_size' do
+  describe '#hand_size' do
     let(:empty_hand_size) { 0 }
 
     context 'when the player has no cards' do

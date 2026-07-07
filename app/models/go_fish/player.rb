@@ -16,5 +16,7 @@ module GoFish
     def add_cards(cards)
       cards.each { |card| hand << card }
     end
+
+    def hand_size = hand.size
   end
 end
