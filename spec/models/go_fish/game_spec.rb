@@ -20,4 +20,15 @@ RSpec.describe GoFish::Game, type: :model do
       expect(restored.players).to all be_a GoFish::Player
     end
   end
+
+  describe '#deal!' do
+    it 'deals the players cards' do
+      go_fish_game.deal!
+      dealt_players_hands = go_fish_game.players.map(&:hand)
+
+      dealt_players_hands.first.each do
+        expect(it).to be_a GoFish::Card
+      end
+    end
+  end
 end

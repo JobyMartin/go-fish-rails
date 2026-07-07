@@ -1,9 +1,12 @@
 module GoFish
   class Game
+    NUM_OF_CARDS = 5
+
     attr_accessor :players
 
     def initialize(players)
       @players = players
+      @deck = Deck.new
     end
 
     def as_json
@@ -26,5 +29,16 @@ module GoFish
     def self.dump(obj)
       obj.as_json
     end
+
+    def deal!
+      NUM_OF_CARDS.times do
+        players.each do
+          it.add_cards([deck.top_card])
+        end
+      end
+    end
+
+    private
+    attr_reader :deck
   end
 end
