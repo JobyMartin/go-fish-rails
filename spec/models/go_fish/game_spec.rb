@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe GoFish::Game, type: :model do
   let(:num_players) { 5 }
-  let!(:players) { Array.new(num_players, GoFish::Player.new) }
+  let!(:players) { Array.new(num_players) { GoFish::Player.new } }
   let!(:go_fish_game) { described_class.new(players) }
   let(:player) { players.first }
 
@@ -54,7 +54,7 @@ RSpec.describe GoFish::Game, type: :model do
     end
   end
 
-  describe '#deal!', pending: 'Cannot figure out why this is broken' do
+  describe '#deal!' do
     it 'deals the players cards' do
       go_fish_game.deal!
       dealt_players_hands = go_fish_game.players.map(&:hand)
