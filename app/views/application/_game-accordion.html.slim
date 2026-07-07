@@ -1,0 +1,33 @@
+
+details.accordion
+  summary.accordion__title
+    .player-name
+      i.ph.ph-caret-right.icon--small.accordion__marker.arrow-button
+      span
+        | #{player.name}
+    .player-details
+      span
+        | Cards 
+        strong
+          | #{player.hand_size}
+      span
+        | Books 
+        strong
+          | #{player.book_size}
+  .accordion__body 
+    .card-collection
+      - if player.hand_size == 0
+        = 'No cards to see here...'
+      - else 
+        - (player.hand_size).times do
+          | img to come 
+
+
+
+    .book-collection 
+      - if player.book_size == 0
+        = 'No books to see here...'
+      - else
+        - player.books.each do |book|
+          img.playing-card.playing-card--small src="assets/images/generated_cards/#{book.cards.first.rank}_spades.svg"
+ 

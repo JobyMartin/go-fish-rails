@@ -23,6 +23,17 @@ class GamesController < ApplicationController
 
   def show
     @game = Game.find(params[:id])
+    @started = @game.started_at.present?
+    return unless @started
+    @go_fish_game = @game.go_fish
+    @current_player = @go_fish_game.current_player
+    @opponents = @go_fish_game.players - [@current_player]
+  end
+
+  def start
+    @game = Game.find(params[:id])
+    @game.start
+    redirect_to game_path(@game)
   end
 
   def history

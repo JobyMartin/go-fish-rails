@@ -1,4 +1,5 @@
 class Game < ApplicationRecord
+  serialize :go_fish, coder: GoFish::Game
   has_many :players
   has_many :users, through: :players
 

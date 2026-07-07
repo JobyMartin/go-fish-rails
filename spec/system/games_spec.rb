@@ -31,7 +31,7 @@ RSpec.describe 'Games', type: :system do
     end
 
     it 'sends them to the show page' do
-      game_name = "Spiderman's Game"
+      game_name = "Start game"
       create_game(game_name)
       expect(page).to have_content game_name
     end
@@ -62,7 +62,7 @@ RSpec.describe 'Games', type: :system do
   end
 
   context 'when there is an open game' do
-    let(:time_content) { "Created at" }
+    let(:game_content) { "Start game" }
     let!(:game) { create(:game) }
 
     before do
@@ -73,7 +73,7 @@ RSpec.describe 'Games', type: :system do
       expect do
         click_on 'Join'
         expect(page).to have_current_path game_path(game)
-        expect(page).to have_content time_content
+        expect(page).to have_content game_content
       end.to change(Player, :count).by 1
       # that's kinda spicy
       expect(Player.last.game).to eq game
@@ -98,8 +98,8 @@ RSpec.describe 'Games', type: :system do
         click_on 'View'
       end
       it 'lets them in and shows the game' do
-        content = 'Created at'
-        expect(page).to have_content content 
+        unique_content = 'Start game'
+        expect(page).to have_content unique_content 
       end
     end
   end
@@ -117,6 +117,17 @@ RSpec.describe 'Games', type: :system do
     it 'displays those games' do
       expect(page).to have_content game_name
       expect(page).to have_content game_name1
+    end
+  end
+
+  context 'when the user clicks to start a game' do
+    let!(:game) { create :game }
+    let!(:player) { create(:player, user:, game:) }
+
+    it 'starts a game' do
+      visit game_path(game)
+      click_on 'Start game'
+      expect(game.reload.go_fish).to be_present
     end
   end
 end
