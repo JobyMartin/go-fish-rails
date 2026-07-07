@@ -15,6 +15,10 @@ RSpec.describe GoFish::Game, type: :model do
     it 'transforms deck into json' do
       expect(json[:deck]['cards'].count).to eq 52
     end
+
+    it 'transforms current player index into json' do
+      expect(json[:current_player_index]).to eq 0
+    end
   end
 
   describe "#load" do
@@ -37,6 +41,16 @@ RSpec.describe GoFish::Game, type: :model do
 
       expect(game.deck).to be_a GoFish::Deck
       expect(new_top_card.rank).to eq original_top_card.rank
+    end
+
+    it 'preserves round-trip current player index state' do
+      go_fish_game.current_player_index = 5
+      original_index = go_fish_game.current_player_index
+      json = described_class.dump(go_fish_game)
+      game = described_class.load(json)
+      new_index = game.current_player_index
+
+      expect(new_index).to eq original_index
     end
   end
 
