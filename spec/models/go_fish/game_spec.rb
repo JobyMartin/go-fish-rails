@@ -8,16 +8,30 @@ RSpec.describe GoFish::Game, type: :model do
 
   describe "#dump" do
     let(:json) { described_class.dump(go_fish_game) }
-    it "transforms it into json" do # Eventually matches struct is a better test
+    it "transforms players into json" do
       expect(json[:players].count).to eq num_players
+    end
+
+    it 'transforms deck into json' do
+      expect(json[:deck]['cards'].count).to eq 52
     end
   end
 
   describe "#load" do
     let(:json) { described_class.dump(go_fish_game) }
     let(:restored) { described_class.load(json) }
-    it "preserves round-trip state" do
+    it 'preserves round-trip player state' do
       expect(restored.players).to all be_a GoFish::Player
+    end
+
+    it 'preserves round-trip deck state' do
+      original_top_card = go_fish_game.deck.cards.first
+      json = described_class.dump(go_fish_game)
+      game = described_class.load(json)
+      new_top_card = game.deck.cards.first
+
+      expect(game.deck).to be_a GoFish::Deck
+      expect(new_top_card.rank).to eq original_top_card.rank
     end
   end
 

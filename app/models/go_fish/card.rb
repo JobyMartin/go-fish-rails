@@ -26,11 +26,8 @@ module GoFish
       
     def to_pathname = "#{rank.downcase}_#{suit.downcase}.svg"
         
-    def as_json
-      {
-        'rank' => rank,
-        'suit' => suit,
-      }
+    def self.load(hash)
+      self.new(hash['rank'], hash['suit'])
     end
   end
 end
