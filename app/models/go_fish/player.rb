@@ -3,13 +3,14 @@ module GoFish
     attr_reader :name
     attr_accessor :hand
 
-    def initialize(name = 'Fisher')
+    def initialize(name = 'Fisher', hand = [])
       @name = name
-      @hand = []
+      @hand = hand
     end
 
     def self.load(hash)
-      self.new
+      hand_cards = hash['hand'].map { |card| Card.load(card) }
+      self.new(hash['name'], hand_cards)
     end
 
     def add_cards(cards)
