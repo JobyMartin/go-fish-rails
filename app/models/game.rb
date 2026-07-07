@@ -19,6 +19,9 @@ class Game < ApplicationRecord
 
   def start
     self.started_at = Time.current
+    self.go_fish = GoFish::Game.new(users.map { |user| GoFish::Player.new(user.id) })
+    go_fish.deal!
+    save!
   end
 
   def end
