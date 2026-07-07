@@ -140,7 +140,7 @@ RSpec.describe GoFish::Player, type: :model do
     end
   end
 
-  xdescribe '#book_size' do
+  describe '#book_size' do
     let(:book_size) { 2 }
 
     before do

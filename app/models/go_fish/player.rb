@@ -21,5 +21,7 @@ module GoFish
     end
 
     def hand_size = hand.size
+
+    def book_size = books.size
   end
 end
