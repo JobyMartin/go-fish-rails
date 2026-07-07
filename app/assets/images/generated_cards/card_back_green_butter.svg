@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 252" width="180" height="252">
+  <defs>
+    <pattern id="lattice" x="0" y="0" width="18" height="18" patternUnits="userSpaceOnUse">
+      <path d="M9,0 L18,9 L9,18 L0,9 Z" fill="none" stroke="#4B7759" stroke-width="0.7"/>
+    </pattern>
+    <clipPath id="inner-clip">
+      <rect x="14" y="14" width="152" height="224" rx="6"/>
+    </clipPath>
+  </defs>
+
+  <!-- Card base -->
+  <rect width="180" height="252" rx="10" fill="#2a2a2a" stroke="#444444" stroke-width="1.5"/>
+
+  <!-- Inner field with lattice -->
+  <rect x="14" y="14" width="152" height="224" rx="6" fill="#111a14"/>
+  <rect x="14" y="14" width="152" height="224" rx="6" fill="url(#lattice)" clip-path="url(#inner-clip)"/>
+
+  <!-- Double border frame -->
+  <rect x="8"  y="8"  width="164" height="236" rx="8" fill="none" stroke="#4B7759" stroke-width="1.5"/>
+  <rect x="14" y="14" width="152" height="224" rx="6" fill="none" stroke="#4B7759" stroke-width="0.8"/>
+
+  <!-- Central nested diamond ornament -->
+  <!-- Outermost diamond -->
+  <polygon points="90,58 138,126 90,194 42,126"
+           fill="none" stroke="#78BE8E" stroke-width="1.4"/>
+  <!-- Middle diamond -->
+  <polygon points="90,78 118,126 90,174 62,126"
+           fill="none" stroke="#4B7759" stroke-width="1"/>
+  <!-- Inner diamond (subtle fill) -->
+  <polygon points="90,98 108,126 90,154 72,126"
+           fill="#78BE8E" fill-opacity="0.12" stroke="#78BE8E" stroke-width="0.8"/>
+
+  <!-- Center diamond symbol -->
+  <text x="90" y="133" font-family="Georgia, serif" font-size="22"
+        fill="#78BE8E" text-anchor="middle" dominant-baseline="middle">♦</text>
+
+  <!-- Corner L-bracket ornaments -->
+  <!-- top-left -->
+  <polyline points="21,28 21,21 28,21" fill="none" stroke="#78BE8E" stroke-width="1"/>
+  <!-- top-right -->
+  <polyline points="152,21 159,21 159,28" fill="none" stroke="#78BE8E" stroke-width="1"/>
+  <!-- bottom-left -->
+  <polyline points="21,224 21,231 28,231" fill="none" stroke="#78BE8E" stroke-width="1"/>
+  <!-- bottom-right -->
+  <polyline points="152,231 159,231 159,224" fill="none" stroke="#78BE8E" stroke-width="1"/>
+
+  <!-- Midpoint accent diamonds on outer border edges -->
+  <polygon points="90,62 93,65 90,68 87,65" fill="#78BE8E"/>
+  <polygon points="90,184 93,187 90,190 87,187" fill="#78BE8E"/>
+  <polygon points="45,126 48,123 51,126 48,129" fill="#78BE8E"/>
+  <polygon points="129,126 132,123 135,126 132,129" fill="#78BE8E"/>
+</svg>
