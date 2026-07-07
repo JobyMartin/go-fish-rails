@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.xdescribe GoFish::Player, type: :model do
+RSpec.describe GoFish::Player, type: :model do
   let(:player) { GoFish::Player.new('Joby') }
   let(:card1) { GoFish::Card.new('A', 'Spades') }
   let(:card2) { GoFish::Card.new('K', 'Spades') }
@@ -17,7 +17,7 @@ RSpec.xdescribe GoFish::Player, type: :model do
       expect(player.hand).to eq [card1, card2]
     end
 
-    context 'when the fourth card is added' do
+    xcontext 'when the fourth card is added' do
       before do
         player.add_cards([card6, card7, card8, card2])
       end
@@ -29,7 +29,7 @@ RSpec.xdescribe GoFish::Player, type: :model do
       end
     end
 
-    context 'when no cards are given' do
+    xcontext 'when no cards are given' do
       it 'does not make a book' do
         book_size = player.book_size
         player.add_cards([])
@@ -38,7 +38,7 @@ RSpec.xdescribe GoFish::Player, type: :model do
     end
   end
 
-  describe '#get_cards_by_rank' do
+  xdescribe '#get_cards_by_rank' do
     let(:rank_in_question) { 'A' }
 
     context 'the players hand contains the rank in question' do
@@ -73,7 +73,7 @@ RSpec.xdescribe GoFish::Player, type: :model do
     end
   end
 
-  describe '#hand_size' do
+  xdescribe '#hand_size' do
     let(:empty_hand_size) { 0 }
 
     context 'when the player has no cards' do
@@ -90,14 +90,14 @@ RSpec.xdescribe GoFish::Player, type: :model do
     end
   end
 
-  describe '#formatted_hand' do
+  xdescribe '#formatted_hand' do
     it 'displays players hand' do
       player.add_cards([card1, card2])
       expect(player.formatted_hand).to eq "- A of Spades\n- K of Spades\n"
     end
   end
 
-  describe '#make_book_if_possible' do
+  xdescribe '#make_book_if_possible' do
     let(:rank) { 'A' }
 
     context 'when the player has four matching cards' do
@@ -123,14 +123,14 @@ RSpec.xdescribe GoFish::Player, type: :model do
     end
   end
 
-  describe '#formatted books' do
+  xdescribe '#formatted books' do
     it 'displays players books' do
       player.books << GoFish::Book.new([card1, card5, card3, card4])
       expect(player.formatted_books).to eq "Books:\n- A\n"
     end
   end
 
-  describe '#highest_book_value' do
+  xdescribe '#highest_book_value' do
     before do
       player.books << GoFish::Book.new([card1, card5, card3, card4])
       player.books << GoFish::Book.new([card2, card6, card7, card8])
@@ -140,7 +140,7 @@ RSpec.xdescribe GoFish::Player, type: :model do
     end
   end
 
-  describe '#book_size' do
+  xdescribe '#book_size' do
     let(:book_size) { 2 }
 
     before do
