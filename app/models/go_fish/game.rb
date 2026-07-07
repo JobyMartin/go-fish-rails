@@ -44,5 +44,7 @@ module GoFish
         end
       end
     end
+
+    def current_player = players[current_player_index]
   end
 end

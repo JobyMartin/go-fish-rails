@@ -78,4 +78,10 @@ RSpec.describe GoFish::Game, type: :model do
       end
     end
   end
+
+  describe '#current_player' do
+    it 'returns the current player' do
+      expect(go_fish_game.current_player).to eq go_fish_game.players.first
+    end
+  end
 end
