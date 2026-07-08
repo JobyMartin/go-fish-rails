@@ -130,7 +130,7 @@ RSpec.describe GoFish::Player, type: :model do
     end
   end
 
-  xdescribe '#highest_book_value' do
+  describe '#highest_book_value' do
     before do
       player.books << GoFish::Book.new([card1, card5, card3, card4])
       player.books << GoFish::Book.new([card2, card6, card7, card8])

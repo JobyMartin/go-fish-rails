@@ -1,5 +1,7 @@
 module GoFish
   class Player
+    STARTING_BOOK_VALUE = 0
+
     attr_reader :name, :id
     attr_accessor :hand, :books
 
@@ -40,6 +42,16 @@ module GoFish
         self.hand -= cards
         books << GoFish::Book.new(cards)
       end
+    end
+
+    def highest_book_value
+      highest_book_value = STARTING_BOOK_VALUE
+
+      books.each do
+        highest_book_value = it.value if it.value > highest_book_value
+      end
+
+      highest_book_value
     end
   end
 end
