@@ -23,5 +23,14 @@ module GoFish
     def hand_size = hand.size
 
     def book_size = books.size
+
+    def get_cards_by_rank(rank)
+      find_by_rank = ->(card) { card.rank == rank }
+
+      cards_of_rank = hand.select(&find_by_rank)
+      hand.delete_if(&find_by_rank)
+      
+      cards_of_rank
+    end
   end
 end

@@ -38,7 +38,7 @@ RSpec.describe GoFish::Player, type: :model do
     end
   end
 
-  xdescribe '#get_cards_by_rank' do
+  describe '#get_cards_by_rank' do
     let(:rank_in_question) { 'A' }
 
     context 'the players hand contains the rank in question' do
