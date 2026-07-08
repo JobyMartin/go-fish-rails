@@ -173,4 +173,61 @@ RSpec.describe 'Games', type: :system do
       end
     end
   end
+
+  context 'when the game is over', pending: 'broken and cannot figure out' do
+    let!(:game) { create :game }
+    let!(:player) { create(:player, user:, game:) }
+    let!(:player2) { create(:player, user: user2, game:) }
+
+    before do
+      game.start
+
+      game.go_fish.players.each do |player|
+        player.hand = [GoFish::Card.new('A'), GoFish::Card.new('A')]
+      end
+
+      game.go_fish.deck.cards = []
+
+      game.save!
+    end
+
+    it 'displays the winner' do
+      visit game_path(game)
+      click_on 'Ask for a card'
+      expect(page).to have_content 'winner'
+    end
+  end
+
+  # fcontext 'when the game ends' do
+  #   let(:winner_message) { 'winner' }
+  #   let(:name_message) { 'Name' }
+  #   let!(:game) { create :game }
+  #   let!(:player) { create(:player, user:, game:) }
+  #   let!(:player2) { create(:player, user: user2, game:) }
+
+  #   before do
+  #     game.start
+  #     binding.irb
+      
+  #     game.go_fish.deck.cards = []
+  #     game.go_fish.players.first.hand = [GoFish::Card.new('A', 'Spades')]
+  #     game.go_fish.players.last.hand = [GoFish::Card.new('A', 'Diamonds'), GoFish::Card.new('A', 'Hearts'), GoFish::Card.new('A', 'Clubs')]
+      
+  #     # game.players.first.books = [Book.new([Card.new('A', 'Spades')])]
+  #     game.save!
+  #     binding.irb
+  #   end
+
+  #   fit 'displays the winner' do
+  #     visit game_path(game)
+  #     page.click_on 'Ask for a card'
+  #     expect(page).to have_content winner_message
+  #   end
+
+  #   xit 'resets the game' do
+  #     session1.click_on "Play Again"
+  #     expect(game.game_started?).to be false
+  #     expect(session1).to have_content name_message
+  #   end
+  # end
 end
