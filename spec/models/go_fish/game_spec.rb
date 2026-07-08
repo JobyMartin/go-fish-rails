@@ -22,10 +22,11 @@ RSpec.describe GoFish::Game, type: :model do
   end
 
   describe "#load" do
+    let!(:original_first_hand) { go_fish_game.players.first.hand }
+    let!(:original_first_books) { go_fish_game.players.first.books }
+    
     before do
       go_fish_game.deal!
-      original_first_hand = go_fish_game.players.first.hand
-      original_first_books = go_fish_game.players.first.books
     end
     
     it 'preserves round-trip player state' do
