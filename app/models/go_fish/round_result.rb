@@ -33,5 +33,16 @@ module GoFish
 
       message
     end
+
+    def self.load(hash)
+      self.new(
+        current_user: Player.load(hash['user_given_to']),
+        cards_exchanged: hash['cards_exchanged'].map { |card| Card.load(card) },
+        user_in_question: Player.load(hash['user_taken_from']),
+        rank_in_question: hash['rank_in_question'],
+        went_fishing: hash['went_fishing'],
+        made_a_catch: hash['made_a_catch'],
+      )
+    end
   end
 end

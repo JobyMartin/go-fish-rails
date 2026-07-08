@@ -24,7 +24,8 @@ module GoFish
     def self.from_json(json)
       players = json['players'].map { |player_hash| Player.load(player_hash) }
       deck = Deck.load(json['deck'])
-      self.new(players, deck, json['current_player_index'], json['round_results'])
+      round_results = json['round_results'].map { |round_hash| RoundResult.load(round_hash) }
+      self.new(players, deck, json['current_player_index'], round_results)
     end
 
     def self.load(json)

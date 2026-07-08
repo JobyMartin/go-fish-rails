@@ -61,13 +61,17 @@ RSpec.describe GoFish::Game, type: :model do
     end
 
     it 'preserves the round-trip round results state' do
-      go_fish_game.round_results = 'mock state'
-      original_round_results = go_fish_game.round_results
+      go_fish_game.round_results = [create_round_result(go_fish_game)]
       json = described_class.dump(go_fish_game)
       game = described_class.load(json.as_json)
       new_round_results = game.round_results
 
-      expect(new_round_results).to eq original_round_results
+      new_round_results.each do
+        expect(it).to be_a GoFish::RoundResult
+        expect(it.user_taken_from).to be_a GoFish::Player
+        expect(it.user_given_to).to be_a GoFish::Player
+        expect(it.cards_exchanged).to all be_a GoFish::Card
+      end
     end
   end
 
