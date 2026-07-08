@@ -51,27 +51,13 @@
               - elsif result.for_other_players.count == 1
                 span.feed-content__player-action = result.for_other_players.first
       
-        form.action-options action='/game' method='post'
-          .action-options__inputs
-            .input-collection
-              label.form-label Player
-              
-              select.form-control name="player"
-                - @opponents.each do |opponent|
-                  option = opponent.name
-
-            .input-collection
-              label.form-label Card Rank
-                
-              select.form-control name="rank"
-                - @current_player.hand.each do |card|
-                  option = card.to_s
-          
+        = simple_form_for :play_turn, url: play_game_path(@game) do |f|
+          = f.input :player, as: :select, collection: @opponents, selected: @opponents.first
+          = f.input :rank, as: :select, collection: @current_player.hand, selected: @current_player.hand.first
           - if @current_player.name == @go_fish_game.current_player.name
-            button.btn.btn--primary type='submit' Ask for a card
-
+            = f.button :submit, 'Ask for a card'
           - else 
-            button.btn.btn--primary disabled=true type='submit' Ask for a card
+            = f.button :submit, 'Ask for a card', disabled: true
 
     .game__hand.panel.panel--hand
       .panel__header
