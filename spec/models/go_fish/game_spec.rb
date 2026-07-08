@@ -26,10 +26,10 @@ RSpec.describe GoFish::Game, type: :model do
       go_fish_game.deal!
       original_first_hand = go_fish_game.players.first.hand
       original_first_books = go_fish_game.players.first.books
-      json = described_class.dump(go_fish_game)
     end
-
+    
     it 'preserves round-trip player state' do
+      json = described_class.dump(go_fish_game)
       game = described_class.load(json.as_json)
       new_first_hand = game.players.first.hand
       new_first_books = game.players.first.books
