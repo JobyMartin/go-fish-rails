@@ -95,4 +95,80 @@ RSpec.describe GoFish::Game, type: :model do
       expect(go_fish_game.find_player(user_id)).to eq go_fish_game.players.first
     end
   end
+
+  describe '#play_turn' do
+    let(:card) { GoFish::Card.new('A', 'Spades') }
+    let(:player_in_question) { go_fish_game.players.last }
+    let(:inquired_player_index) { 1 }
+    let(:inquired_player_index2) { 0 }
+    let(:inquired_rank) { 'A' }
+    let(:default_hand_size) { 1 }
+    let(:full_deck_size) { 52 }
+
+    context 'when the player in question has a matching card' do
+      before do 
+        player_in_question.add_cards([card])
+        go_fish_game.current_player.add_cards([card])
+      end
+
+      it 'gives that card to the player asking' do
+        go_fish_game.play_turn(inquired_player_index2, inquired_rank)
+        expect(player_in_question.hand).to be_empty
+        expect(go_fish_game.current_player.hand_size).to eq default_hand_size + 1
+        expect(go_fish_game.current_player.hand).to all be_a GoFish::Card
+      end
+
+      it 'does not fish a card from the deck' do
+        go_fish_game.play_turn(inquired_player_index2, inquired_rank)
+        expect(go_fish_game.deck.cards_left).to eq full_deck_size
+        expect(go_fish_game.current_player.hand_size).to eq default_hand_size + 1
+      end
+    end
+
+    context 'when the player in question does not have the card' do
+      let(:unmatched_rank) { '2' }
+      let(:default_hand_size) { 2 }
+      let(:full_deck_size) { 52 }
+      let!(:current_player) { go_fish_game.current_player }
+
+      before do
+        player_in_question.add_cards([card, card])
+        current_player.add_cards([card, card])
+        go_fish_game.play_turn(inquired_player_index, unmatched_rank)
+      end
+
+      it 'fishes a card' do
+        expect(go_fish_game.deck.cards_left).to eq full_deck_size - 1
+        expect(current_player.hand_size).to eq default_hand_size + 1
+      end
+    end
+
+    context 'when the player does not make a catch', pending: "make this accurate" do
+      let(:unmatched_rank) { '2' }
+      # let!(:current_user) { go_fish_game.current_user }
+
+      before do
+        go_fish_game.deck.cards = [Card.new('A', 'Spades')]
+        go_fish_game.play_turn(inquired_player_index, unmatched_rank)
+      end
+
+      it 'ends the turn' do
+        expect(go_fish_game.current_user).not_to eq current_user
+      end
+    end
+
+    context 'when the player makes a catch', pending: "make this accurate" do
+      let(:matched_rank) { 'A' }
+      # let!(:current_user) { go_fish_game.current_user }
+
+      before do
+        go_fish_game.deck.cards = [GoFish::Card.new('A', 'Spades')]
+        go_fish_game.play_turn(inquired_player_index, matched_rank)
+      end
+
+      it 'does not end turn' do
+        expect(go_fish_game.current_user).to eq current_user
+      end
+    end
+  end
 end

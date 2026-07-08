@@ -50,5 +50,60 @@ module GoFish
     def find_player(user_id)
       players.find { it.id == user_id }
     end
+
+    def play_turn(inquired_user_index, inquired_rank)
+      inquired_player = players[inquired_user_index - 1]
+      cards_exchanged = inquired_player.get_cards_by_rank(inquired_rank)
+      
+      handle_cards_and_end_turn(cards_exchanged, inquired_user_index, inquired_rank)
+    end
+
+    private
+
+    def handle_cards_and_end_turn(cards_exchanged, inquired_user_index, inquired_rank)
+      if cards_exchanged.any?
+        current_player.add_cards(cards_exchanged)
+        end_turn(cards_exchanged, players[inquired_user_index - 1], false, inquired_rank)
+      else
+        end_turn(cards_exchanged, players[inquired_user_index - 1], (go_fish.rank != inquired_rank), inquired_rank)
+      end
+    end
+
+    def go_fish
+      fished_card = deck.top_card
+      current_player.add_cards([fished_card])
+
+      current_player.make_book_if_possible(fished_card.rank) unless current_player.hand.empty?
+
+      fished_card
+    end
+
+    def end_turn(cards_exchanged, inquired_user, turn_over, inquired_rank)
+      cards_exchanged.each { current_player.make_book_if_possible(it.rank) }
+
+      round_results << GoFish::RoundResult.new(current_user: current_player,
+                                      cards_exchanged: cards_exchanged,
+                                      user_in_question: inquired_user,
+                                      rank_in_question: inquired_rank,
+                                      went_fishing: went_fishing?(cards_exchanged, turn_over),
+                                      made_a_catch: made_a_catch?(cards_exchanged, turn_over))
+      switch_players if turn_over
+    end
+
+    def went_fishing?(cards_exchanged, turn_over)
+      turn_over && cards_exchanged.empty?
+    end
+
+    def made_a_catch?(cards_exchanged, turn_over)
+      !turn_over && cards_exchanged.empty?
+    end
+
+    def switch_players
+      if current_player_index == players.length - 1
+        self.current_player_index = 0
+      else
+        self.current_player_index += 1
+      end
+    end
   end
 end
