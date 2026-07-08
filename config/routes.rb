@@ -22,6 +22,10 @@ Rails.application.routes.draw do
     member do 
       post :start
     end
+
+    member do 
+      post :play
+    end
   end
 
   get "pages/rules", to: "pages#rules"

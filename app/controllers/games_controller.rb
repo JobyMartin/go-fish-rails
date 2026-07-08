@@ -40,6 +40,15 @@ class GamesController < ApplicationController
     @user_games = Current.session.user.games
   end
 
+  def play
+    @game = Game.find(params[:id])
+    inquired_player_id = params[:play_turn][:player].to_i
+    inquired_rank = params[:play_turn][:rank].chars.first
+    @game.go_fish.play_turn(inquired_player_id, inquired_rank)
+    @game.save!
+    redirect_to game_path(@game)
+  end
+
   private
 
   def game_params

@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Games', type: :system do
   let(:user) { create(:user) }
+  let(:user2) { create :user }
 
   before do
     sign_in(user)
@@ -128,6 +129,35 @@ RSpec.describe 'Games', type: :system do
       visit game_path(game)
       click_on 'Start game'
       expect(game.reload.go_fish).to be_present
+    end
+  end
+
+  context 'when the user plays a turn' do
+    let!(:game) { create :game }
+    let!(:player) { create(:player, user:, game:) }
+    let!(:player2) { create(:player, user: user2, game:) }
+    # let(:session1) { Capybara::Session.new(:rack_test, Rails.application) }
+    # let(:session2) { Capybara::Session.new(:rack_test, Rails.application) }
+
+    context 'when the rank in question is in a hand' do
+      before do
+        game.start
+        game.go_fish.players.each do |player|
+          player.hand = [GoFish::Card.new('A')]
+        end
+        game.save!
+      end
+      
+      it 'exchanges the cards between players' do
+        visit game_path(game)
+        page.click_on 'Ask for a card'
+        post_turn_card_count = '2'
+        expect(page).to have_content post_turn_card_count
+      end
+    end
+
+    context 'when the rank in question is not in a hand' do
+      it 'goes fishing'
     end
   end
 end

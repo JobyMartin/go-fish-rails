@@ -52,21 +52,21 @@ module GoFish
       players.find { it.id == user_id }
     end
 
-    def play_turn(inquired_user_index, inquired_rank)
-      inquired_player = players[inquired_user_index - 1]
+    def play_turn(inquired_player_id, inquired_rank)
+      inquired_player = find_player(inquired_player_id)
       cards_exchanged = inquired_player.get_cards_by_rank(inquired_rank)
       
-      handle_cards_and_end_turn(cards_exchanged, inquired_user_index, inquired_rank)
+      handle_cards_and_end_turn(cards_exchanged, inquired_player_id, inquired_rank)
     end
 
     private
 
-    def handle_cards_and_end_turn(cards_exchanged, inquired_user_index, inquired_rank)
+    def handle_cards_and_end_turn(cards_exchanged, inquired_player_id, inquired_rank)
       if cards_exchanged.any?
         current_player.add_cards(cards_exchanged)
-        end_turn(cards_exchanged, players[inquired_user_index - 1], false, inquired_rank)
+        end_turn(cards_exchanged, find_player(inquired_player_id), false, inquired_rank)
       else
-        end_turn(cards_exchanged, players[inquired_user_index - 1], (go_fish.rank != inquired_rank), inquired_rank)
+        end_turn(cards_exchanged, find_player(inquired_player_id), (go_fish.rank != inquired_rank), inquired_rank)
       end
     end
 
