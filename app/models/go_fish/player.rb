@@ -32,5 +32,14 @@ module GoFish
       
       cards_of_rank
     end
+
+    def make_book_if_possible(rank)
+      cards = hand.select { it.rank == rank }
+
+      if cards.count == 4
+        self.hand -= cards
+        books << GoFish::Book.new(cards)
+      end
+    end
   end
 end

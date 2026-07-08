@@ -97,7 +97,7 @@ RSpec.describe GoFish::Player, type: :model do
     end
   end
 
-  xdescribe '#make_book_if_possible' do
+  describe '#make_book_if_possible' do
     let(:rank) { 'A' }
 
     context 'when the player has four matching cards' do
