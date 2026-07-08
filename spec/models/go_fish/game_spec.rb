@@ -2,7 +2,7 @@ require 'rails_helper'
 
 RSpec.describe GoFish::Game, type: :model do
   let(:num_players) { 5 }
-  let!(:players) { Array.new(num_players) { GoFish::Player.new } }
+  let!(:players) { Array.new(num_players) { |id| GoFish::Player.new(id) } }
   let!(:go_fish_game) { described_class.new(players) }
   let(:player) { players.first }
 
@@ -103,8 +103,8 @@ RSpec.describe GoFish::Game, type: :model do
   describe '#play_turn' do
     let(:card) { GoFish::Card.new('A', 'Spades') }
     let(:player_in_question) { go_fish_game.players.last }
-    let(:inquired_player_index) { 1 }
-    let(:inquired_player_index2) { 0 }
+    let(:inquired_player_id) { go_fish_game.players.last.id }
+    let(:inquired_player_id2) { go_fish_game.players.first.id }
     let(:inquired_rank) { 'A' }
     let(:default_hand_size) { 1 }
     let(:full_deck_size) { 52 }
@@ -116,14 +116,14 @@ RSpec.describe GoFish::Game, type: :model do
       end
 
       it 'gives that card to the player asking' do
-        go_fish_game.play_turn(inquired_player_index2, inquired_rank)
+        go_fish_game.play_turn(inquired_player_id, inquired_rank)
         expect(player_in_question.hand).to be_empty
         expect(go_fish_game.current_player.hand_size).to eq default_hand_size + 1
         expect(go_fish_game.current_player.hand).to all be_a GoFish::Card
       end
 
       it 'does not fish a card from the deck' do
-        go_fish_game.play_turn(inquired_player_index2, inquired_rank)
+        go_fish_game.play_turn(inquired_player_id, inquired_rank)
         expect(go_fish_game.deck.cards_left).to eq full_deck_size
         expect(go_fish_game.current_player.hand_size).to eq default_hand_size + 1
       end
@@ -138,7 +138,7 @@ RSpec.describe GoFish::Game, type: :model do
       before do
         player_in_question.add_cards([card, card])
         current_player.add_cards([card, card])
-        go_fish_game.play_turn(inquired_player_index, unmatched_rank)
+        go_fish_game.play_turn(inquired_player_id, unmatched_rank)
       end
 
       it 'fishes a card' do
