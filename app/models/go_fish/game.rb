@@ -59,7 +59,33 @@ module GoFish
       handle_cards_and_end_turn(cards_exchanged, inquired_player_id, inquired_rank)
     end
 
+    def winner
+      player_books = players.map { it.books }
+
+      if player_books.all? { it.length == player_books.first.length }
+        handle_tie
+      else
+        handle_winner
+      end
+    end
+
     private
+
+    def handle_tie
+      winner = current_player
+
+      players.each do
+        winner = it if it.highest_book_value > winner.highest_book_value
+      end
+
+      winner
+    end
+
+    def handle_winner
+      players.first.books.size > players.last.books.size ? winner = players.first : winner = players.last
+
+      winner
+    end
 
     def handle_cards_and_end_turn(cards_exchanged, inquired_player_id, inquired_rank)
       if cards_exchanged.any?

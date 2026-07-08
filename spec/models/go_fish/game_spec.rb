@@ -175,4 +175,31 @@ RSpec.describe GoFish::Game, type: :model do
       end
     end
   end
+
+  describe 'winner' do
+    let(:num_players) { 2 }
+    let!(:players) { Array.new(num_players) { |id| GoFish::Player.new(id) } }
+    let!(:game) { described_class.new(players) }
+    context 'when one player has more books than the others' do
+      before do
+        game.players.last.books = []
+        game.current_player.books = [GoFish::Book.new([GoFish::Card.new('A', 'Spades')])]
+      end
+
+      it 'returns the winner' do
+        expect(game.winner).to eq game.current_player
+      end
+    end
+
+    context 'when all players have the same amount of books' do
+      before do
+        game.players.last.books = [GoFish::Book.new([GoFish::Card.new('K', 'Spades')])]
+        game.current_player.books = [GoFish::Book.new([GoFish::Card.new('A', 'Spades')])]
+      end
+
+      it 'displays the winner' do
+        expect(game.winner).to eq game.current_player
+      end
+    end
+  end
 end
