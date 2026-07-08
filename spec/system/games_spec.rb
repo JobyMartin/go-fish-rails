@@ -159,5 +159,18 @@ RSpec.describe 'Games', type: :system do
     context 'when the rank in question is not in a hand' do
       it 'goes fishing'
     end
+
+    context 'when it is not the current users turn' do
+      before do
+        game.start
+        game.go_fish.current_player_index = 1
+        game.save!
+      end
+
+      it 'the ask button is disabled' do
+        visit game_path(game)
+        expect(page).to have_button('Ask for a card', disabled: true)
+      end
+    end
   end
 end
