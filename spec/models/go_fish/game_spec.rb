@@ -87,4 +87,11 @@ RSpec.describe GoFish::Game, type: :model do
       expect(go_fish_game.current_player).to eq go_fish_game.players.first
     end
   end
+
+  describe '#find_player' do
+    let(:user_id) { 0 }
+    it 'returns the player with the name in question' do
+      expect(go_fish_game.find_player(user_id)).to eq go_fish_game.players.first
+    end
+  end
 end

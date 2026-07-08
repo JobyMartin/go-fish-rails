@@ -46,5 +46,9 @@ module GoFish
     end
 
     def current_player = players[current_player_index]
+
+    def find_player(user_id)
+      players.find { it.id == user_id }
+    end
   end
 end
