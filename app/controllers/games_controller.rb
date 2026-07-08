@@ -26,7 +26,7 @@ class GamesController < ApplicationController
     @started = @game.started_at.present?
     return unless @started
     @go_fish_game = @game.go_fish
-    @current_player = @go_fish_game.current_player
+    @current_player = @go_fish_game.find_player(Current.session.user.id)
     @opponents = @go_fish_game.players - [@current_player]
   end
 
