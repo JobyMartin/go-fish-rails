@@ -26,6 +26,10 @@ Rails.application.routes.draw do
     member do 
       post :play
     end
+
+    member do
+      get :winner
+    end
   end
 
   get "pages/rules", to: "pages#rules"

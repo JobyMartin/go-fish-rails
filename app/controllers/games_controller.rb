@@ -39,14 +39,29 @@ class GamesController < ApplicationController
   def history
     @user_games = Current.session.user.games
   end
-
   def play
     @game = Game.find(params[:id])
-    inquired_player_id = params[:play_turn][:player].to_i
-    inquired_rank = params[:play_turn][:rank].chars.first
-    @game.go_fish.play_turn(inquired_player_id, inquired_rank)
+
+    if @game.go_fish.game_over?
+      redirect_to winner_game_path(@game) and return
+    end
+
+    if @game.go_fish.current_player.hand_size == 0
+      @game.go_fish.fish_and_skip
+    else
+      inquired_player_id = params[:play_turn][:player].to_i
+      inquired_rank = params[:play_turn][:rank].chars.first
+      @game.go_fish.play_turn(inquired_player_id, inquired_rank)
+    end
+
     @game.save!
     redirect_to game_path(@game)
+  end
+
+  def winner
+    # instance var vs not broke it
+    @game = Game.find(params[:id])
+    @winner = @game.go_fish.winner
   end
 
   private
