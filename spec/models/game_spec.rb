@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe Game, type: :model do
   let(:user) { create(:user) }
+  let(:user2) { create(:user) }
 
   describe '#status' do
     let!(:game) { create :game }
@@ -63,6 +64,40 @@ RSpec.describe Game, type: :model do
     it 'saves it to the database' do
       game.start
       expect(game.reload.go_fish).to be_present
+    end
+  end
+
+  describe '#play_go_fish' do
+    let!(:game) { create(:game) }
+    let!(:player) { create(:player, user:, game:) }
+    let!(:player2) { create(:player, user: user2, game:) }
+    let(:inquired_player_id) { game.go_fish.players.last.id }
+    let(:good_inquired_rank) { 'A' }
+    let(:bad_inquired_rank) { nil }
+
+    context 'when the current player has no cards' do
+      before do
+        game.start
+        inquired_player_id
+        game.go_fish.current_player.hand = []
+      end
+      it 'fishes and skips' do
+        game.play_go_fish(inquired_player_id, bad_inquired_rank)
+        expect(game.go_fish.current_player.hand_size).to eq 5
+        expect(game.go_fish.players.first.hand_size).to eq 1
+      end
+    end
+
+    context 'when the current player has cards' do
+      before do
+        game.start
+        inquired_player_id
+      end
+
+      it 'plays a turn' do
+        game.play_go_fish(inquired_player_id, good_inquired_rank)
+        expect(game.go_fish.players.first.hand_size).to eq 6
+      end
     end
   end
 

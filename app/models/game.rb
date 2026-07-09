@@ -25,6 +25,14 @@ class Game < ApplicationRecord
     save!
   end
 
+  def play_go_fish(inquired_player_id, inquired_rank)
+    if go_fish.current_player.hand_size == 0
+      go_fish.fish_and_skip
+    else
+      go_fish.play_turn(inquired_player_id, inquired_rank.chars.first)
+    end
+  end
+
   def end
     self.ended_at = Time.current
   end

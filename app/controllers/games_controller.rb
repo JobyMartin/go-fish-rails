@@ -42,24 +42,15 @@ class GamesController < ApplicationController
   def play
     @game = Game.find(params[:id])
 
-    if @game.go_fish.game_over?
-      redirect_to winner_game_path(@game) and return
-    end
+    redirect_to winner_game_path(@game) and return if @game.go_fish.game_over?
 
-    if @game.go_fish.current_player.hand_size == 0
-      @game.go_fish.fish_and_skip
-    else
-      inquired_player_id = params[:play_turn][:player].to_i
-      inquired_rank = params[:play_turn][:rank].chars.first
-      @game.go_fish.play_turn(inquired_player_id, inquired_rank)
-    end
+    @game.play_go_fish(params[:play_turn][:player].to_i, params[:play_turn][:rank])
 
     @game.save!
     redirect_to game_path(@game)
   end
 
   def winner
-    # instance var vs not broke it
     @game = Game.find(params[:id])
     @winner = @game.go_fish.winner
   end
