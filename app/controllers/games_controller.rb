@@ -10,11 +10,12 @@ class GamesController < ApplicationController
   end
 
   def create
-    @game = Game.new(game_params)
+    type = params[:game][:type]
+    type_class = "#{type}Game".delete(' ').constantize
+    @game = type_class.new(game_params)
     @player = @game.players.new(user: Current.session.user)
-    @player.save
-    
-    if @game.save
+
+    if @game.save!
       redirect_to game_path(@game)
     else
       render :new
@@ -58,8 +59,6 @@ class GamesController < ApplicationController
   private
 
   def game_params
-    data = params.require(:game).permit(:name, :game_type)
-    data[:game_type] = data[:game_type].parameterize(separator: '_')
-    data
+    params.require(:game).permit(:name, :game_type)
   end
 end

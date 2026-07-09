@@ -62,6 +62,40 @@ RSpec.describe 'Games', type: :system do
     end
   end
 
+  context 'when user creates a go fish game' do
+    before do
+      visit games_path
+      click_on 'New Game'
+      fill_in 'Name', with: 'Toast'
+    end
+
+    it 'creates a GoFishGame' do
+      select 'Go Fish', from: 'Type'
+      expect do
+        click_on 'Create Game'
+      end.to change(Game, :count).by 1
+
+      expect(Game.last).to be_a GoFishGame
+    end
+  end
+
+  context 'when user creates a crazy eights game' do
+    before do
+      visit games_path
+      click_on 'New Game'
+      fill_in 'Name', with: 'Toast'
+    end
+
+    it 'creates a CrazyEightsGame' do
+      select 'Crazy Eights', from: 'Type'
+      expect do
+        click_on 'Create Game'
+      end.to change(Game, :count).by 1
+
+      expect(Game.last).to be_a CrazyEightsGame
+    end
+  end
+
   context 'when there is an open game' do
     let(:game_content) { "Start game" }
     let!(:game) { create(:game) }

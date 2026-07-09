@@ -5,7 +5,7 @@ class PlayersController < ApplicationController
     @player = @game.players.new(user: Current.session.user)
 
     if @player.save
-      redirect_to @game
+      redirect_to game_path(@game)
     else
       redirect_to games_path
     end
