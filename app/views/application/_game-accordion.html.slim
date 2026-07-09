@@ -29,5 +29,4 @@ details.accordion
         = 'No books to see here...'
       - else
         - player.books.each do |book|
-          img.playing-card.playing-card--small src="assets/images/generated_cards/#{book.cards.first.rank}_spades.svg"
- 
+          = image_tag "generated_cards/#{book.cards.first.rank.downcase}_spades.svg", class: "playing-card playing-card--small"
