@@ -156,6 +156,23 @@ RSpec.describe 'Games', type: :system do
       end
     end
 
+    context 'when the card makes a book' do
+      before do
+        game.start
+        game.go_fish.players.first.hand = [GoFish::Card.new]
+        game.go_fish.players.last.hand = [GoFish::Card.new, GoFish::Card.new, GoFish::Card.new]
+        game.save!
+      end
+
+      it 'exchanges the cards between players' do
+        visit game_path(game)
+        page.click_on 'Ask for a card'
+        within '[data-testid="books"]' do
+          expect(page).to have_css('img')
+        end
+      end
+    end
+
     context 'when the rank in question is not in a hand' do
       it 'goes fishing'
     end

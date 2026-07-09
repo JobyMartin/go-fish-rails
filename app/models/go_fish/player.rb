@@ -14,7 +14,7 @@ module GoFish
 
     def self.load(hash)
       hand_cards = hash['hand'].map { |card| Card.load(card) }
-      books = hash['books'].map { |book| book.map{ |card| Card.load(card) } }
+      books = hash['books'].map { |book| Book.load(book) }
       self.new(hash['id'], hash['name'], hand_cards, books)
     end
 

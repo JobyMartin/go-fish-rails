@@ -72,9 +72,9 @@
       .panel__header
         | Your Books
 
-      .panel__content
+      .panel__content data-testid='books'
         - if @current_player.books.count == 0
-            = 'No books yet...get to work!'
+          = 'No books yet...get to work!'
         - else
           - @current_player.books.each do |book|
-            = image_tag "/generated_cards/#{book.cards.first.rank}_spades.svg", class: "playing-card playing-card--medium"
+            = image_tag "generated_cards/#{book.cards.first.rank.downcase}_spades.svg", class: "playing-card playing-card--medium"
