@@ -216,4 +216,42 @@ RSpec.describe GoFish::Game, type: :model do
       expect(go_fish_game.current_player).to eq go_fish_game.players[1]
     end
   end
+
+  describe '#game_over?' do
+    let(:num_players) { 2 }
+    let!(:players) { Array.new(num_players) { |id| GoFish::Player.new(id) } }
+    let!(:game) { described_class.new(players) }
+
+    context 'when the deck is empty and the players are out of cards' do
+      before do
+        game.deck.cards = []
+        game.players.each { it.hand = [] }
+      end
+
+      it 'returns true' do
+        expect(game.game_over?).to be true
+      end
+    end
+
+    context 'when the deck is not empty and the players are out of cards' do
+      before do
+        game.deck = GoFish::Deck.new
+        game.players.each { it.hand = [] }
+      end
+
+      it 'returns false' do
+        expect(game.game_over?).to be false
+      end
+    end
+
+    context 'when the deck is empty and the players are not out of cards' do
+      before do
+        game.deal!
+        game.deck.cards = []
+      end
+      it 'returns false' do
+        expect(game.game_over?).to be false
+      end
+    end
+  end
 end

@@ -2,8 +2,7 @@ module GoFish
   class Game
     NUM_OF_CARDS = 5
 
-    attr_reader :deck
-    attr_accessor :players, :current_player_index, :round_results
+    attr_accessor :players, :current_player_index, :round_results, :deck
 
     def initialize(players, deck = Deck.new, current_player_index = 0, round_results = [])
       @players = players
@@ -73,6 +72,10 @@ module GoFish
       fish_message = 'No rank in question'
       go_fish
       end_turn([], nil, true, fish_message)
+    end
+
+    def game_over?
+      deck.empty? && players.all? { it.hand.empty? }
     end
 
     private
