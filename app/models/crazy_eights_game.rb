@@ -1,0 +1,2 @@
+class CrazyEightsGame < Game
+end

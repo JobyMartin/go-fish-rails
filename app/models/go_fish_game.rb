@@ -1,0 +1,2 @@
+class GoFishGame < Game
+end
