@@ -10,7 +10,7 @@ module GoFish
     RANKS = %w( 2 3 4 5 6 7 8 9 10 J Q K A )
     SUITS = %w( Diamonds Hearts Spades Clubs )
     
-    def initialize(rank, suit = 'Spades')
+    def initialize(rank = 'A', suit = 'Spades')
       raise InvalidRank unless RANKS.include? rank
       raise InvalidSuit unless SUITS.include? suit
       @rank = rank
