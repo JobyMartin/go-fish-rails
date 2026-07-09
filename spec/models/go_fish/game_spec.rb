@@ -202,4 +202,18 @@ RSpec.describe GoFish::Game, type: :model do
       end
     end
   end
+
+  describe '#fish_and_skip' do
+    let(:post_go_fish_count) { 1 }
+
+    before do
+      go_fish_game.current_player.hand = []
+    end
+
+    it 'fishes and switches turns' do
+      go_fish_game.fish_and_skip
+      expect(go_fish_game.players.first.hand.count).to eq post_go_fish_count
+      expect(go_fish_game.current_player).to eq go_fish_game.players[1]
+    end
+  end
 end

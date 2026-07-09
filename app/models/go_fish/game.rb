@@ -69,6 +69,12 @@ module GoFish
       end
     end
 
+    def fish_and_skip
+      fish_message = 'No rank in question'
+      go_fish
+      end_turn([], nil, true, fish_message)
+    end
+
     private
 
     def handle_tie
