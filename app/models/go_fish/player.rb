@@ -13,9 +13,9 @@ module GoFish
     end
 
     def self.load(hash)
-      hand_cards = hash['hand'].map { |card| Card.load(card) }
-      books = hash['books'].map { |book| Book.load(book) }
-      self.new(hash['id'], hash['name'], hand_cards, books)
+      hand_cards = hash['hand'].map { |card| Card.load(card) } unless hash.nil?
+      books = hash['books'].map { |book| Book.load(book) } unless hash.nil?
+      self.new(hash['id'], hash['name'], hand_cards, books) unless hash.nil?
     end
 
     def add_cards(cards)

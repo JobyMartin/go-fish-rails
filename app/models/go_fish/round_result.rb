@@ -13,7 +13,7 @@ module GoFish
     end
 
     def for_current_player
-      message = ["You asked #{user_taken_from.name} for any #{rank_in_question}s"]
+      went_fishing || made_a_catch ? message = [] : message = ["You asked #{user_taken_from.name} for any #{rank_in_question}s"]
 
       message << "\nGo fish!" if went_fishing
       message << "\nYou made a catch!" if made_a_catch
@@ -24,7 +24,7 @@ module GoFish
     end
 
     def for_other_players
-      message = ["#{user_given_to.name} asked #{user_taken_from.name} for any #{rank_in_question}s"]
+      went_fishing || made_a_catch ? message = [] : message = ["#{user_given_to.name} asked #{user_taken_from.name} for any #{rank_in_question}s"]
 
       message << "\n#{user_given_to.name} went fishing!" if went_fishing
       message << "\n#{user_given_to.name} made a catch!" if made_a_catch
