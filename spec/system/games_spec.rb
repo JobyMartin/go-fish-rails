@@ -164,7 +164,7 @@ RSpec.describe 'Games', type: :system do
         game.save!
       end
 
-      it 'exchanges the cards between players' do
+      it 'makes a book' do
         visit game_path(game)
         page.click_on 'Ask for a card'
         within '[data-testid="books"]' do
