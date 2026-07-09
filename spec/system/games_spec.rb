@@ -77,6 +77,18 @@ RSpec.describe 'Games', type: :system do
 
       expect(Game.last).to be_a GoFishGame
     end
+
+    context 'when the user views the game page' do
+      before do
+        select 'Go Fish', from: 'Type'
+        click_on 'Create Game'
+      end
+
+      it 'shows the go fish game view' do
+        click_on 'Start game'
+        expect(page).to have_css("div.game__books.panel.panel--books")
+      end
+    end
   end
 
   context 'when user creates a crazy eights game' do
@@ -93,6 +105,18 @@ RSpec.describe 'Games', type: :system do
       end.to change(Game, :count).by 1
 
       expect(Game.last).to be_a CrazyEightsGame
+    end
+
+    context 'when the user views the game page' do
+      before do
+        select 'Crazy Eights', from: 'Type'
+        click_on 'Create Game'
+      end
+
+      it 'shows the go fish game view' do
+        click_on 'Start game'
+        expect(page).to have_css("div.table")
+      end
     end
   end
 

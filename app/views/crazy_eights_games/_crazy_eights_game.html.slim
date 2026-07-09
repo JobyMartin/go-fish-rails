@@ -1,0 +1,6 @@
+
+- if !@started
+  .simple-page
+    = button_to 'Start game', start_game_path(@game), method: :post, class: 'btn btn--primary'
+- else
+  .table
