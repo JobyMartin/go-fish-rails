@@ -61,7 +61,7 @@ RSpec.describe GoFish::Game, type: :model do
     end
 
     it 'preserves the round-trip round results state' do
-      go_fish_game.round_results = [create_round_result(go_fish_game)]
+      go_fish_game.round_results = [create_go_fish_round_result(go_fish_game)]
       json = described_class.dump(go_fish_game)
       game = described_class.load(json.as_json)
       new_round_results = game.round_results
