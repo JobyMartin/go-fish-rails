@@ -36,4 +36,11 @@ RSpec.describe CrazyEights::Game, type: :model do
       end
     end
   end
+
+  describe '#find_player' do
+    let(:user_id) { 0 }
+    it 'returns the player with the name in question' do
+      expect(crazy_eights_game.find_player(user_id)).to eq crazy_eights_game.players.first
+    end
+  end
 end

@@ -26,6 +26,10 @@ module CrazyEights
       end
     end
 
+    def find_player(user_id)
+      players.find { it.id == user_id }
+    end
+
     private
 
     def number_of_cards
