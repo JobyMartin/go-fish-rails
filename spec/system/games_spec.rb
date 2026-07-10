@@ -113,7 +113,7 @@ RSpec.describe 'Games', type: :system do
         click_on 'Create Game'
       end
 
-      it 'shows the go fish game view' do
+      it 'shows the crazy eights game view' do
         click_on 'Start game'
         expect(page).to have_css("div.table")
       end
