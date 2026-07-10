@@ -15,7 +15,7 @@
       .panel__content
         .op-stack
           span Players
-          - @go_fish_game.players.each do |player|
+          - @implementation.players.each do |player|
             = render 'game-accordion', player: player
 
     .game__feed.panel.panel--feed
@@ -25,8 +25,8 @@
 
       .panel__content
         .feed-content
-          - if !@go_fish_game.round_results.empty?
-            - @go_fish_game.round_results.each do |result|
+          - if !@implementation.round_results.empty?
+            - @implementation.round_results.each do |result|
               - if result.for_other_players.count == 3
                 span.feed-content__player-action = result.for_other_players.first
                 .action-responses
@@ -54,7 +54,7 @@
         = simple_form_for :play_turn, url: play_game_path(@game) do |f|
           = f.input :player, as: :select, collection: @opponents, selected: @opponents.first
           = f.input :rank, as: :select, collection: @current_player.hand, selected: @current_player.hand.first
-          - if @current_player.id == @go_fish_game.current_player.id
+          - if @current_player.id == @implementation.current_player.id
             = f.button :submit, 'Ask for a card'
           - else
             = f.button :submit, 'Ask for a card', disabled: true

@@ -46,24 +46,24 @@ RSpec.describe Game, type: :model do
 
     it 'creates a game' do
       game.start
-      expect(game.go_fish).not_to be nil
+      expect(game.game_state).not_to be nil
     end
 
     it 'creates a game with players for each user' do
       game.start
-      expect(game.go_fish.players.count).to eq game.players.count
+      expect(game.game_state.players.count).to eq game.players.count
     end
 
     it 'deals the cards' do
       game.start
-      game.go_fish.players.each do |player|
+      game.game_state.players.each do |player|
         expect(player.hand.count).to eq 5
       end
     end
 
     it 'saves it to the database' do
       game.start
-      expect(game.reload.go_fish).to be_present
+      expect(game.reload.game_state).to be_present
     end
   end
 
@@ -71,7 +71,7 @@ RSpec.describe Game, type: :model do
     let!(:game) { create(:game) }
     let!(:player) { create(:player, user:, game:) }
     let!(:player2) { create(:player, user: user2, game:) }
-    let(:inquired_player_id) { game.go_fish.players.last.id }
+    let(:inquired_player_id) { game.game_state.players.last.id }
     let(:good_inquired_rank) { 'A' }
     let(:bad_inquired_rank) { nil }
 
@@ -79,12 +79,12 @@ RSpec.describe Game, type: :model do
       before do
         game.start
         inquired_player_id
-        game.go_fish.current_player.hand = []
+        game.game_state.current_player.hand = []
       end
       it 'fishes and skips' do
-        game.play_go_fish(inquired_player_id, bad_inquired_rank)
-        expect(game.go_fish.current_player.hand_size).to eq 5
-        expect(game.go_fish.players.first.hand_size).to eq 1
+        game.play_turn(inquired_player_id, bad_inquired_rank)
+        expect(game.game_state.current_player.hand_size).to eq 5
+        expect(game.game_state.players.first.hand_size).to eq 1
       end
     end
 
@@ -95,8 +95,8 @@ RSpec.describe Game, type: :model do
       end
 
       it 'plays a turn' do
-        game.play_go_fish(inquired_player_id, good_inquired_rank)
-        expect(game.go_fish.players.first.hand_size).to eq 6
+        game.play_turn(inquired_player_id, good_inquired_rank)
+        expect(game.game_state.players.first.hand_size).to eq 6
       end
     end
   end
