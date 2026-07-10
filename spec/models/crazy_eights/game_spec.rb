@@ -56,6 +56,19 @@ RSpec.describe CrazyEights::Game, type: :model do
 
       expect(new_index).to eq original_index
     end
+
+    it 'preserves the round-trip round results state' do
+      crazy_eights_game.round_results = [create_crazy_eights_round_result]
+      json = described_class.dump(crazy_eights_game)
+      game = described_class.load(json.as_json)
+      new_round_results = game.round_results
+
+      new_round_results.each do
+        expect(it).to be_a CrazyEights::RoundResult
+        expect(it.current_player).to be_a CrazyEights::Player
+        expect(it.card_placed).to be_a CrazyEights::Card
+      end
+    end
   end
 
   describe '#deal!' do

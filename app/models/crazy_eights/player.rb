@@ -1,6 +1,6 @@
 module CrazyEights
   class Player
-    attr_reader :id
+    attr_reader :id, :name
     attr_accessor :hand
 
     def initialize(id, name = 'Crazy Eighter', hand = [])

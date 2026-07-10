@@ -16,6 +16,15 @@ module CrazyEights
 
       message
     end
+
+    def self.load(hash)
+      self.new(
+          current_player: Player.load(hash['current_player']),
+          card_placed: Card.load(hash['card_placed']),
+          wild: hash['wild'],
+          suit_choice: hash['suit_choice']
+        )
+    end
   end
 end
 
