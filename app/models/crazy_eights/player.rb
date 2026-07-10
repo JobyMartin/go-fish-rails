@@ -3,8 +3,9 @@ module CrazyEights
     attr_reader :id
     attr_accessor :hand
 
-    def initialize(id, hand = [])
+    def initialize(id, name = 'Crazy Eighter', hand = [])
       @id = id
+      @name = name
       @hand = hand
     end
 
@@ -14,7 +15,7 @@ module CrazyEights
 
     def self.load(hash)
       hand_cards = hash['hand'].map { |card| Card.load(card) } unless hash.nil?
-      self.new(hash['id'], hand_cards) unless hash.nil?
+      self.new(hash['id'], hash['name'], hand_cards) unless hash.nil?
     end
   end
 end
