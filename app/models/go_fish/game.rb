@@ -1,6 +1,6 @@
 module GoFish
   class Game
-    BIG_GAME_PLAYER_COUNT = 3
+    BIG_GAME_PLAYER_COUNT = 4
     BIG_GAME_DEAL_COUNT = 5
     SMALL_GAME_DEAL_COUNT = 7
 

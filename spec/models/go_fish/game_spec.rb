@@ -78,7 +78,7 @@ RSpec.describe GoFish::Game, type: :model do
   describe '#deal!' do
     let(:small_game_hand) { 5 }
     let(:large_game_hand) { 7 }
-    context 'when there are more than 2 players' do
+    context 'when there are more than 3 players' do
       it 'deals the players 5 cards' do
         go_fish_game.deal!
         dealt_players_hands = go_fish_game.players.map(&:hand)
@@ -90,8 +90,8 @@ RSpec.describe GoFish::Game, type: :model do
       end
     end
 
-    context 'when there are 2 players or less' do
-      let(:num_players) { 2 }
+    context 'when there are 3 players or less' do
+      let(:num_players) { 3 }
       let!(:players) { Array.new(num_players) { |id| GoFish::Player.new(id) } }
       let!(:go_fish_game) { described_class.new(players) }
 
