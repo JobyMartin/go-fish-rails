@@ -50,6 +50,8 @@ module CrazyEights
       players.find { it.id == user_id }
     end
 
+    def current_player = players[current_player_index]
+
     private
 
     def number_of_cards

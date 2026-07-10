@@ -109,4 +109,10 @@ RSpec.describe CrazyEights::Game, type: :model do
       expect(crazy_eights_game.find_player(user_id)).to eq crazy_eights_game.players.first
     end
   end
+
+  describe '#current_player' do
+    it 'returns the current player' do
+      expect(crazy_eights_game.current_player).to eq crazy_eights_game.players.first
+    end
+  end
 end
