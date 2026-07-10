@@ -57,7 +57,7 @@ RSpec.describe Game, type: :model do
     it 'deals the cards' do
       game.start
       game.game_state.players.each do |player|
-        expect(player.hand.count).to eq 5
+        expect(player.hand.count).to eq 7
       end
     end
 
@@ -83,7 +83,7 @@ RSpec.describe Game, type: :model do
       end
       it 'fishes and skips' do
         game.play_turn(inquired_player_id, bad_inquired_rank)
-        expect(game.game_state.current_player.hand_size).to eq 5
+        expect(game.game_state.current_player.hand_size).to eq 7
         expect(game.game_state.players.first.hand_size).to eq 1
       end
     end
@@ -96,7 +96,7 @@ RSpec.describe Game, type: :model do
 
       it 'plays a turn' do
         game.play_turn(inquired_player_id, good_inquired_rank)
-        expect(game.game_state.players.first.hand_size).to eq 6
+        expect(game.game_state.players.first.hand_size).to eq 8
       end
     end
   end
