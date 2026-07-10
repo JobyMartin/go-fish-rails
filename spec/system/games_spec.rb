@@ -92,10 +92,12 @@ RSpec.describe 'Games', type: :system do
   end
 
   context 'when user creates a crazy eights game' do
+    let(:game_name) { 'Toast' }
+
     before do
       visit games_path
       click_on 'New Game'
-      fill_in 'Name', with: 'Toast'
+      fill_in 'Name', with: game_name
     end
 
     it 'creates a CrazyEightsGame' do
@@ -115,7 +117,21 @@ RSpec.describe 'Games', type: :system do
 
       it 'shows the crazy eights game view' do
         click_on 'Start game'
-        expect(page).to have_css("div.table")
+        expect(page).to have_css "div.game"
+      end
+
+      context 'when the user starts the game' do
+        before do
+          click_on 'Start game'
+        end
+
+        it 'shows the game name' do
+          expect(page).to have_content game_name
+        end
+
+        it 'displays the form' do
+          expect(page).to have_css 'form'
+        end
       end
     end
   end

@@ -3,4 +3,65 @@
   .simple-page
     = button_to 'Start game', start_game_path(@game), method: :post, class: 'btn btn--primary'
 - else
-  .table
+  .game
+    .game__players.panel.panel--players
+      .panel__header
+        span.flex.items-center.gap-xs
+          = link_to games_path, class: 'btn btn--medium' do
+            i.ph.ph-arrow-left.icon
+          | #{@game.name}
+
+    .game__feed.panel.panel--feed
+      .panel__header
+        span Game Feed
+        .badge Your Turn
+
+      .panel__content
+        .feed-content
+          - if !@implementation.round_results.empty?
+            - @implementation.round_results.each do |result|
+              - if result.for_other_players.count == 3
+                span.feed-content__player-action = result.for_other_players.first
+                .action-responses
+                  .response-group
+                    i.ph.ph-arrow-bend-down-right.icon.response-group__reply-arrow
+                    .response-group__player-response.flex.items-center.gap-xxs
+                      = result.for_other_players[1]
+
+                  .response-group
+                    i.ph.ph-arrow-bend-down-right.icon.response-group__reply-arrow
+                    .response-group__game-response
+                      = result.for_other_players[2]
+
+              - elsif result.for_other_players.count == 2
+                span.feed-content__player-action = result.for_other_players.first
+                .action-responses
+                  .response-group
+                    i.ph.ph-arrow-bend-down-right.icon.response-group__reply-arrow
+                    .response-group__game-response
+                      = result.for_other_players[1]
+
+              - elsif result.for_other_players.count == 1
+                span.feed-content__player-action = result.for_other_players.first
+
+        = simple_form_for :play_turn, url: play_game_path(@game) do |f|
+          = f.input :player, as: :select, collection: @opponents, selected: @opponents.first
+          = f.input :rank, as: :select, collection: @current_player.hand, selected: @current_player.hand.first
+          - if @current_player.id == @implementation.current_player.id
+            = f.button :submit, 'Ask for a card'
+          - else
+            = f.button :submit, 'Ask for a card', disabled: true
+
+    .game__hand.panel.panel--hand
+      .panel__header
+        | Your Hand
+
+      .panel__content
+        .flex
+          - @current_player.hand.each do |card|
+            = image_tag "generated_cards/#{card.to_pathname}", class: "playing-card playing-card--large"
+
+
+    .game__books.panel.panel--books
+      .panel__header
+        | Discard Pile
