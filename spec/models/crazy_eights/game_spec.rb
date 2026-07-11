@@ -13,7 +13,7 @@ RSpec.describe CrazyEights::Game, type: :model do
     end
 
     it 'transforms deck into json' do
-      expect(json[:deck]['cards'].count).to eq 52
+      expect(json[:deck]['cards'].count).to eq 51
     end
 
     it 'transforms current player index into json' do

@@ -71,3 +71,6 @@
     .game__books.panel.panel--books
       .panel__header
         | Discard Pile
+
+      .panel__content
+        = image_tag "generated_cards/#{@game.game_state.william.active_card.to_pathname}", class: "playing-card playing-card--medium"

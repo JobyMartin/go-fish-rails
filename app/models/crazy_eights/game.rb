@@ -6,7 +6,7 @@ module CrazyEights
 
     attr_accessor :players, :deck, :current_player_index, :round_results, :william
 
-    def initialize(players, deck = Deck.new, current_player_index = 0, round_results = [], william = William.new)
+    def initialize(players, deck = Deck.new, current_player_index = 0, round_results = [], william = William.new([deck.top_card]))
       @players = players
       @deck = deck
       @current_player_index = current_player_index

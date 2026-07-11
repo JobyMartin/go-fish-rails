@@ -138,6 +138,12 @@ RSpec.describe 'Games', type: :system do
             expect(page).to have_css("details.accordion", count: 1)
           end
         end
+
+        it 'displays the discard pile' do
+          within '.game__books.panel.panel--books' do
+            expect(page).to have_css "img.playing-card"
+          end
+        end
       end
     end
   end
