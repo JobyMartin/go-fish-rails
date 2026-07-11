@@ -69,6 +69,16 @@ RSpec.describe CrazyEights::Game, type: :model do
         expect(it.card_placed).to be_a CrazyEights::Card
       end
     end
+
+    it 'preserves round-trip william state' do
+      crazy_eights_game.william = CrazyEights::William.new([CrazyEights::Card.new])
+      json = described_class.dump(crazy_eights_game)
+      game = described_class.load(json.as_json)
+      new_william = game.william
+
+      expect(new_william).to be_a CrazyEights::William
+      expect(new_william.cards).to all be_a CrazyEights::Card
+    end
   end
 
   describe '#deal!' do

@@ -4,13 +4,14 @@ module CrazyEights
     BIG_GAME_DEAL_COUNT = 5
     SMALL_GAME_DEAL_COUNT = 7
 
-    attr_accessor :players, :deck, :current_player_index, :round_results
+    attr_accessor :players, :deck, :current_player_index, :round_results, :william
 
-    def initialize(players, deck = Deck.new, current_player_index = 0, round_results = [])
+    def initialize(players, deck = Deck.new, current_player_index = 0, round_results = [], william = William.new)
       @players = players
       @deck = deck
       @current_player_index = current_player_index
       @round_results = round_results
+      @william = william
     end
     def self.load(json)
       return if json.blank?
@@ -27,7 +28,8 @@ module CrazyEights
         players: players.map(&:as_json),
         current_player_index: current_player_index,
         deck: deck.as_json,
-        round_results: round_results.as_json
+        round_results: round_results.as_json,
+        william: william.as_json
       }
     end
 
@@ -35,7 +37,8 @@ module CrazyEights
       players = json['players'].map { |player_hash| Player.load(player_hash) }
       deck = Deck.load(json['deck'])
       round_results = json['round_results'].map { |round_hash| RoundResult.load(round_hash) }
-      self.new(players, deck, json['current_player_index'], round_results)
+      william = William.load(json['william'])
+      self.new(players, deck, json['current_player_index'], round_results, william)
     end
 
     def deal!
