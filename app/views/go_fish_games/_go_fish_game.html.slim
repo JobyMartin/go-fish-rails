@@ -16,7 +16,19 @@
         .op-stack
           span Players
           - @implementation.players.each do |player|
-            = render 'game-accordion', player: player
+            - accordion_content = capture do
+              span
+                | Books
+              strong
+                | #{player.book_size}
+            - book_collection = capture do
+              .book-collection
+                - if player.book_size == 0
+                  = 'No books to see here...'
+                - else
+                  - player.books.each do |book|
+                    = image_tag "generated_cards/#{book.cards.first.rank.downcase}_spades.svg", class: "playing-card playing-card--small"
+            = render 'game-accordion', player: player, accordion_content: accordion_content, book_collection: book_collection
 
     .game__feed.panel.panel--feed
       .panel__header

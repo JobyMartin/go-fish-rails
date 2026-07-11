@@ -1,3 +1,4 @@
+-# locals: (player:, accordion_content: nil, book_collection: nil)
 
 details.accordion
   summary.accordion__title
@@ -9,24 +10,17 @@ details.accordion
       span
         | Cards 
         strong
-          | #{player.hand_size}
-      span
-        | Books 
-        strong
-          | #{player.book_size}
+          | #{player.hand.size}
+
+      = accordion_content
+
   .accordion__body 
     .card-collection
-      - if player.hand_size == 0
+      - if player.hand.size == 0
         = 'No cards to see here...'
       - else 
-        - (player.hand_size).times do
+        - (player.hand.size).times do
           | img to come 
 
 
-
-    .book-collection 
-      - if player.book_size == 0
-        = 'No books to see here...'
-      - else
-        - player.books.each do |book|
-          = image_tag "generated_cards/#{book.cards.first.rank.downcase}_spades.svg", class: "playing-card playing-card--small"
+    = book_collection

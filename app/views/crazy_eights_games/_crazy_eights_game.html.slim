@@ -11,6 +11,12 @@
             i.ph.ph-arrow-left.icon
           | #{@game.name}
 
+      .panel__content
+        .op-stack
+          span Players
+          - @implementation.players.each do |player|
+            = render 'game-accordion', player: player
+
     .game__feed.panel.panel--feed
       .panel__header
         span Game Feed
@@ -48,9 +54,9 @@
           = f.input :player, as: :select, collection: @opponents, selected: @opponents.first
           = f.input :rank, as: :select, collection: @current_player.hand, selected: @current_player.hand.first
           - if @current_player.id == @implementation.current_player.id
-            = f.button :submit, 'Ask for a card'
+            = f.button :submit, 'Place card'
           - else
-            = f.button :submit, 'Ask for a card', disabled: true
+            = f.button :submit, 'Place card', disabled: true
 
     .game__hand.panel.panel--hand
       .panel__header

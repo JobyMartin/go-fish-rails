@@ -132,6 +132,12 @@ RSpec.describe 'Games', type: :system do
         it 'displays the form' do
           expect(page).to have_css 'form'
         end
+
+        it 'displays the players' do
+          within(".game__players.panel.panel--players") do
+            expect(page).to have_css("details.accordion", count: 1)
+          end
+        end
       end
     end
   end
