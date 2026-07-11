@@ -125,4 +125,31 @@ RSpec.describe CrazyEights::Game, type: :model do
       expect(crazy_eights_game.current_player).to eq crazy_eights_game.players.first
     end
   end
+
+  describe '#game_over?' do
+    let(:num_players) { 2 }
+    let!(:players) { Array.new(num_players) { |id| GoFish::Player.new(id) } }
+    let!(:game) { described_class.new(players) }
+
+    context 'when one player is out of cards' do
+      before do
+        game.deal!
+        game.players.first.hand = []
+      end
+
+      it 'returns true' do
+        expect(game.game_over?).to eq true
+      end
+    end
+
+    context 'when no players are out of cards' do
+      before do
+        game.deal!
+      end
+
+      it 'returns false' do
+        expect(game.game_over?).to eq false
+      end
+    end
+  end
 end

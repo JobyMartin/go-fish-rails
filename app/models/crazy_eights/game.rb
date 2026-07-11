@@ -55,6 +55,10 @@ module CrazyEights
 
     def current_player = players[current_player_index]
 
+    def game_over?
+      players.any? { it.hand.empty? }
+    end
+
     private
 
     def number_of_cards
