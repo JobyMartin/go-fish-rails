@@ -29,5 +29,10 @@ module CrazyEights
     def self.load(hash)
       self.new(hash['rank'], hash['suit'])
     end
+
+    def self.objectify(card_string)
+      card_array = card_string.split(' ')
+      self.new(card_array.first, card_array.last)
+    end
   end
 end

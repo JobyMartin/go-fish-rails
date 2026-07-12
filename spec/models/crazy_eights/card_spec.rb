@@ -56,4 +56,14 @@ RSpec.describe CrazyEights::Card, type: :model do
       expect(card1.to_pathname).to eq card_pathname
     end
   end
+
+  describe '#objectify' do
+    it 'turns a card string into an object' do
+      card_string = '6 of Diamonds'
+      objectified_card = described_class.objectify(card_string)
+      expect(objectified_card).to be_a CrazyEights::Card
+      expect(objectified_card.rank).to eq '6'
+      expect(objectified_card.suit).to eq 'Diamonds'
+    end
+  end
 end
