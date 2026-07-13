@@ -152,4 +152,49 @@ RSpec.describe CrazyEights::Game, type: :model do
       end
     end
   end
+
+  describe '#play_turn' do
+    let!(:placed_card) { CrazyEights::Card.new('2', 'Hearts') }
+    it 'removes the placed card from the players hand' do
+      active_player = crazy_eights_game.current_player
+      active_player.hand = [placed_card]
+
+      crazy_eights_game.play_turn(
+        CrazyEights::Card.new('A', 'Hearts'),
+        placed_card
+      )
+
+      expect(active_player.hand).not_to include placed_card
+    end
+
+    it 'adds the placed card to William' do
+      crazy_eights_game.play_turn(
+        CrazyEights::Card.new('A', 'Hearts'),
+        placed_card
+      )
+
+      expect(crazy_eights_game.william.cards).to include placed_card
+    end
+
+    it 'creates a round result' do
+      crazy_eights_game.play_turn(
+        CrazyEights::Card.new('A', 'Hearts'),
+        placed_card
+      )
+
+      message = 'Crazy Eighter placed a 2 of Hearts'
+      expect(crazy_eights_game.round_results.count).to eq 1
+      expect(crazy_eights_game.round_results.last.for_other_players.first).to eq message
+    end
+
+    it 'switches turns' do
+      original_current_player = crazy_eights_game.current_player
+      crazy_eights_game.play_turn(
+        CrazyEights::Card.new('A', 'Hearts'),
+        placed_card
+      )
+
+      expect(crazy_eights_game.current_player).not_to eq original_current_player
+    end
+  end
 end

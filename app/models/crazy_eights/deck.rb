@@ -4,10 +4,10 @@ module CrazyEights
     attr_accessor :cards 
     def initialize
       @cards = Card::SUITS.flat_map do |suit|
-        Card::RANKS.shuffle.map do |rank|
+        Card::RANKS.map do |rank|
           Card.new(rank, suit)
         end
-      end
+      end.shuffle
   
       # @cards = []
     end

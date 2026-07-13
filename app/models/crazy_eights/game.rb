@@ -59,7 +59,30 @@ module CrazyEights
       players.any? { it.hand.empty? }
     end
 
+    def play_turn(active_card, placed_card)
+      current_player.hand.delete placed_card
+      william.cards << placed_card
+      create_round_result(placed_card)
+      switch_turns
+    end
+
     private
+
+    def create_round_result(card_placed)
+      if card_placed.rank == '8'
+        round_results << RoundResult.new(current_player:, card_placed: card_placed, wild: true, suit_choice: card_placed.suit)
+      else
+        round_results << RoundResult.new(current_player:, card_placed: card_placed)
+      end
+    end
+
+    def switch_turns
+      if current_player_index == players.length - 1
+        self.current_player_index = 0
+      else
+        self.current_player_index += 1
+      end
+    end
 
     def number_of_cards
       players.count < BIG_GAME_PLAYER_COUNT ? SMALL_GAME_DEAL_COUNT : BIG_GAME_DEAL_COUNT

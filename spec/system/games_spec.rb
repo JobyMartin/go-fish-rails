@@ -144,6 +144,15 @@ RSpec.describe 'Games', type: :system do
             expect(page).to have_css "img.playing-card"
           end
         end
+
+        context 'when the user plays a turn' do
+          it 'shows the turn in the turn results' do
+            click_on 'Place card'
+            within '.feed-content' do
+              expect(page).to have_css('span.feed-content__player-action', count: 1)
+            end
+          end
+        end
       end
     end
   end
