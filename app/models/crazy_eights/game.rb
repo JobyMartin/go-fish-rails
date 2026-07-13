@@ -66,8 +66,8 @@ module CrazyEights
       switch_turns
     end
 
-    def valid_player_cards
-      current_player.hand.map do |card|
+    def valid_player_cards(player)
+      player.hand.map do |card|
         card if card.rank == william.active_card.rank || card.suit == william.active_card.suit || card.rank == '8'
       end.compact
     end

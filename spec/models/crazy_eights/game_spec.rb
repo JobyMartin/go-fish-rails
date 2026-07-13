@@ -214,7 +214,7 @@ RSpec.describe CrazyEights::Game, type: :model do
       valid_ranks = %w(A 8)
       valid_suits = %w(Hearts)
 
-      crazy_eights_game.valid_player_cards.each do |card|
+      crazy_eights_game.valid_player_cards(crazy_eights_game.current_player).each do |card|
         if valid_ranks.include?(card.rank)
           expect(valid_ranks).to include card.rank
         else
