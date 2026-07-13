@@ -197,4 +197,30 @@ RSpec.describe CrazyEights::Game, type: :model do
       expect(crazy_eights_game.current_player).not_to eq original_current_player
     end
   end
+
+  describe 'valid_player_cards' do
+    before do
+      crazy_eights_game.william.cards << CrazyEights::Card.new('A', 'Hearts')
+      crazy_eights_game.current_player.hand = [
+        CrazyEights::Card.new,
+        CrazyEights::Card.new('2', 'Hearts'),
+        CrazyEights::Card.new('8', 'Diamonds'),
+        CrazyEights::Card.new('3', 'Spades'),
+        CrazyEights::Card.new('5', 'Diamonds'),
+      ]
+    end
+
+    it 'returns the cards in the players hand that match the active card' do
+      valid_ranks = %w(A 8)
+      valid_suits = %w(Hearts)
+
+      crazy_eights_game.valid_player_cards.each do |card|
+        if valid_ranks.include?(card.rank)
+          expect(valid_ranks).to include card.rank
+        else
+          expect(valid_suits).to include card.suit
+        end
+      end
+    end
+  end
 end
