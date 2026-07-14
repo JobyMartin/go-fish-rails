@@ -1,4 +1,5 @@
 class Game < ApplicationRecord
+  serialize :go_fish, coder: GoFish::Game
   has_many :players
   has_many :users, through: :players
 
@@ -19,6 +20,17 @@ class Game < ApplicationRecord
 
   def start
     self.started_at = Time.current
+    self.go_fish = GoFish::Game.new(users.map { |user| GoFish::Player.new(user.id) })
+    go_fish.deal!
+    save!
+  end
+
+  def play_go_fish(inquired_player_id, inquired_rank)
+    if go_fish.current_player.hand_size == 0
+      go_fish.fish_and_skip
+    else
+      go_fish.play_turn(inquired_player_id, inquired_rank.chars.first)
+    end
   end
 
   def end

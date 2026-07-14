@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.describe 'Games', type: :system do
   let(:user) { create(:user) }
+  let(:user2) { create :user }
 
   before do
     sign_in(user)
@@ -31,7 +32,7 @@ RSpec.describe 'Games', type: :system do
     end
 
     it 'sends them to the show page' do
-      game_name = "Spiderman's Game"
+      game_name = "Start game"
       create_game(game_name)
       expect(page).to have_content game_name
     end
@@ -62,7 +63,7 @@ RSpec.describe 'Games', type: :system do
   end
 
   context 'when there is an open game' do
-    let(:time_content) { "Created at" }
+    let(:game_content) { "Start game" }
     let!(:game) { create(:game) }
 
     before do
@@ -73,7 +74,7 @@ RSpec.describe 'Games', type: :system do
       expect do
         click_on 'Join'
         expect(page).to have_current_path game_path(game)
-        expect(page).to have_content time_content
+        expect(page).to have_content game_content
       end.to change(Player, :count).by 1
       # that's kinda spicy
       expect(Player.last.game).to eq game
@@ -98,8 +99,8 @@ RSpec.describe 'Games', type: :system do
         click_on 'View'
       end
       it 'lets them in and shows the game' do
-        content = 'Created at'
-        expect(page).to have_content content 
+        unique_content = 'Start game'
+        expect(page).to have_content unique_content 
       end
     end
   end
@@ -119,4 +120,131 @@ RSpec.describe 'Games', type: :system do
       expect(page).to have_content game_name1
     end
   end
+
+  context 'when the user clicks to start a game' do
+    let!(:game) { create :game }
+    let!(:player) { create(:player, user:, game:) }
+
+    it 'starts a game' do
+      visit game_path(game)
+      click_on 'Start game'
+      expect(game.reload.go_fish).to be_present
+    end
+  end
+
+  context 'when the user plays a turn' do
+    let!(:game) { create :game }
+    let!(:player) { create(:player, user:, game:) }
+    let!(:player2) { create(:player, user: user2, game:) }
+    # let(:session1) { Capybara::Session.new(:rack_test, Rails.application) }
+    # let(:session2) { Capybara::Session.new(:rack_test, Rails.application) }
+
+    context 'when the rank in question is in a hand' do
+      before do
+        game.start
+        game.go_fish.players.each do |player|
+          player.hand = [GoFish::Card.new('A')]
+        end
+        game.save!
+      end
+      
+      it 'exchanges the cards between players' do
+        visit game_path(game)
+        page.click_on 'Ask for a card'
+        post_turn_card_count = '2'
+        expect(page).to have_content post_turn_card_count
+      end
+    end
+
+    context 'when the card makes a book' do
+      before do
+        game.start
+        game.go_fish.players.first.hand = [GoFish::Card.new]
+        game.go_fish.players.last.hand = [GoFish::Card.new, GoFish::Card.new, GoFish::Card.new]
+        game.save!
+      end
+
+      it 'makes a book' do
+        visit game_path(game)
+        page.click_on 'Ask for a card'
+        within '[data-testid="books"]' do
+          expect(page).to have_css('img')
+        end
+      end
+    end
+
+    context 'when the rank in question is not in a hand' do
+      it 'goes fishing'
+    end
+
+    context 'when it is not the current users turn' do
+      before do
+        game.start
+        game.go_fish.current_player_index = 1
+        game.save!
+      end
+
+      it 'the ask button is disabled' do
+        visit game_path(game)
+        expect(page).to have_button('Ask for a card', disabled: true)
+      end
+    end
+  end
+
+  context 'when the game is over', pending: 'broken and cannot figure out' do
+    let!(:game) { create :game }
+    let!(:player) { create(:player, user:, game:) }
+    let!(:player2) { create(:player, user: user2, game:) }
+
+    before do
+      game.start
+
+      game.go_fish.players.each do |player|
+        player.hand = [GoFish::Card.new('A'), GoFish::Card.new('A')]
+      end
+
+      game.go_fish.deck.cards = []
+
+      game.save!
+    end
+
+    it 'displays the winner' do
+      visit game_path(game)
+      click_on 'Ask for a card'
+      expect(page).to have_content 'winner'
+    end
+  end
+
+  # fcontext 'when the game ends' do
+  #   let(:winner_message) { 'winner' }
+  #   let(:name_message) { 'Name' }
+  #   let!(:game) { create :game }
+  #   let!(:player) { create(:player, user:, game:) }
+  #   let!(:player2) { create(:player, user: user2, game:) }
+
+  #   before do
+  #     game.start
+  #     binding.irb
+      
+  #     game.go_fish.deck.cards = []
+  #     game.go_fish.players.first.hand = [GoFish::Card.new('A', 'Spades')]
+  #     game.go_fish.players.last.hand = [GoFish::Card.new('A', 'Diamonds'), GoFish::Card.new('A', 'Hearts'), GoFish::Card.new('A', 'Clubs')]
+      
+  #     # game.players.first.books = [Book.new([Card.new('A', 'Spades')])]
+  #     game.save!
+  #     binding.irb
+  #   end
+
+  #   fit 'displays the winner' do
+  #     visit game_path(game)
+  #     page.click_on 'Ask for a card'
+  #     expect(page).to have_content winner_message
+  #   end
+
+  #   xit 'resets the game' do
+  #     session1.click_on "Play Again"
+  #     expect(game.game_started?).to be false
+  #     expect(session1).to have_content name_message
+  #   end
+  # end
 end

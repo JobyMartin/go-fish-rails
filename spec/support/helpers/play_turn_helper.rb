@@ -1,0 +1,20 @@
+
+module PlayTurnHelper
+  def select_player_and_rank(page, game)
+    page.select 'Fisher', from: 'Player'
+    card = game.current_player.hand.first.to_s
+    page.select card, from: 'Card rank'
+    page.click_on "Ask for a card"
+  end
+
+  def create_round_result(game)
+    cards_exchanged = [GoFish::Card.new('A', 'Spades'), GoFish::Card.new('K', 'Spades'), GoFish::Card.new('Q', 'Spades')]
+
+    GoFish::RoundResult.new(current_user: game.current_player,
+                                cards_exchanged: cards_exchanged,
+                                user_in_question: game.players.last,
+                                rank_in_question: 'A',
+                                went_fishing: false,
+                                made_a_catch: false)
+  end
+end

@@ -19,6 +19,17 @@ Rails.application.routes.draw do
   
   resources :games do
     resources :players, only: [:create]
+    member do 
+      post :start
+    end
+
+    member do 
+      post :play
+    end
+
+    member do
+      get :winner
+    end
   end
 
   get "pages/rules", to: "pages#rules"
