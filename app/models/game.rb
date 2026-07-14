@@ -1,9 +1,11 @@
 class Game < ApplicationRecord
+  include ActionView::RecordIdentifier
   has_many :players
   has_many :users, through: :players
 
   after_update_commit { broadcast_refresh_to self }
   after_create_commit :broadcast_game_update
+  after_update_commit :broadcast_status
 
   WAITING_MESSAGE = 'Waiting...'
   IN_PROGRESS_MESSAGE = 'In progress'
@@ -29,6 +31,13 @@ class Game < ApplicationRecord
   end
 
   private
+
+  def broadcast_status
+    broadcast_remove_to(
+      'games',
+      target: dom_id(self),
+      )
+  end
 
   def broadcast_game_update
     broadcast_append_to(
