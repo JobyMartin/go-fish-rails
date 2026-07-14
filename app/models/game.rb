@@ -1,6 +1,7 @@
 class Game < ApplicationRecord
   has_many :players
   has_many :users, through: :players
+  after_update_commit { broadcast_refresh_to self }
 
   WAITING_MESSAGE = 'Waiting...'
   IN_PROGRESS_MESSAGE = 'In progress'
