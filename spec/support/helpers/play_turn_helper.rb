@@ -7,7 +7,7 @@ module PlayTurnHelper
     page.click_on "Ask for a card"
   end
 
-  def create_round_result(game)
+  def create_go_fish_round_result(game)
     cards_exchanged = [GoFish::Card.new('A', 'Spades'), GoFish::Card.new('K', 'Spades'), GoFish::Card.new('Q', 'Spades')]
 
     GoFish::RoundResult.new(current_user: game.current_player,
@@ -16,5 +16,14 @@ module PlayTurnHelper
                                 rank_in_question: 'A',
                                 went_fishing: false,
                                 made_a_catch: false)
+  end
+
+  def create_crazy_eights_round_result
+    CrazyEights::RoundResult.new(
+      current_player: CrazyEights::Player.new(0),
+      card_placed: CrazyEights::Card.new,
+      wild: true,
+      suit_choice: 'Hearts'
+    )
   end
 end

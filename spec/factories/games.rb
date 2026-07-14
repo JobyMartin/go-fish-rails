@@ -1,9 +1,10 @@
 FactoryBot.define do
   factory :game do
+    type { 'GoFishGame' }
+    initialize_with { type.present? ? type.constantize.new(attributes) : Game.new(attributes) }
     sequence :name do |n|
       "Game #{n}"
     end
-    game_type { 'go_fish' }
 
     trait :in_progress do
       started_at { 1.day.ago }

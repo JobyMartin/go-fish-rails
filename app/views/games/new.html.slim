@@ -6,7 +6,7 @@
         | Setup Game
 
       .modal__body
-          = f.input :name
-          = f.input :game_type, collection: Game.game_types.keys.map { it.titleize }
+        = f.input :name
+        = f.input :type, collection: ['Go Fish', 'Crazy Eights'], include_blank: false
       .modal__footer
         = f.button :submit, "Create Game"

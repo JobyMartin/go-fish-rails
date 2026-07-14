@@ -1,6 +1,8 @@
 module GoFish
   class Game
-    NUM_OF_CARDS = 5
+    BIG_GAME_PLAYER_COUNT = 4
+    BIG_GAME_DEAL_COUNT = 5
+    SMALL_GAME_DEAL_COUNT = 7
 
     attr_accessor :players, :current_player_index, :round_results, :deck
 
@@ -38,7 +40,7 @@ module GoFish
     end
 
     def deal!
-      NUM_OF_CARDS.times do
+      number_of_cards.times do
         players.each do
           it.add_cards([deck.top_card])
         end
@@ -79,6 +81,10 @@ module GoFish
     end
 
     private
+
+    def number_of_cards
+      players.count < BIG_GAME_PLAYER_COUNT ? SMALL_GAME_DEAL_COUNT : BIG_GAME_DEAL_COUNT
+    end
 
     def handle_tie
       winner = current_player

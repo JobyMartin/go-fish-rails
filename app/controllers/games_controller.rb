@@ -10,11 +10,12 @@ class GamesController < ApplicationController
   end
 
   def create
-    @game = Game.new(game_params)
+    type = params[:game][:type]
+    type_class = "#{type}Game".delete(' ').constantize
+    @game = type_class.new(game_params)
     @player = @game.players.new(user: Current.session.user)
-    @player.save
-    
-    if @game.save
+
+    if @game.save!
       redirect_to game_path(@game)
     else
       render :new
@@ -25,9 +26,9 @@ class GamesController < ApplicationController
     @game = Game.find(params[:id])
     @started = @game.started_at.present?
     return unless @started
-    @go_fish_game = @game.go_fish
-    @current_player = @go_fish_game.find_player(Current.session.user.id)
-    @opponents = @go_fish_game.players - [@current_player]
+    @implementation = @game.game_state
+    @current_player = @implementation.find_player(Current.session.user.id)
+    @opponents = @implementation.players - [@current_player]
   end
 
   def start
@@ -42,9 +43,9 @@ class GamesController < ApplicationController
   def play
     @game = Game.find(params[:id])
 
-    redirect_to winner_game_path(@game) and return if @game.go_fish.game_over?
+    redirect_to winner_game_path(@game) and return if @game.game_state.game_over?
 
-    @game.play_go_fish(params[:play_turn][:player].to_i, params[:play_turn][:rank])
+    @game.play_turn(params[:play_turn][:player].to_i, params[:play_turn][:rank])
 
     @game.save!
     redirect_to game_path(@game)
@@ -52,14 +53,12 @@ class GamesController < ApplicationController
 
   def winner
     @game = Game.find(params[:id])
-    @winner = @game.go_fish.winner
+    @winner = @game.game_state.winner
   end
 
   private
 
   def game_params
-    data = params.require(:game).permit(:name, :game_type)
-    data[:game_type] = data[:game_type].parameterize(separator: '_')
-    data
+    params.require(:game).permit(:name, :game_type)
   end
 end

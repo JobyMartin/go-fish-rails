@@ -62,6 +62,101 @@ RSpec.describe 'Games', type: :system do
     end
   end
 
+  context 'when user creates a go fish game' do
+    before do
+      visit games_path
+      click_on 'New Game'
+      fill_in 'Name', with: 'Toast'
+    end
+
+    it 'creates a GoFishGame' do
+      select 'Go Fish', from: 'Type'
+      expect do
+        click_on 'Create Game'
+      end.to change(Game, :count).by 1
+
+      expect(Game.last).to be_a GoFishGame
+    end
+
+    context 'when the user views the game page' do
+      before do
+        select 'Go Fish', from: 'Type'
+        click_on 'Create Game'
+      end
+
+      it 'shows the go fish game view' do
+        click_on 'Start game'
+        expect(page).to have_css("div.game__books.panel.panel--books")
+      end
+    end
+  end
+
+  context 'when user creates a crazy eights game' do
+    let(:game_name) { 'Toast' }
+
+    before do
+      visit games_path
+      click_on 'New Game'
+      fill_in 'Name', with: game_name
+    end
+
+    it 'creates a CrazyEightsGame' do
+      select 'Crazy Eights', from: 'Type'
+      expect do
+        click_on 'Create Game'
+      end.to change(Game, :count).by 1
+
+      expect(Game.last).to be_a CrazyEightsGame
+    end
+
+    context 'when the user views the game page' do
+      before do
+        select 'Crazy Eights', from: 'Type'
+        click_on 'Create Game'
+      end
+
+      it 'shows the crazy eights game view' do
+        click_on 'Start game'
+        expect(page).to have_css "div.game"
+      end
+
+      context 'when the user starts the game' do
+        before do
+          click_on 'Start game'
+        end
+
+        it 'shows the game name' do
+          expect(page).to have_content game_name
+        end
+
+        it 'displays the form' do
+          expect(page).to have_css 'form'
+        end
+
+        it 'displays the players' do
+          within(".game__players.panel.panel--players") do
+            expect(page).to have_css("details.accordion", count: 1)
+          end
+        end
+
+        it 'displays the discard pile' do
+          within '.game__books.panel.panel--books' do
+            expect(page).to have_css "img.playing-card"
+          end
+        end
+
+        context 'when the user plays a turn' do
+          it 'shows the turn in the turn results' do
+            click_on 'Place card'
+            within '.feed-content' do
+              expect(page).to have_css('span.feed-content__player-action', count: 1)
+            end
+          end
+        end
+      end
+    end
+  end
+
   context 'when there is an open game' do
     let(:game_content) { "Start game" }
     let!(:game) { create(:game) }
@@ -128,7 +223,7 @@ RSpec.describe 'Games', type: :system do
     it 'starts a game' do
       visit game_path(game)
       click_on 'Start game'
-      expect(game.reload.go_fish).to be_present
+      expect(game.reload.game_state).to be_present
     end
   end
 
@@ -142,7 +237,7 @@ RSpec.describe 'Games', type: :system do
     context 'when the rank in question is in a hand' do
       before do
         game.start
-        game.go_fish.players.each do |player|
+        game.game_state.players.each do |player|
           player.hand = [GoFish::Card.new('A')]
         end
         game.save!
@@ -159,8 +254,8 @@ RSpec.describe 'Games', type: :system do
     context 'when the card makes a book' do
       before do
         game.start
-        game.go_fish.players.first.hand = [GoFish::Card.new]
-        game.go_fish.players.last.hand = [GoFish::Card.new, GoFish::Card.new, GoFish::Card.new]
+        game.game_state.players.first.hand = [GoFish::Card.new]
+        game.game_state.players.last.hand = [GoFish::Card.new, GoFish::Card.new, GoFish::Card.new]
         game.save!
       end
 
@@ -180,7 +275,7 @@ RSpec.describe 'Games', type: :system do
     context 'when it is not the current users turn' do
       before do
         game.start
-        game.go_fish.current_player_index = 1
+        game.game_state.current_player_index = 1
         game.save!
       end
 
