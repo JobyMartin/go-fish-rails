@@ -1,8 +1,10 @@
+- game = @game || game
+= turbo_stream_from 'games'
 
 .op-page
   .op-page__sidebar
     = render "sidebar"
-    
+
   .op-page__main
     main.op-page__main-content
       header.op-page__main-header
@@ -25,6 +27,6 @@
             | All Games
       .divider
 
-      .op-stack data-testid='all-games'
+      .op-stack#all-games-list data-testid='all-games'
         - (@games - @user.games).each do |game|
           = render 'game-card', name: game.name, status: game.status, button_text: 'Join', game: game

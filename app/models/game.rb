@@ -1,7 +1,9 @@
 class Game < ApplicationRecord
   has_many :players
   has_many :users, through: :players
+
   after_update_commit { broadcast_refresh_to self }
+  after_create_commit :broadcast_game_update
 
   WAITING_MESSAGE = 'Waiting...'
   IN_PROGRESS_MESSAGE = 'In progress'
@@ -27,6 +29,15 @@ class Game < ApplicationRecord
   end
 
   private
+
+  def broadcast_game_update
+    broadcast_append_to(
+      'games',
+      target: 'all-games-list',
+      partial: 'application/game-card',
+      locals: { name: self.name, status: self.status, button_text: 'View', game: self }
+    )
+  end
 
   def build_game
     if type == GO_FISH_GAME_TYPE
