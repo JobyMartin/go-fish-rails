@@ -14,5 +14,13 @@ FactoryBot.define do
       started_at { 2.days.ago }
       ended_at { 1.day.ago }
     end
+
+    trait :archived do
+      archived_at { Time.current }
+    end
+
+    trait :stale do
+      updated_at { 3.days.ago}
+    end
   end
 end

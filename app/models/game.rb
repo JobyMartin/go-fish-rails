@@ -3,7 +3,7 @@ class Game < ApplicationRecord
   has_many :players
   has_many :users, through: :players
 
-  after_update_commit { broadcast_refresh_to self }
+  after_update_commit { broadcast_refresh_later_to self }
   after_create_commit :broadcast_game_update
   after_update_commit :broadcast_status
 
@@ -40,7 +40,7 @@ class Game < ApplicationRecord
   end
 
   def broadcast_game_update
-    broadcast_append_to(
+    broadcast_append_later_to(
       'games',
       target: 'all-games-list',
       partial: 'application/game-card',

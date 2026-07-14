@@ -80,3 +80,5 @@ group :test do
   gem "pry"
 end
 gem "simple_form", "~> 5.4"
+
+gem "good_job", "~> 4.19"
