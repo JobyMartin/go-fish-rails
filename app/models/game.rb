@@ -35,7 +35,7 @@ class Game < ApplicationRecord
       'games',
       target: 'all-games-list',
       partial: 'application/game-card',
-      locals: { name: self.name, status: self.status, button_text: 'View', game: self }
+      locals: { name: self.name, status: self.status, button_text: 'Join', game: self }
     )
   end
 
