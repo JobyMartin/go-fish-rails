@@ -40,4 +40,6 @@ Rails.application.routes.draw do
 
   get "users/show", to: "users#show"
   resources :users, only: [:new, :create]
+
+  mount GoodJob::Engine => 'good_job'
 end
