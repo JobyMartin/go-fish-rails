@@ -11,7 +11,7 @@ class CrazyEightsGame < Game
       end
       placed_card = drawn_cards.pop
       game_state.current_player.add_cards(drawn_cards)
-      game_state.play_turn(active_card, CrazyEights::Card.objectify(placed_card))
+      game_state.play_turn(active_card, placed_card)
     end
   end
 end
