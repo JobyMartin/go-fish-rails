@@ -39,7 +39,7 @@ Rails.application.routes.draw do
   resources :stats, only: [:index]
 
   get "users/show", to: "users#show"
-  resources :users, only: [:new, :create]
+  resources :users
 
   mount GoodJob::Engine => 'good_job'
 end

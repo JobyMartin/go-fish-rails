@@ -74,4 +74,16 @@ RSpec.describe 'Users', type: :system do
       expect(page).to have_content 'must be equal to'
     end
   end
+
+  context 'when the user clicks edit' do
+    before do
+      sign_up
+      click_on 'Profile'
+    end
+
+    it 'has the address form' do
+      click_on 'Edit profile'
+      expect(page).to have_field 'Country'
+    end
+  end
 end

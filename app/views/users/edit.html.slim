@@ -1,0 +1,17 @@
+.op-page
+  .op-page__sidebar
+    = render "sidebar"
+
+  .op-page__main
+    main.op-page__main-content
+      header.content-header
+        .content-header__details
+          h1.content-header__title
+            | Edit profile
+      .form-group
+        = simple_form_for @user do |f|
+          = f.input :country, collection: Data::Country.all, priority: ['US', 'CA', 'MX'], include_blank: true
+          - if @user.country
+            = f.input :state, collection: Data::Country.find(@user.country).states | [Data::State.new(@user.state)]
+          - else
+            = f.input :state, collection: []

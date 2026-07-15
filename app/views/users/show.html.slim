@@ -14,3 +14,5 @@
       
       = Current.user.email_address
        / = Current.user.created_at
+
+      = button_to 'Edit profile', edit_user_path(Current.user.id), method: :get, class: 'btn btn--primary'
