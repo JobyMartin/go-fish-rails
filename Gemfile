@@ -82,3 +82,5 @@ end
 gem "simple_form", "~> 5.4"
 
 gem "good_job", "~> 4.19"
+
+gem "data_for"
