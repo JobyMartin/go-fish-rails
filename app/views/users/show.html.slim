@@ -14,7 +14,9 @@
       
       = Current.user.email_address
       br
-      = Current.user.state
-       / = Current.user.created_at
+      - if Current.user.state.present?
+        = "#{Current.user.state}, #{Current.user.country}"
+      - else
+        = Current.user.country
 
-      = button_to 'Edit profile', edit_user_path(Current.user.id), method: :get, class: 'btn btn--primary'
+      = link_to 'Edit profile', edit_user_path(Current.user.id), class: 'btn btn--primary', data: { turbo_frame: 'modal' }
