@@ -6,9 +6,7 @@ export default class extends Controller {
 
   connect() {
     this.timerController = setInterval(() => {
-      if (this.timer == null) {
-        this.startTimer()
-      }
+      if (this.timer == null) this.startTimer()
     })
   }
 

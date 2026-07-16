@@ -18,7 +18,7 @@
 
           #state-container
             - if @user.country
-              = f.input :state, collection: Data::Country.find(@user.country).states | [Data::State.new(@user.state)]
+              = f.input :state, collection: Data::Country.find(@user.country).states || [Data::State.new(@user.state)]
             - else
               = f.input :state, collection: []
 

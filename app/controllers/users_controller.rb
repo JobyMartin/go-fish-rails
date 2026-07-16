@@ -11,10 +11,10 @@ class UsersController < ApplicationController
 
   def update
     @user = User.find(params[:id])
-    if @user.update!(update_params)
+    if @user.update(update_params)
       redirect_to users_show_path(@user)
     else
-      render :edit , status: :unprocessable_content
+      render :edit, status: :unprocessable_content
     end
   end
 
