@@ -21,7 +21,7 @@ RSpec.describe 'Games', type: :system do
 
   it 'allows user to go to game creation form' do
     click_on 'New Game'
-    expect(page).to have_content 'Setup Game'
+    expect(page).to have_content 'Create Game'
   end
 
   context 'when a game is created' do
