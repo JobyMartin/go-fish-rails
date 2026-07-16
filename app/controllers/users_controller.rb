@@ -9,6 +9,15 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
   end
 
+  def update
+    @user = User.find(params[:id])
+    if @user.update!(update_params)
+      redirect_to users_show_path(@user)
+    else
+      render :edit , status: :unprocessable_content
+    end
+  end
+
   def turbo_fetch
     @user = User.new(update_params)
   end
