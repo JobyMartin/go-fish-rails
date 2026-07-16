@@ -4,8 +4,14 @@
 
 import { application } from "./application"
 
+import AutoPlayController from "./auto_play_controller"
+application.register("auto-play", AutoPlayController)
+
 import HelloController from "./hello_controller"
 application.register("hello", HelloController)
 
 import LocationSelectionController from "./location_selection_controller"
 application.register("location-selection", LocationSelectionController)
+
+import TimerController from "./timer_controller"
+application.register("timer", TimerController)

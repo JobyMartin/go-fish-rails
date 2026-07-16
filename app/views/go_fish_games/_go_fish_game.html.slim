@@ -35,9 +35,11 @@
               = render 'game-accordion', player: player, accordion_content: accordion_content, book_collection: book_collection
 
       .game__feed.panel.panel--feed
-        .panel__header
-          span Game Feed
-          .badge Your Turn
+        div.timer data={ controller: 'timer' }
+          .panel__header
+            span Game Feed
+            div data={ 'timer-target': 'output' }
+            .badge Your Turn
 
         .panel__content
           .feed-content
@@ -68,13 +70,13 @@
                 - elsif result.for_other_players.count == 1
                   span.feed-content__player-action = result.for_other_players.first
 
-          = simple_form_for :play_turn, url: play_game_path(game) do |f|
+          = simple_form_for :play_turn, url: play_game_path(game), html: { data: { controller: 'auto-play', action: 'timer:timer-over@window->auto-play#play' } } do |f|
             = f.input :player, as: :select, collection: opponents, selected: opponents.first
             = f.input :rank, as: :select, collection: current_player.hand, selected: current_player.hand.first
             - if current_player.id == game.game_state.current_player.id
-              = f.button :submit, 'Ask for a card'
+              = f.button :submit, 'Ask for a card', data: { 'auto-play_target': 'playButton' }
             - else
-              = f.button :submit, 'Ask for a card', disabled: true
+              = f.button :submit, 'Ask for a card', disabled: true, data: { 'auto-play_target': 'playButton' }
 
       .game__hand.panel.panel--hand
         .panel__header
