@@ -74,4 +74,45 @@ RSpec.describe 'Users', type: :system do
       expect(page).to have_content 'must be equal to'
     end
   end
+
+  context 'when the user clicks edit' do
+    before do
+      sign_up
+      click_on 'Profile'
+    end
+
+    it 'has the address form' do
+      click_on 'Edit profile'
+      expect(page).to have_field 'Country'
+    end
+
+    context 'when a country is selected' do
+      before do
+        click_on 'Edit profile'
+      end
+
+      it 'the correct states are added to the dropdown', :js do
+        select 'United States', from: 'Country'
+        expect(page).to have_select('State', with_options: ['North Carolina', 'Pennsylvania'])
+      end
+
+      context 'when the user clicks save', :js do
+        let(:user) { create :user }
+
+        before do
+          sign_in(user)
+          visit edit_user_path(user)
+        end
+
+        it 'saves to the database', :js do
+          select 'United States', from: 'Country'
+          select 'North Carolina', from: 'State'
+
+          click_on 'Update profile'
+          sleep 0.1
+          expect(user.reload.state).to eq 'NC'
+        end
+      end
+    end
+  end
 end

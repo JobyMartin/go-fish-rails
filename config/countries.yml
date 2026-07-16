@@ -1,0 +1,1019 @@
+---
+shared:
+  - id: AR
+    name: Argentina
+    states: []
+  - id: AT
+    name: Austria
+    states: []
+  - id: AU
+    name: Australia
+    states:
+      - country_id: AU
+        id: ACT
+        name: Australian Capital Territory
+      - country_id: AU
+        id: NSW
+        name: New South Wales
+      - country_id: AU
+        id: NT
+        name: Northern Territory
+      - country_id: AU
+        id: QLD
+        name: Queensland
+      - country_id: AU
+        id: SA
+        name: South Australia
+      - country_id: AU
+        id: TAS
+        name: Tasmania
+      - country_id: AU
+        id: VIC
+        name: Victoria
+      - country_id: AU
+        id: WA
+        name: Western Australia
+  - id: BS
+    name: Bahamas
+    states: []
+  - id: CA
+    name: Canada
+    states:
+      - country_id: CA
+        id: AB
+        name: Alberta
+      - country_id: CA
+        id: BC
+        name: British Columbia
+      - country_id: CA
+        id: MB
+        name: Manitoba
+      - country_id: CA
+        id: NB
+        name: New Brunswick
+      - country_id: CA
+        id: NL
+        name: Newfoundland
+      - country_id: CA
+        id: NS
+        name: Nova Scotia
+      - country_id: CA
+        id: NT
+        name: Northwest Territories
+      - country_id: CA
+        id: NU
+        name: Nunavut
+      - country_id: CA
+        id: 'ON'
+        name: Ontario
+      - country_id: CA
+        id: PE
+        name: Prince Edward Island
+      - country_id: CA
+        id: QC
+        name: Quebec
+      - country_id: CA
+        id: SK
+        name: Saskatchewan
+      - country_id: CA
+        id: YT
+        name: Yukon
+  - id: CL
+    name: Chile
+    states: []
+  - id: CN
+    name: China
+    states:
+      - country_id: CN
+        id: 黑龙江省
+        name: Heilongjiang Province
+      - country_id: CN
+        id: 吉林省
+        name: Jilin Province
+      - country_id: CN
+        id: 辽宁省
+        name: Liaoning Province
+      - country_id: CN
+        id: 内蒙古
+        name: Neimenggu A.R.
+      - country_id: CN
+        id: 甘肃省
+        name: Gansu Province
+      - country_id: CN
+        id: 宁夏回族自治区
+        name: Ningxia A.R.
+      - country_id: CN
+        id: 新疆维吾尔族自治区
+        name: Xinjiang A.R.
+      - country_id: CN
+        id: 青海省
+        name: Qinghai Province
+      - country_id: CN
+        id: 河北省
+        name: Hebei Province
+      - country_id: CN
+        id: 河南省
+        name: Henan Province
+      - country_id: CN
+        id: 山东省
+        name: Shandong Province
+      - country_id: CN
+        id: 山西省
+        name: Shanxi Province
+      - country_id: CN
+        id: 陕西省
+        name: Shaanxi Province
+      - country_id: CN
+        id: 江苏省
+        name: Jiangsu Province
+      - country_id: CN
+        id: 浙江省
+        name: Zhejiang Province
+      - country_id: CN
+        id: 安徽省
+        name: Anhui Province
+      - country_id: CN
+        id: 湖北省
+        name: Hubei Province
+      - country_id: CN
+        id: 湖南省
+        name: Hunan Province
+      - country_id: CN
+        id: 四川省
+        name: Sichuan Province
+      - country_id: CN
+        id: 贵州省
+        name: Guizhou Province
+      - country_id: CN
+        id: 江西省
+        name: Jiangxi Province
+      - country_id: CN
+        id: 广东省
+        name: Guangdong Province
+      - country_id: CN
+        id: 广西壮族自治区
+        name: Guangxi A.R.
+      - country_id: CN
+        id: 云南省
+        name: Yunnan Province
+      - country_id: CN
+        id: 海南省
+        name: Hainan Province
+      - country_id: CN
+        id: 西藏藏族自治区
+        name: Xizang A.R.
+      - country_id: CN
+        id: 北京市
+        name: Beijing
+      - country_id: CN
+        id: 上海市
+        name: Shanghai
+      - country_id: CN
+        id: 天津市
+        name: Tianjin
+      - country_id: CN
+        id: 重庆市
+        name: Chongqing
+      - country_id: CN
+        id: 福建省
+        name: Fujian Province
+  - id: CO
+    name: Colombia
+    states: []
+  - id: CR
+    name: Costa Rica
+    states: []
+  - id: DM
+    name: Dominica
+    states: []
+  - id: DO
+    name: Dominican Republic
+    states: []
+  - id: EC
+    name: Ecuador
+    states: []
+  - id: ER
+    name: Eritrea
+    states: []
+  - id: GB
+    name: United Kingdom
+    states:
+      - country_id: GB
+        id: Aberdeenshire
+        name: Aberdeenshire
+      - country_id: GB
+        id: Angus
+        name: Angus
+      - country_id: GB
+        id: Argyll
+        name: Argyll
+      - country_id: GB
+        id: Avon
+        name: Avon
+      - country_id: GB
+        id: Ayrshire
+        name: Ayrshire
+      - country_id: GB
+        id: Banffshire
+        name: Banffshire
+      - country_id: GB
+        id: Beds.
+        name: Bedfordshire
+      - country_id: GB
+        id: Berks.
+        name: Berkshire
+      - country_id: GB
+        id: Berwickshire
+        name: Berwickshire
+      - country_id: GB
+        id: Bucks.
+        name: Buckinghamshire
+      - country_id: GB
+        id: Caithness
+        name: Caithness
+      - country_id: GB
+        id: Cambs.
+        name: Cambridgeshire
+      - country_id: GB
+        id: Ches.
+        name: Cheshire
+      - country_id: GB
+        id: Clackmannanshire
+        name: Clackmannanshire
+      - country_id: GB
+        id: Cleveland
+        name: Cleveland
+      - country_id: GB
+        id: Clwyd
+        name: Clwyd
+      - country_id: GB
+        id: Cornwall
+        name: Cornwall
+      - country_id: GB
+        id: Co Antrim
+        name: County Antrim
+      - country_id: GB
+        id: Co Armagh
+        name: County Armagh
+      - country_id: GB
+        id: Co Down
+        name: County Down
+      - country_id: GB
+        id: Co Fermanagh
+        name: County Fermanagh
+      - country_id: GB
+        id: Co Londonderry
+        name: County Londonderry
+      - country_id: GB
+        id: Co Tyrone
+        name: County Tyrone
+      - country_id: GB
+        id: Cumbria
+        name: Cumbria
+      - country_id: GB
+        id: Derbys.
+        name: Derbyshire
+      - country_id: GB
+        id: Devon
+        name: Devon
+      - country_id: GB
+        id: Dorset
+        name: Dorset
+      - country_id: GB
+        id: Dumfriesshire
+        name: Dumfriesshire
+      - country_id: GB
+        id: Dunbartonshire
+        name: Dunbartonshire
+      - country_id: GB
+        id: Durham
+        name: County Durham
+      - country_id: GB
+        id: Dyfed
+        name: Dyfed
+      - country_id: GB
+        id: E Sussex
+        name: East Sussex
+      - country_id: GB
+        id: E Lothian
+        name: East Lothian
+      - country_id: GB
+        id: Essex
+        name: Essex
+      - country_id: GB
+        id: Fife
+        name: Fife
+      - country_id: GB
+        id: Gloucs.
+        name: Gloucestershire
+      - country_id: GB
+        id: London
+        name: Greater London
+      - country_id: GB
+        id: Gwent
+        name: Gwent
+      - country_id: GB
+        id: Gwynedd
+        name: Gwynedd
+      - country_id: GB
+        id: Hants.
+        name: Hampshire
+      - country_id: GB
+        id: Hereford
+        name: Herefordshire
+      - country_id: GB
+        id: Herts.
+        name: Hertfordshire
+      - country_id: GB
+        id: Inverness-shire
+        name: Inverness-shire
+      - country_id: GB
+        id: Isle of Arran
+        name: Isle of Arran
+      - country_id: GB
+        id: Isle of Barra
+        name: Isle of Barra
+      - country_id: GB
+        id: Isle of Benbecula
+        name: Isle of Benbecula
+      - country_id: GB
+        id: Isle of Bute
+        name: Isle of Bute
+      - country_id: GB
+        id: Isle of Canna
+        name: Isle of Canna
+      - country_id: GB
+        id: Isle of Coll
+        name: Isle of Coll
+      - country_id: GB
+        id: Isle of Colonsay
+        name: Isle of Colonsay
+      - country_id: GB
+        id: Isle of Cumbrae
+        name: Isle of Cumbrae
+      - country_id: GB
+        id: Isle of Eigg
+        name: Isle of Eigg
+      - country_id: GB
+        id: Isle of Gigha
+        name: Isle of Gigha
+      - country_id: GB
+        id: Isle of Harris
+        name: Isle of Harris
+      - country_id: GB
+        id: Isle of Islay
+        name: Isle of Islay
+      - country_id: GB
+        id: Isle of Iona
+        name: Isle of Iona
+      - country_id: GB
+        id: Isle of Jura
+        name: Isle of Jura
+      - country_id: GB
+        id: Isle of Lewis
+        name: Isle of Lewis
+      - country_id: GB
+        id: Isle of Mull
+        name: Isle of Mull
+      - country_id: GB
+        id: Isle of North Uist
+        name: Isle of North Uist
+      - country_id: GB
+        id: Isle of Rum
+        name: Isle of Rum
+      - country_id: GB
+        id: Isle of Scalpay
+        name: Isle of Scalpay
+      - country_id: GB
+        id: Isle of Skye
+        name: Isle of Skye
+      - country_id: GB
+        id: Isle of South Uist
+        name: Isle of South Uist
+      - country_id: GB
+        id: Isle of Tiree
+        name: Isle of Tiree
+      - country_id: GB
+        id: Isle of Wight
+        name: Isle of Wight
+      - country_id: GB
+        id: Kent
+        name: Kent
+      - country_id: GB
+        id: Kincardineshire
+        name: Kincardineshire
+      - country_id: GB
+        id: Kinross-shire
+        name: Kinross-shire
+      - country_id: GB
+        id: Kirkcudbrightshire
+        name: Kirkcudbrightshire
+      - country_id: GB
+        id: Lanarkshire
+        name: Lanarkshire
+      - country_id: GB
+        id: Lancs.
+        name: Lancashire
+      - country_id: GB
+        id: Leics.
+        name: Leicestershire
+      - country_id: GB
+        id: Lincs.
+        name: Lincolnshire
+      - country_id: GB
+        id: Merseyside
+        name: Merseyside
+      - country_id: GB
+        id: M Glam
+        name: Mid Glamorgan
+      - country_id: GB
+        id: Mid Lothian
+        name: Mid Lothian
+      - country_id: GB
+        id: Middx.
+        name: Middlesex
+      - country_id: GB
+        id: Morayshire
+        name: Morayshire
+      - country_id: GB
+        id: Nairnshire
+        name: Nairnshire
+      - country_id: GB
+        id: Norfolk
+        name: Norfolk
+      - country_id: GB
+        id: N Humberside
+        name: North Humberside
+      - country_id: GB
+        id: N Yorkshire
+        name: North Yorkshire
+      - country_id: GB
+        id: Northants.
+        name: Northamptonshire
+      - country_id: GB
+        id: Northumberland
+        name: Northumberland
+      - country_id: GB
+        id: Notts.
+        name: Nottinghamshire
+      - country_id: GB
+        id: Oxon.
+        name: Oxfordshire
+      - country_id: GB
+        id: Peeblesshire
+        name: Peeblesshire
+      - country_id: GB
+        id: Perthshire
+        name: Perthshire
+      - country_id: GB
+        id: Powys
+        name: Powys
+      - country_id: GB
+        id: Renfrewshire
+        name: Renfrewshire
+      - country_id: GB
+        id: Ross-shire
+        name: Ross-shire
+      - country_id: GB
+        id: Roxburghshire
+        name: Roxburghshire
+      - country_id: GB
+        id: Shrops
+        name: Shropshire
+      - country_id: GB
+        id: Selkirkshire
+        name: Selkirkshire
+      - country_id: GB
+        id: Somt.
+        name: Somerset
+      - country_id: GB
+        id: S Glam
+        name: South Glamorgan
+      - country_id: GB
+        id: S Humberside
+        name: South Humberside
+      - country_id: GB
+        id: S Yorkshire
+        name: South Yorkshire
+      - country_id: GB
+        id: Staffs.
+        name: Staffordshire
+      - country_id: GB
+        id: Stirlingshire
+        name: Stirlingshire
+      - country_id: GB
+        id: Suffolk
+        name: Suffolk
+      - country_id: GB
+        id: Surrey
+        name: Surrey
+      - country_id: GB
+        id: Sutherland
+        name: Sutherland
+      - country_id: GB
+        id: Tyne & Wear
+        name: Tyne and Wear
+      - country_id: GB
+        id: Warks
+        name: Warwickshire
+      - country_id: GB
+        id: W Glam
+        name: West Glamorgan
+      - country_id: GB
+        id: W Lothian
+        name: West Lothian
+      - country_id: GB
+        id: W Midlands
+        name: West Midlands
+      - country_id: GB
+        id: W Sussex
+        name: West Sussex
+      - country_id: GB
+        id: W Yorkshire
+        name: West Yorkshire
+      - country_id: GB
+        id: Wigtownshire
+        name: Wigtownshire
+      - country_id: GB
+        id: Wilts
+        name: Wiltshire
+      - country_id: GB
+        id: Worcs
+        name: Worcestershire
+  - id: GT
+    name: Guatemala
+    states: []
+  - id: GU
+    name: Guam
+    states: []
+  - id: GY
+    name: Guyana
+    states: []
+  - id: HT
+    name: Haiti
+    states: []
+  - id: HN
+    name: Honduras
+    states: []
+  - id: IS
+    name: Iceland
+    states: []
+  - id: JM
+    name: Jamaica
+    states: []
+  - id: JP
+    name: Japan
+    states:
+      - country_id: JP
+        id: 北海道
+        name: Hokkaido
+      - country_id: JP
+        id: 青森県
+        name: Aomori
+      - country_id: JP
+        id: 岩手県
+        name: Iwate
+      - country_id: JP
+        id: 宮城県
+        name: Miyagi
+      - country_id: JP
+        id: 秋田県
+        name: Akita
+      - country_id: JP
+        id: 山形県
+        name: Yamagata
+      - country_id: JP
+        id: 福島県
+        name: Fukushima
+      - country_id: JP
+        id: 茨城県
+        name: Ibaraki
+      - country_id: JP
+        id: 栃木県
+        name: Tochigi
+      - country_id: JP
+        id: 群馬県
+        name: Gunma
+      - country_id: JP
+        id: 埼玉県
+        name: Saitama
+      - country_id: JP
+        id: 千葉県
+        name: Chiba
+      - country_id: JP
+        id: 東京都
+        name: Tokyo
+      - country_id: JP
+        id: 神奈川県
+        name: Kanagawa
+      - country_id: JP
+        id: 新潟県
+        name: Niigata
+      - country_id: JP
+        id: 富山県
+        name: Toyama
+      - country_id: JP
+        id: 石川県
+        name: Ishikawa
+      - country_id: JP
+        id: 福井県
+        name: Fukui
+      - country_id: JP
+        id: 山梨県
+        name: Yamanashi
+      - country_id: JP
+        id: 長野県
+        name: Nagano
+      - country_id: JP
+        id: 岐阜県
+        name: Gifu
+      - country_id: JP
+        id: 静岡県
+        name: Shizuoka
+      - country_id: JP
+        id: 愛知県
+        name: Aichi
+      - country_id: JP
+        id: 三重県
+        name: Mie
+      - country_id: JP
+        id: 滋賀県
+        name: Shiga
+      - country_id: JP
+        id: 京都府
+        name: Kyoto
+      - country_id: JP
+        id: 大阪府
+        name: Osaka
+      - country_id: JP
+        id: 兵庫県
+        name: Hyogo
+      - country_id: JP
+        id: 奈良県
+        name: Nara
+      - country_id: JP
+        id: 和歌山県
+        name: Wakayama
+      - country_id: JP
+        id: 鳥取県
+        name: Tottori
+      - country_id: JP
+        id: 島根県
+        name: Shimane
+      - country_id: JP
+        id: 岡山県
+        name: Okayama
+      - country_id: JP
+        id: 広島県
+        name: Hiroshima
+      - country_id: JP
+        id: 山口県
+        name: Yamaguchi
+      - country_id: JP
+        id: 徳島県
+        name: Tokushima
+      - country_id: JP
+        id: 香川県
+        name: Kagawa
+      - country_id: JP
+        id: 愛媛県
+        name: Ehime
+      - country_id: JP
+        id: 高知県
+        name: Kochi
+      - country_id: JP
+        id: 福岡県
+        name: Fukuoka
+      - country_id: JP
+        id: 佐賀県
+        name: Saga
+      - country_id: JP
+        id: 長崎県
+        name: Nagasaki
+      - country_id: JP
+        id: 熊本県
+        name: Kumamoto
+      - country_id: JP
+        id: 大分県
+        name: Oita
+      - country_id: JP
+        id: 宮崎県
+        name: Miyazaki
+      - country_id: JP
+        id: 鹿児島県
+        name: Kagoshima
+      - country_id: JP
+        id: 沖縄県
+        name: Okinawa
+  - id: LC
+    name: Saint Lucia
+    states: []
+  - id: LY
+    name: Libya
+    states: []
+  - id: MH
+    name: Marshall Islands
+    states: []
+  - id: ML
+    name: Mali
+    states: []
+  - id: MX
+    name: Mexico
+    states:
+      - country_id: MX
+        id: AGS
+        name: Aguascalientes
+      - country_id: MX
+        id: BCN
+        name: Baja California Norte
+      - country_id: MX
+        id: BCS
+        name: Baja California Sur
+      - country_id: MX
+        id: CAM
+        name: Campeche
+      - country_id: MX
+        id: CHIS
+        name: Chiapas
+      - country_id: MX
+        id: CHIH
+        name: Chihuahua
+      - country_id: MX
+        id: COAH
+        name: Coahuila
+      - country_id: MX
+        id: COL
+        name: Colima
+      - country_id: MX
+        id: DF
+        name: Distrito Federal
+      - country_id: MX
+        id: DGO
+        name: Durango
+      - country_id: MX
+        id: GTO
+        name: Guanajuato
+      - country_id: MX
+        id: GRO
+        name: Guerrero
+      - country_id: MX
+        id: HGO
+        name: Hidalgo
+      - country_id: MX
+        id: JAL
+        name: Jalisco
+      - country_id: MX
+        id: MEX
+        name: México (Estado de)
+      - country_id: MX
+        id: MICH
+        name: Michoacán
+      - country_id: MX
+        id: MOR
+        name: Morelos
+      - country_id: MX
+        id: NAY
+        name: Nayarit
+      - country_id: MX
+        id: NL
+        name: Nuevo León
+      - country_id: MX
+        id: OAX
+        name: Oaxaca
+      - country_id: MX
+        id: PUE
+        name: Puebla
+      - country_id: MX
+        id: QRO
+        name: Querétaro
+      - country_id: MX
+        id: QROO
+        name: Quintana Roo
+      - country_id: MX
+        id: SLP
+        name: San Luis Potosí
+      - country_id: MX
+        id: SIN
+        name: Sinaloa
+      - country_id: MX
+        id: SON
+        name: Sonora
+      - country_id: MX
+        id: TAB
+        name: Tabasco
+      - country_id: MX
+        id: TAMPS
+        name: Tamaulipas
+      - country_id: MX
+        id: TLAX
+        name: Tlaxcala
+      - country_id: MX
+        id: VER
+        name: Veracruz
+      - country_id: MX
+        id: YUC
+        name: Yucatán
+      - country_id: MX
+        id: ZAC
+        name: Zacatecas
+      - country_id: MX
+        id: BC
+        name: Baja California
+      - country_id: MX
+        id: CDMX
+        name: Mexico City
+  - id: NI
+    name: Nicaragua
+    states: []
+  - id: OM
+    name: Oman
+    states: []
+  - id: PA
+    name: Panama
+    states: []
+  - id: PE
+    name: Peru
+    states: []
+  - id: PH
+    name: Philippines
+    states: []
+  - id: PR
+    name: Puerto Rico
+    states: []
+  - id: SA
+    name: Saudi Arabia
+    states: []
+  - id: SR
+    name: Suriname
+    states: []
+  - id: SV
+    name: El Salvador
+    states: []
+  - id: TH
+    name: Thailand
+    states: []
+  - id: US
+    name: United States
+    states:
+      - country_id: US
+        id: AL
+        name: Alabama
+      - country_id: US
+        id: AK
+        name: Alaska
+      - country_id: US
+        id: AZ
+        name: Arizona
+      - country_id: US
+        id: AR
+        name: Arkansas
+      - country_id: US
+        id: CA
+        name: California
+      - country_id: US
+        id: CO
+        name: Colorado
+      - country_id: US
+        id: CT
+        name: Connecticut
+      - country_id: US
+        id: DE
+        name: Delaware
+      - country_id: US
+        id: DC
+        name: District of Columbia
+      - country_id: US
+        id: FL
+        name: Florida
+      - country_id: US
+        id: GA
+        name: Georgia
+      - country_id: US
+        id: HI
+        name: Hawaii
+      - country_id: US
+        id: ID
+        name: Idaho
+      - country_id: US
+        id: IL
+        name: Illinois
+      - country_id: US
+        id: IN
+        name: Indiana
+      - country_id: US
+        id: IA
+        name: Iowa
+      - country_id: US
+        id: KS
+        name: Kansas
+      - country_id: US
+        id: KY
+        name: Kentucky
+      - country_id: US
+        id: LA
+        name: Louisiana
+      - country_id: US
+        id: ME
+        name: Maine
+      - country_id: US
+        id: MD
+        name: Maryland
+      - country_id: US
+        id: MA
+        name: Massachusetts
+      - country_id: US
+        id: MI
+        name: Michigan
+      - country_id: US
+        id: MN
+        name: Minnesota
+      - country_id: US
+        id: MS
+        name: Mississippi
+      - country_id: US
+        id: MO
+        name: Missouri
+      - country_id: US
+        id: MT
+        name: Montana
+      - country_id: US
+        id: NE
+        name: Nebraska
+      - country_id: US
+        id: NV
+        name: Nevada
+      - country_id: US
+        id: NH
+        name: New Hampshire
+      - country_id: US
+        id: NJ
+        name: New Jersey
+      - country_id: US
+        id: NM
+        name: New Mexico
+      - country_id: US
+        id: NY
+        name: New York
+      - country_id: US
+        id: NC
+        name: North Carolina
+      - country_id: US
+        id: ND
+        name: North Dakota
+      - country_id: US
+        id: OH
+        name: Ohio
+      - country_id: US
+        id: OK
+        name: Oklahoma
+      - country_id: US
+        id: OR
+        name: Oregon
+      - country_id: US
+        id: PA
+        name: Pennsylvania
+      - country_id: US
+        id: PR
+        name: Puerto Rico
+      - country_id: US
+        id: RI
+        name: Rhode Island
+      - country_id: US
+        id: SC
+        name: South Carolina
+      - country_id: US
+        id: SD
+        name: South Dakota
+      - country_id: US
+        id: TN
+        name: Tennessee
+      - country_id: US
+        id: TX
+        name: Texas
+      - country_id: US
+        id: UT
+        name: Utah
+      - country_id: US
+        id: VT
+        name: Vermont
+      - country_id: US
+        id: VA
+        name: Virginia
+      - country_id: US
+        id: WA
+        name: Washington
+      - country_id: US
+        id: WV
+        name: West Virginia
+      - country_id: US
+        id: WI
+        name: Wisconsin
+      - country_id: US
+        id: WY
+        name: Wyoming
+  - id: UY
+    name: Uruguay
+    states: []
+  - id: ZA
+    name: South Africa
+    states: []

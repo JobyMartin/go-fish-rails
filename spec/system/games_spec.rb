@@ -225,6 +225,12 @@ RSpec.describe 'Games', type: :system do
       click_on 'Start game'
       expect(game.reload.game_state).to be_present
     end
+
+    it 'a timer is there' do
+      visit game_path(game)
+      click_on 'Start game'
+      expect(page).to have_css 'div.timer'
+    end
   end
 
   context 'when the user plays a turn' do
@@ -245,7 +251,7 @@ RSpec.describe 'Games', type: :system do
       
       it 'exchanges the cards between players' do
         visit game_path(game)
-        page.click_on 'Ask for a card'
+        click_on 'Ask for a card'
         post_turn_card_count = '2'
         expect(page).to have_content post_turn_card_count
       end

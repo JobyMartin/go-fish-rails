@@ -1,0 +1,3 @@
+= simple_form_for @user do |f|
+  = turbo_stream.update 'state-container' do
+    = f.input :state, as: :select, collection: Data::State.where(country_id: f.object.country)
