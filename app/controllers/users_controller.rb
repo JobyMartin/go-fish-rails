@@ -9,6 +9,10 @@ class UsersController < ApplicationController
     @user = User.find(params[:id])
   end
 
+  def turbo_fetch
+    @user = User.new(update_params)
+  end
+
   def create
     @user = User.new(user_params)
     if @user.save
@@ -24,6 +28,10 @@ class UsersController < ApplicationController
   end
 
   private
+
+  def update_params
+    params.require(:user).permit(:country, :state)
+  end
 
   def user_params
     params.require(:user).permit(:email_address, :password, :confirm_password)

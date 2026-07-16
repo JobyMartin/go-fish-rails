@@ -9,9 +9,15 @@
           h1.content-header__title
             | Edit profile
       .form-group
-        = simple_form_for @user do |f|
-          = f.input :country, collection: Data::Country.all, priority: ['US', 'CA', 'MX'], include_blank: true
-          - if @user.country
-            = f.input :state, collection: Data::Country.find(@user.country).states | [Data::State.new(@user.state)]
-          - else
-            = f.input :state, collection: []
+        = simple_form_for @user, data: { controller: 'location-selection', location_selection_url_value: turbo_fetch_users_url } do |f|
+          = f.input :country,
+                  collection: Data::Country.all,
+                  priority: ['US', 'CA', 'MX'],
+                  include_blank: true,
+                  input_html: { data: { action: 'location-selection#perform' } }
+
+          #state-container
+            - if @user.country
+              = f.input :state, collection: Data::Country.find(@user.country).states | [Data::State.new(@user.state)]
+            - else
+              = f.input :state, collection: []

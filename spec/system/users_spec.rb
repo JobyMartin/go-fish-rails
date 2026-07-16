@@ -85,5 +85,16 @@ RSpec.describe 'Users', type: :system do
       click_on 'Edit profile'
       expect(page).to have_field 'Country'
     end
+
+    context 'when a country is selected' do
+      before do
+        click_on 'Edit profile'
+      end
+
+      it 'the correct states are added to the dropdown', :js do
+        select 'United States', from: 'Country'
+        expect(page).to have_select('State', with_options: ['North Carolina', 'Pennsylvania'])
+      end
+    end
   end
 end
