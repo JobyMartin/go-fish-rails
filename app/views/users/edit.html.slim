@@ -10,7 +10,8 @@
     #state-container
       = f.input :state, collection: Data::State.where(country_id: @user.country)
 
-    = f.button :submit, 'Update profile'
+    = content_for :modal_footer do
+      = f.button :submit, "Update profile", form: f.id
 
 = content_for :modal_header do
   | Edit your profile

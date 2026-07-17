@@ -3,7 +3,8 @@
   = f.input :name
   = f.input :type, collection: ['Go Fish', 'Crazy Eights'], include_blank: false
 
-  = f.button :submit, "Create Game"
+  = content_for :modal_footer do
+    = f.button :submit, "Create Game", form: f.id
 
   = content_for :modal_header do
     | Create Game
