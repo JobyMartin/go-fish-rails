@@ -1,12 +1,10 @@
-.modal-wrapper.modal-wrapper--active
-  .modal-wrapper__backdrop
-  .modal.modal--login
-    = simple_form_for @game do |f|
-      .modal__header
-        | Setup Game
 
-      .modal__body
-        = f.input :name
-        = f.input :type, collection: ['Go Fish', 'Crazy Eights'], include_blank: false
-      .modal__footer
-        = f.button :submit, "Create Game"
+= simple_form_for @game do |f|
+  = f.input :name
+  = f.input :type, collection: ['Go Fish', 'Crazy Eights'], include_blank: false
+
+  = content_for :modal_footer do
+    = f.button :submit, "Create Game", form: f.id
+
+  = content_for :modal_header do
+    | Create Game

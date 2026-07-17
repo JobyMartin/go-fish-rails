@@ -7,6 +7,8 @@ class UsersController < ApplicationController
 
   def edit
     @user = User.find(params[:id])
+
+    render layout: 'modal'
   end
 
   def update
@@ -14,7 +16,7 @@ class UsersController < ApplicationController
     if @user.update(update_params)
       redirect_to users_show_path(@user)
     else
-      render :edit, status: :unprocessable_content
+      render :edit, status: :unprocessable_content, layout: 'modal'
     end
   end
 

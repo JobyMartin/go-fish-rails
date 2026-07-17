@@ -13,7 +13,7 @@
             h1.content-header__title
               | Your Games
           .content-header__aside
-            = link_to "New Game", new_game_path, class: 'btn.btn--primary'
+            = link_to "New Game", new_game_path, class: 'btn btn--primary', data: { turbo_frame: 'modal' }
       .op-stack data-testid='your-games'
         .divider
 
