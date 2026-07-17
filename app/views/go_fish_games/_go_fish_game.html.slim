@@ -4,6 +4,9 @@
 - opponents = game.game_state.players - [current_player] if game.game_state.present?
 
 - unless game.started_at.present?
+  = link_to games_path, class: 'btn btn--medium' do
+    i.ph.ph-arrow-left.icon
+
   .simple-page
     = button_to 'Start game', start_game_path(game), method: :post, class: 'btn btn--primary'
 - else
