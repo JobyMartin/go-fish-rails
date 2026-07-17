@@ -1,26 +1,78 @@
-// // Add a service worker for processing Web Push notifications:
-// //
-// self.addEventListener("push", async (event) => {
-//   const { title, options } = await event.data.json()
-//   event.waitUntil(self.registration.showNotification(title, options))
-// })
-//
-// self.addEventListener("notificationclick", function(event) {
-//   event.notification.close()
-//   event.waitUntil(
-//     clients.matchAll({ type: "window" }).then((clientList) => {
-//       for (let i = 0; i < clientList.length; i++) {
-//         let client = clientList[i]
-//         let clientPath = (new URL(client.url)).pathname
-//
-//         if (clientPath == event.notification.data.path && "focus" in client) {
-//           return client.focus()
-//         }
-//       }
-//
-//       if (clients.openWindow) {
-//         return clients.openWindow(event.notification.data.path)
-//       }
-//     })
-//   )
-// })
+
+const addResourcesToCache = async (resources) => {
+  const cache = await caches.open("v1");
+  await cache.addAll(resources);
+};
+
+const putInCache = async (request, response) => {
+  const cache = await caches.open("v1");
+  await cache.put(request, response);
+};
+
+const cacheFirst = async ({
+                            request,
+                            preloadResponsePromise,
+                            fallbackUrl,
+                            event,
+                          }) => {
+  const responseFromCache = await caches.match(request);
+  if (responseFromCache) {
+    event.waitUntil(preloadResponsePromise.catch(() => undefined));
+    return responseFromCache;
+  }
+
+  const preloadResponse = await preloadResponsePromise;
+  if (preloadResponse) {
+    console.info("using preload response", preloadResponse);
+    event.waitUntil(putInCache(request, preloadResponse.clone()));
+    return preloadResponse;
+  }
+
+  try {
+    const responseFromNetwork = await fetch(request);
+
+    event.waitUntil(putInCache(request, responseFromNetwork.clone()));
+    return responseFromNetwork;
+  } catch (error) {
+    const fallbackResponse = await caches.match(fallbackUrl);
+    console.log(caches)
+    if (fallbackResponse) {
+      return fallbackResponse;
+    }
+
+    return new Response("Network error happened", {
+      status: 408,
+      headers: { "Content-Type": "text/plain" },
+    });
+  }
+};
+
+const enableNavigationPreload = async () => {
+  if (self.registration.navigationPreload) {
+    await self.registration.navigationPreload.enable();
+  }
+};
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(enableNavigationPreload());
+});
+
+self.addEventListener("install", (event) => {
+  console.log('installing...')
+  event.waitUntil(
+    addResourcesToCache([
+      "/",
+    ]),
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    cacheFirst({
+      request: event.request,
+      preloadResponsePromise: event.preloadResponse,
+      fallbackUrl: "/",
+      event,
+    }),
+  );
+});
