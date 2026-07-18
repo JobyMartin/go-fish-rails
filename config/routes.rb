@@ -39,6 +39,8 @@ Rails.application.routes.draw do
   get "pages/rules", to: "pages#rules"
   resources :pages, only: [:index]
 
+  resources :offlines, only: [:index]
+
   get "stats", to: "stats#index"
   resources :stats, only: [:index]
 
