@@ -22,6 +22,22 @@ RSpec.describe 'Games', type: :system do
       emulate_worker_network(offline: false)
     end
   end
+
+  context 'when the user goes offline in a game' do
+    before do
+      sign_up
+      sleep 0.1
+      create_game
+      click_on 'Start game'
+    end
+    it 'renders an offline alert', :chrome do
+      wait_for_service_worker_control
+      emulate_worker_network(offline: true)
+      expect(page).to have_content 'You are offline'
+      emulate_worker_network(offline: false)
+      expect(page).not_to have_content 'You are offline'
+    end
+  end
 end
 
 def emulate_worker_network(offline:)
