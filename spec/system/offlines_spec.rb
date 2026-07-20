@@ -14,17 +14,12 @@ RSpec.describe 'Games', type: :system do
       visit root_path
       wait_for_service_worker_control
 
-      page.driver.browser.network_conditions = {
-        offline: true,
-        latency: 0,
-        throughput: 0
-      }
-
       emulate_worker_network(offline: true)
     end
     it 'renders the offline show page' do
       visit root_path
       expect(page).to have_content "You're offline!"
+      emulate_worker_network(offline: false)
     end
   end
 end
