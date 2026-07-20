@@ -3,6 +3,8 @@ title Game Platform
 = csrf_meta_tags
 = csp_meta_tag
 
+= tag.link rel: "manifest", href: pwa_manifest_path(format: :json)
+
 meta name="viewport" content="width=device-width, initial-scale=1"
 meta name="turbo-refresh-method" content="morph"
 meta name="turbo-refresh-scroll" content="preserve"

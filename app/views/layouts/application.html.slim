@@ -1,6 +1,6 @@
 doctype html
 html
   head = render 'head'
-  body
+  body data-controller='service-worker' data-service-worker-url-value=pwa_service_worker_path
     = turbo_frame_tag 'modal'
     = yield

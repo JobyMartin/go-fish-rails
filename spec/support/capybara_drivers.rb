@@ -20,7 +20,7 @@ RSpec.configure do |config|
   end
 
   config.before(:each, :chrome, type: :system) do
-    driven_by :chrome
+    driven_by :selenium, using: :chrome
   end
 
   config.before(:each, :firefox, type: :system) do

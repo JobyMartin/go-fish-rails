@@ -231,6 +231,15 @@ RSpec.describe 'Games', type: :system do
       click_on 'Start game'
       expect(page).to have_css 'div.timer'
     end
+
+    xit 'takes the turn for them if they wait 10 seconds' do
+      visit game_path(game)
+      click_on 'Start game'
+
+      expect(page).to have_button('Ask for a card', disabled: false)
+
+      expect(page).to have_button('Ask for a card', disabled: true, wait: 11)
+    end
   end
 
   context 'when the user plays a turn' do
