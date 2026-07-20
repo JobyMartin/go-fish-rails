@@ -42,6 +42,10 @@ bundle exec rspec path/to/spec.rb:42    # a single example by line
 - System specs run under `rack_test` by default. Tag `:js` (Playwright) or `:chrome` only
   when a spec genuinely needs a real browser — a spec that relies on JS but isn't tagged
   will fail.
+- **Prefer system specs for behavior coverage; request specs are almost never used.**
+  System specs (from the user's perspective) plus comprehensive model specs do the
+  coverage. Reach for a request spec only in the rare case where a system spec would have
+  to reach across too many layers to exercise the behavior.
 - **CI does not run the specs.** `.github/workflows/ci.yml` runs only RuboCop and security
   scans, so green CI does not mean the tests pass — run RSpec locally.
 
