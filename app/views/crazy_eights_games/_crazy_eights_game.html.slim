@@ -2,7 +2,6 @@
 - game = @game || game
 - implementation = game.game_state
 - current_player = implementation.find_player(Current.session.user.id) if game.game_state.present?
-- opponents = game.game_state.players - [current_player] if game.game_state.present?
 
 - unless game.started_at.present?
   .simple-page
@@ -57,7 +56,6 @@
                   span.feed-content__player-action = result.for_other_players.first
 
           = simple_form_for :play_turn, url: play_game_path(game) do |f|
-            = f.input :player, as: :select, collection: opponents, selected: opponents.first if game.type == "GoFishGame"
             = f.input :rank, as: :select, collection: game.game_state.valid_player_cards(current_player), selected: game.game_state.valid_player_cards(current_player).first
             = f.input :suit, as: :select, collection: CrazyEights::Card::SUITS
             - if current_player.id == implementation.current_player.id

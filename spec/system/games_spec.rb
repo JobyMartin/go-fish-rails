@@ -124,6 +124,12 @@ RSpec.describe 'Games', type: :system do
         expect(page).to have_css "div.game"
       end
 
+      it 'renders the play form with no opponent select' do
+        click_on 'Start game'
+        expect(page).to have_button 'Place card'
+        expect(page).to have_no_select 'Player'
+      end
+
       context 'when the user starts the game' do
         before do
           click_on 'Start game'
