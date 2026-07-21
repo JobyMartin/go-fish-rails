@@ -51,6 +51,15 @@ RSpec.describe Game, type: :model do
     end
   end
 
+  describe '#build_game' do
+    it 'does not silently coerce an unknown type into Crazy Eights' do
+      stub_const('EvilGame', Class.new(Game))
+      game = EvilGame.new(name: 'Evil')
+      create(:player, user:, game:)
+      expect { game.send(:build_game) }.to raise_error(NoMethodError)
+    end
+  end
+
   describe '#start' do
   let!(:game) { create(:game) }
   let!(:player) { create(:player, user:, game:) }

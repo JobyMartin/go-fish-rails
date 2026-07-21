@@ -40,6 +40,15 @@ RSpec.describe GoFishGame, type: :model do
     it_behaves_like 'a persisted card game'
   end
 
+  describe '#build_game' do
+    it 'builds a GoFish::Game domain object' do
+      game = create(:game, type: 'GoFishGame')
+      create(:player, game:)
+      game.start
+      expect(game.game_state).to be_a GoFish::Game
+    end
+  end
+
   describe 'an unstarted game' do
     it 'serializes game_state as nil' do
       game = create(:game, type: 'GoFishGame')

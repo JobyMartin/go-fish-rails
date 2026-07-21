@@ -14,4 +14,10 @@ class CrazyEightsGame < Game
       game_state.play_turn(active_card, placed_card)
     end
   end
+
+  private
+
+  def build_game
+    CrazyEights::Game.new(users.map { CrazyEights::Player.new(it.id) })
+  end
 end

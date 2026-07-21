@@ -10,7 +10,6 @@ class Game < ApplicationRecord
   WAITING_MESSAGE = 'Waiting...'
   IN_PROGRESS_MESSAGE = 'In progress'
   FINISHED_MESSAGE = 'Finished'
-  GO_FISH_GAME_TYPE = 'GoFishGame'
   PLAYABLE_TYPES = { 'GoFishGame' => 'Go Fish', 'CrazyEightsGame' => 'Crazy Eights' }.freeze
 
   def self.playable_types
@@ -54,13 +53,5 @@ class Game < ApplicationRecord
       partial: 'application/game-card',
       locals: { name: self.name, status: self.status, button_text: 'Join', game: self }
     )
-  end
-
-  def build_game
-    if type == GO_FISH_GAME_TYPE
-      GoFish::Game.new(users.map { |user| GoFish::Player.new(user.id) })
-    else
-      CrazyEights::Game.new(users.map { |user| CrazyEights::Player.new(user.id) })
-    end
   end
 end

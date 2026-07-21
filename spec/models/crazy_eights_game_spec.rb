@@ -43,6 +43,15 @@ RSpec.describe CrazyEightsGame, type: :model do
     end
   end
 
+  describe '#build_game' do
+    it 'builds a CrazyEights::Game domain object' do
+      game = create(:game, type: 'CrazyEightsGame')
+      create(:player, game:)
+      game.start
+      expect(game.game_state).to be_a CrazyEights::Game
+    end
+  end
+
   describe 'shared contract' do
     let(:game) { create(:game, type: 'CrazyEightsGame') }
 

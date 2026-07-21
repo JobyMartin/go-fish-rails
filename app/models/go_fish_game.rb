@@ -8,4 +8,10 @@ class GoFishGame < Game
       game_state.play_turn(inquired_player_id, inquired_rank.chars.first)
     end
   end
+
+  private
+
+  def build_game
+    GoFish::Game.new(users.map { GoFish::Player.new(it.id) })
+  end
 end
