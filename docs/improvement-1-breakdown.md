@@ -20,6 +20,15 @@ Ruby's implicit block param `it`, TDD/system-spec-first mindset. System specs ru
 
 ---
 
+## Progress
+
+- ✅ **A. STI subclass specs** — done. Both branches of each game's `play_turn` are pinned
+  in `spec/models/go_fish_game_spec.rb` (A1 normal ask, A2 fish-and-skip) and
+  `spec/models/crazy_eights_game_spec.rb` (A3 place a given card, A4 draw-until-playable).
+- ⬜ B. Serialization round-trip specs
+- ⬜ D. Shared example (`"a persisted card game"`)
+- ⬜ C. System specs (winner / game-over)
+
 ## Order of work
 
 Do them in this order — each builds confidence for the next:

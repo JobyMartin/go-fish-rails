@@ -114,6 +114,16 @@ See `docs/architecture.md` for the full model map and serialization details.
   `if/else`, `GamesController#play`, and a stray conditional in the Crazy Eights partial),
   and `GamesController#create` rebuilds the class via string surgery
   (`"#{type}Game".delete(' ').constantize`). These are the target of Improvement 2.
+- **`GoFishGame#play_turn` truncates the rank** via `inquired_rank.chars.first`, so a two-
+  character ask (`'10'`) silently becomes `'1'` — an invalid rank. Latent bug; single-char
+  ranks (`'A'`, `'K'`) are unaffected.
+- **The two `play_turn` signatures differ, and the CE domain ignores one arg.**
+  `GoFishGame#play_turn(inquired_player_id, inquired_rank)` vs.
+  `CrazyEightsGame#play_turn(active_card, placed_card = nil)`. In Crazy Eights, `active_card`
+  is a `Card`, `placed_card` is a `"rank suit"` string (`Card.objectify`'d); the *domain*
+  `CrazyEights::Game#play_turn` ignores `active_card` entirely — it only matters to the AR
+  wrapper's no-`placed_card` branch, which draws from the deck until a card matches the
+  active card's suit or rank. Improvement 2 unifies these into one polymorphic signature.
 
 ## Key context
 
@@ -125,6 +135,8 @@ See `docs/architecture.md` for the full model map and serialization details.
   shared "game contract" with tests, then (2) replace type-branching with polymorphic
   dispatch + a game registry. Read this before touching game dispatch or serialization.
 - `docs/improvement-1-breakdown.md` — step-by-step Given/When/Then for Improvement 1
-  (tests-only). Note the current test gaps it addresses: `spec/models/go_fish_game_spec.rb`
-  and `spec/models/crazy_eights_game_spec.rb` are empty `pending` stubs, and the winner /
-  game-over system spec is `pending: 'broken'`.
+  (tests-only). Progress: **Deliverable A (STI subclass `play_turn` specs) is complete** —
+  `spec/models/go_fish_game_spec.rb` and `spec/models/crazy_eights_game_spec.rb` now pin
+  both branches of each game's `play_turn`. Still open: B (serialization round-trips),
+  D (shared `"a persisted card game"` example), and C (the winner / game-over system spec,
+  still `pending: 'broken'`).

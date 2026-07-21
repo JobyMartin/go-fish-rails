@@ -36,6 +36,22 @@ The specs mirror the two-layer architecture (see `docs/architecture.md`):
   of re-writing setup.
 - `spec/factories/` — FactoryBot factories.
 
+## Arranging a persisted game in a spec
+
+Setting up a started game trips people up because of the STI + serialization split:
+
+- `create(:game, type: 'GoFishGame')` (or `'CrazyEightsGame'`) builds the AR subclass; the
+  `:game` factory's `initialize_with` handles the STI. The empty `:go_fish_game` /
+  `:crazy_eights_game` factory stubs are unused — ignore them.
+- Add players with `create(:player, game:)` (the `:player` factory auto-creates a `User`).
+  A `game_state` only exists after `game.start`, which builds the domain object, deals, and
+  **already calls `save!`** — no separate save needed.
+- `game.game_state` returns the **same in-memory domain object** on every call until
+  `game.reload` (the `serialize` coder caches the deserialized value). So you can grab it
+  once, mutate a hand (e.g. `state.current_player.hand = []`), and `play_turn` sees it.
+- Domain actions can mutate the current player mid-call (e.g. Go Fish's `fish_and_skip`
+  switches turns), so capture the player/index you're asserting on *before* the call.
+
 ## Drivers and the `:js` gotcha
 
 System specs default to `rack_test`. Tags switch the driver
