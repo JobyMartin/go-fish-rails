@@ -68,7 +68,7 @@ Sized X-Small (~under 2h).
 
 ---
 
-## Card 3 — Authorize game actions to participants
+## Card 3 — Authorize game actions to participants — ✅ Done
 
 **Goal**
 Only a `Player` in a game can view (`show`), start, play, or the relevant join path — a non-participant is redirected (to the lobby with a flash) rather than reaching game state. In particular, viewing a game you're not part of no longer raises a `NoMethodError`.
