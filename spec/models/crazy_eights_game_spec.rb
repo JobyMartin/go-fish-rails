@@ -14,7 +14,7 @@ RSpec.describe CrazyEightsGame, type: :model do
       state = game.game_state
       before_index = state.current_player_index
       card = state.current_player.hand.first
-      game.play_turn(state.william.active_card, "#{card.rank} #{card.suit}")
+      game.play_turn(rank: "#{card.rank} #{card.suit}")
       expect(state.william.active_card).to eq card
       expect(state.current_player_index).not_to eq before_index
     end
@@ -22,7 +22,7 @@ RSpec.describe CrazyEightsGame, type: :model do
     it 'draws until a playable card when none is given' do
       state = game.game_state
       active = state.william.active_card
-      game.play_turn(active)
+      game.play_turn({})
       placed = state.william.active_card
       expect(placed.suit == active.suit || placed.rank == active.rank).to be true
     end
@@ -60,7 +60,7 @@ RSpec.describe CrazyEightsGame, type: :model do
       create(:player, game:)
       game.start
       card = game.game_state.current_player.hand.first
-      game.play_turn(game.game_state.william.active_card, "#{card.rank} #{card.suit}")
+      game.play_turn(rank: "#{card.rank} #{card.suit}")
       game.save!
     end
 

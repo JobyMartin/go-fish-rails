@@ -45,11 +45,7 @@ class GamesController < ApplicationController
 
     redirect_to winner_game_path(@game) and return if @game.game_state.game_over?
 
-    if @game.type == 'GoFishGame'
-      @game.play_turn(params[:play_turn][:player].to_i, params[:play_turn][:rank])
-    else
-      play_crazy_eights(params[:play_turn][:rank])
-    end
+    @game.play_turn(play_turn_params)
 
     @game.save!
     redirect_to game_path(@game)
@@ -62,12 +58,8 @@ class GamesController < ApplicationController
 
   private
 
-  def play_crazy_eights(rank)
-    if rank.nil?
-      @game.play_turn(@game.game_state.william.active_card)
-    else
-      @game.play_turn(@game.game_state.william.active_card, rank)
-    end
+  def play_turn_params
+    params.require(:play_turn).permit(:player, :rank, :suit)
   end
 
   def game_params

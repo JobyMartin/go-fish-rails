@@ -13,7 +13,7 @@ RSpec.describe GoFishGame, type: :model do
     it 'delegates a normal ask to the domain game_state' do
       state = game.game_state
       opponent = state.players.last
-      expect { game.play_turn(opponent.id, 'A') }
+      expect { game.play_turn(player: opponent.id, rank: 'A') }
         .to change { state.round_results.size }.by(1)
     end
 
@@ -21,7 +21,7 @@ RSpec.describe GoFishGame, type: :model do
       state = game.game_state
       fisher = state.current_player
       fisher.hand = []
-      game.play_turn(0, 'A')
+      game.play_turn(player: 0, rank: 'A')
       expect(fisher.hand_size).to eq 1
     end
   end
@@ -33,7 +33,7 @@ RSpec.describe GoFishGame, type: :model do
       create(:player, game:)
       create(:player, game:)
       game.start
-      game.play_turn(game.game_state.players.last.id, 'A')
+      game.play_turn(player: game.game_state.players.last.id, rank: 'A')
       game.save!
     end
 
