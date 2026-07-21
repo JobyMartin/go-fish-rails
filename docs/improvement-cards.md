@@ -83,6 +83,15 @@ The audit rated this **High (Security)**. `GamesController#show/start/play` and 
 - New coverage: a controller/request or system spec for the non-participant path (currently only happy-path system specs exist in `spec/system/games_spec.rb`)
 - Open decision for implementation: redirect-with-flash vs 404 for a non-participant
 
+**Note (from BRAVE breakdown — `docs/brave-card-3-authorize-game-actions.md`):** protect
+`show`/`start`/`play` **and `winner`** (same state leak as `show`); **leave `join` alone** (a
+non-participant action by nature — the card's "join path" wording is out of scope). Open decision
+resolved: **redirect to the lobby with a flash**, not 404. Approach: two scoped before_actions in
+`GamesController` — `set_game` (removes the duplicated `Game.find`) then `require_participation`
+(`@game.users.include?(Current.session.user)`), both `only: %i[show start play winner]`; ordering
+`set_game → require_participation → body` is what also fixes the latent 500. Sized **Small (~4
+pts)**; non-participant coverage via system specs. Not yet implemented.
+
 ---
 
 _Not selected this round (still in the reports for later): persist the game-over lifecycle via a `Game#record_turn` deep module — the architecture review's top recommendation and the audit's other High finding (revives "Finished" status and win stats). See `RAILS_AUDIT_REPORT.md` and the architecture HTML report._

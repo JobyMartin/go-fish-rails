@@ -130,8 +130,9 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **No membership check on game actions.** `GamesController#show`/`#start`/`#play` and
   `PlayersController#create` require only authentication, not participation — a non-participant
   can POST against any game id, and hitting `show` for a game you're not in raises
-  `NoMethodError` (`find_player` → `nil`, then `current_player.hand` in the partial). Being
-  fixed as Card 3 of `docs/improvement-cards.md`.
+  `NoMethodError` (`find_player` → `nil`, then `current_player.hand` in the partial). Card 3 of
+  `docs/improvement-cards.md` — **broken down, not yet implemented** (see
+  `docs/brave-card-3-authorize-game-actions.md`).
 
 ## Key context
 
@@ -152,7 +153,8 @@ See `docs/architecture.md` for the full model map and serialization details.
   view conditional. No `type ==` branching remains in source.
 - `docs/improvement-cards.md` — the post-Improvement-2 scoped round: three ~1–2h cards —
   (1) a `RoundResult` feed presenter **(done)**, (2) the shared `Card`/`Deck` extraction
-  **(done)**, (3) authorization on game actions. `RAILS_AUDIT_REPORT.md` (repo root) is the
+  **(done)**, (3) authorization on game actions **(broken down, not yet implemented)**.
+  `RAILS_AUDIT_REPORT.md` (repo root) is the
   full audit behind them; its two other High findings (game-over persistence, authorization)
   map to the gotchas above.
 - `docs/brave-card-1-round-feed-presenter.md` — BRAVE breakdown for Card 1 (the feed presenter),
@@ -168,3 +170,11 @@ See `docs/architecture.md` for the full model map and serialization details.
   whole-deck shuffle) — the full suite stayed green, confirming the Go Fish per-suit shuffle
   was an untested artifact, not pinned behavior. See `spec/models/card_spec.rb` and
   `spec/models/deck_spec.rb`.
+- `docs/brave-card-3-authorize-game-actions.md` — BRAVE breakdown for Card 3 (authorize game
+  actions), **not yet implemented**. Plan: two scoped before_actions in `GamesController` —
+  `set_game` (drops the repeated `Game.find`) then `require_participation`
+  (`@game.users.include?(Current.session.user)`, else redirect to lobby with a flash), both
+  `only: %i[show start play winner]`. Decisions: **include `winner`** (leaks state like `show`);
+  **leave `join` alone** (non-participant action by nature); **redirect-with-flash, not 404**.
+  Sized Small (~4 pts). Non-participant coverage via system specs (the inverse of the existing
+  participant setup in `spec/system/games_spec.rb`).
