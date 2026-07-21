@@ -34,7 +34,14 @@ delegating via `feed_lines`.
 
 ---
 
-## Card 2 — Collapse the duplicated `Card` / `Deck` into one shared module
+## Card 2 — Collapse the duplicated `Card` / `Deck` into one shared module — ✅ Done
+
+**Done:** top-level `::Card`/`::Deck` at `app/models/card.rb`/`app/models/deck.rb`; both games'
+bare `Card`/`Deck` refs resolve to them via constant lookup. `Deck` unified on one whole-deck
+shuffle (Approach A) — the full suite stayed green, confirming the Go Fish per-suit shuffle was
+untested. `objectify` moved onto the shared `Card`; `create_stacked_deck` and stray comments
+removed. Per-game `card_spec`/`deck_spec` merged into `spec/models/card_spec.rb` /
+`spec/models/deck_spec.rb`. Pure refactor, no behavior change.
 
 **Goal**
 There is one `Card` implementation and one `Deck` implementation. `GoFish` and `CrazyEights` reuse them; the games' only difference (shuffle strategy) is passed in, not forked into a whole second copy. Both games' specs stay green, and each STI subclass keeps its explicit serializer.

@@ -142,7 +142,7 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/improvement-plan.md` — foundation work for adding a third game: (1) lock the shared
   "game contract" with tests, then (2) replace type-branching with polymorphic dispatch + a
   game registry. **Both improvements are complete.** The optional stretch item (extract a
-  shared `Card`/`Deck`) is now scoped as Card 2 of `docs/improvement-cards.md`.
+  shared `Card`/`Deck`) is now Card 2 of `docs/improvement-cards.md`, **complete**.
 - `docs/improvement-1-breakdown.md` — Improvement 1 (tests-only), **complete**: STI subclass
   specs, serialization round-trips, the shared `"a persisted card game"` example, and the
   winner/game-over system specs.
@@ -151,10 +151,10 @@ See `docs/architecture.md` for the full model map and serialization details.
   polymorphic `build_game`, the unified `play_turn(params)`, and removal of the last stray
   view conditional. No `type ==` branching remains in source.
 - `docs/improvement-cards.md` — the post-Improvement-2 scoped round: three ~1–2h cards —
-  (1) a `RoundResult` feed presenter **(done)**, (2) the shared `Card`/`Deck` extraction,
-  (3) authorization on game actions. `RAILS_AUDIT_REPORT.md` (repo root) is the full audit
-  behind them; its two other High findings (game-over persistence, authorization) map to the
-  gotchas above.
+  (1) a `RoundResult` feed presenter **(done)**, (2) the shared `Card`/`Deck` extraction
+  **(done)**, (3) authorization on game actions. `RAILS_AUDIT_REPORT.md` (repo root) is the
+  full audit behind them; its two other High findings (game-over persistence, authorization)
+  map to the gotchas above.
 - `docs/brave-card-1-round-feed-presenter.md` — BRAVE breakdown for Card 1 (the feed presenter),
   **complete**. `RoundFeed` (+ `FeedLine`) at `app/models/round_feed.rb` is a namespace-neutral
   presentation seam: each `RoundResult#feed_lines` delegates to it, and both game partials
@@ -162,9 +162,9 @@ See `docs/architecture.md` for the full model map and serialization details.
   instead of branching on `for_other_players.count`. The `count == 3` path was dead then and is
   **preserved** (still dead) — a pure, behavior-identical refactor. See `spec/models/round_feed_spec.rb`.
 - `docs/brave-card-2-shared-card-deck.md` — BRAVE breakdown for Card 2 (shared `Card`/`Deck`),
-  **planned, not yet built**. Decisions locked: flat top-level `::Card`/`::Deck` (bare `Card`/`Deck`
-  refs in the game namespaces resolve to them for free); **Approach A** — collapse the fork and use
-  one whole-deck shuffle rather than parameterizing it, because the Go Fish per-suit shuffle is an
-  untested artifact (neither `deck_spec` pins it). `objectify` moves onto the shared `Card`; delete
-  the dead `create_stacked_deck` and stray comments. Fallback if the suite goes red: pass the shuffle
-  in (the card's original wording). Sized X-Small.
+  **complete**. `Card`/`Deck` now live at top level (`app/models/card.rb`, `app/models/deck.rb`);
+  the per-game copies are deleted and bare `Card`/`Deck` refs inside `module GoFish` /
+  `module CrazyEights` resolve to them via constant lookup. Went with Approach A (one
+  whole-deck shuffle) — the full suite stayed green, confirming the Go Fish per-suit shuffle
+  was an untested artifact, not pinned behavior. See `spec/models/card_spec.rb` and
+  `spec/models/deck_spec.rb`.

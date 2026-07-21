@@ -34,5 +34,6 @@ Do not model an AI player around it; there isn't one.
   active card's rank or suit, or any 8).
 - `CrazyEights::RoundResult#for_other_players` narrates the placed card and, for a wild 8,
   the chosen suit.
-- `CrazyEights::Card.objectify("K Spades")` parses a `"<rank> <suit>"` string back into a
-  `Card` (used when a placed card arrives from the controller/params).
+- `Card.objectify("K Spades")` parses a `"<rank> <suit>"` string back into a `Card` (used
+  when a placed card arrives from the controller/params). Shared with Go Fish — not
+  Crazy-Eights-specific despite living on the `Card` primitive first used here.

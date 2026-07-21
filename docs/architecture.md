@@ -28,13 +28,17 @@ Under `app/models/go_fish/` and `app/models/crazy_eights/`:
   Crazy Eights, `william`). Contains all the rules and turn logic.
 - `Player` — a **plain Ruby** player, keyed by `user.id`. Holds that player's hand (and,
   for Go Fish, `books`). Never touches the database.
-- `Card`, `Deck` — a standard 52-card deck.
 - `RoundResult` — a record of what happened on a turn, used to narrate the feed.
 - Go Fish only: `Book` — a completed four-of-a-kind.
 - Crazy Eights only: `William` — **the discard pile** (see below).
 
 Don't confuse the two `Player`s: `Player` (AR) is persistence/join; `GoFish::Player` and
 `CrazyEights::Player` are per-game responsibilities held in memory and serialized.
+
+`Card` and `Deck` are shared primitives at the top level (`app/models/card.rb`,
+`app/models/deck.rb`), not per-game — both games reuse the same 52-card deck and shuffle.
+Bare `Card`/`Deck` references inside `module GoFish` / `module CrazyEights` resolve to
+these via Ruby's constant lookup.
 
 ## How the layers connect: serialization
 
