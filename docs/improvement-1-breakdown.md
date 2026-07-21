@@ -25,9 +25,15 @@ Ruby's implicit block param `it`, TDD/system-spec-first mindset. System specs ru
 - ✅ **A. STI subclass specs** — done. Both branches of each game's `play_turn` are pinned
   in `spec/models/go_fish_game_spec.rb` (A1 normal ask, A2 fish-and-skip) and
   `spec/models/crazy_eights_game_spec.rb` (A3 place a given card, A4 draw-until-playable).
-- ⬜ B. Serialization round-trip specs
-- ⬜ D. Shared example (`"a persisted card game"`)
-- ⬜ C. System specs (winner / game-over)
+- ✅ B. Serialization round-trip specs
+- ✅ D. Shared example (`"a persisted card game"`) — winner clause included, CE marked `pending`
+- ✅ C. System specs (winner / game-over) — Go Fish winner screen via `winner_game_path`;
+  Crazy Eights winner screen `pending` on the undefined `CrazyEights::Game#winner`
+
+**Improvement 1 complete.** The two model specs + shared example + system specs are green
+(4 pending: 2 deliberate CE `winner` handoff markers, 2 pre-existing). Next: Improvement 2
+adds `CrazyEights::Game#winner` and replaces the STI type-branching — those pending markers
+will flip to FIXED as the handoff signal.
 
 ## Order of work
 

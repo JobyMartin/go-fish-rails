@@ -46,6 +46,4 @@ RSpec.describe GoFishGame, type: :model do
       expect(game.reload.game_state).to be_nil
     end
   end
-
-
 end
