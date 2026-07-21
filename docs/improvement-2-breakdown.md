@@ -1,9 +1,20 @@
+
 # Improvement 2 — Step-by-Step: "Replace type-branching with polymorphic dispatch + one game registry"
 
 > Source: `docs/improvement-plan.md` → *Improvement 2*.
 > This is a **refactor**. Improvement 1 already pinned the behavior with model specs, a
 > shared example (`"a persisted card game"`), and winner/game-over system specs — those are
 > your safety net. Keep `bundle exec rspec` green at every step.
+
+## Progress
+
+**Improvement 2 complete.** All five deliverables shipped (A → E), each on its own commit:
+A `CrazyEights::Game#winner`; B the `Game::PLAYABLE_TYPES` registry; C polymorphic
+`build_game` (silent else-trap deleted + regression guard); D unified `play_turn(params)`
+(controller is one polymorphic call, `play_crazy_eights` gone); E removed the last stray
+`game.type` view conditional. Full suite green (205 examples, 0 failures); no `type ==`
+branching remains in source. Deferred: the `params[:rank].chars.first` truncation bug (left
+as-is) and the optional stretch item (shared `Card`/`Deck`).
 
 ## Guiding rule for this improvement
 

@@ -76,6 +76,12 @@ The AR `Player` is just the join table between `User` and `Game`. The domain
 `GoFish::Player` / `CrazyEights::Player` are plain objects that hold per-game
 responsibilities and never touch the database (they're keyed by `user.id`).
 
+**Adding a game is polymorphic, not conditional** (as of Improvement 2). Each STI subclass
+answers `build_game`, `play_turn(params)`, and `winner`; `Game::PLAYABLE_TYPES` is the single
+registry the lobby form and `GamesController#create` read from. A third game = a new
+`<name>_game.rb` (coder + those three methods), the `app/models/<name>/` domain namespace,
+a view partial, and one registry entry — **no shared `if/else` to touch.**
+
 See `docs/architecture.md` for the full model map and serialization details.
 
 ## Conventions (that RuboCop won't catch)
@@ -104,26 +110,18 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **Routes are inconsistent** — they grew through the apprenticeship's learning phases
   (e.g. `users/show` as a GET path, repeated `member` blocks). Don't treat existing route
   style as the intended convention.
-- **`winner` is Go Fish-only (latent bug).** `GamesController#winner` calls
-  `game_state.winner`, but only `GoFish::Game` defines `winner` — `CrazyEights::Game` does
-  not, so the CE winner screen raises `NoMethodError`. Tracked for fix in the improvement
-  plan (Improvement 2). Related trap: `GamesController#play` checks `game_over?` *before*
-  playing, so the turn that ends a game redirects to the game page, not the winner screen —
-  the winner screen is only reached on a later request against an already-over game.
-- **Type-branching bypasses the STI polymorphism** in three places (`Game#build_game`'s
-  `if/else`, `GamesController#play`, and a stray conditional in the Crazy Eights partial),
-  and `GamesController#create` rebuilds the class via string surgery
-  (`"#{type}Game".delete(' ').constantize`). These are the target of Improvement 2.
-- **`GoFishGame#play_turn` truncates the rank** via `inquired_rank.chars.first`, so a two-
+- **`GamesController#play` checks `game_over?` *before* playing the turn**, so the turn that
+  *ends* a game redirects to the game page, not the winner screen — the winner screen is only
+  reached on a later request against an already-over game. (The `CrazyEights::Game#winner`
+  `NoMethodError` this used to trip over is fixed as of Improvement 2.)
+- **`GoFishGame#play_turn` truncates the rank** via `params[:rank].chars.first`, so a two-
   character ask (`'10'`) silently becomes `'1'` — an invalid rank. Latent bug; single-char
-  ranks (`'A'`, `'K'`) are unaffected.
-- **The two `play_turn` signatures differ, and the CE domain ignores one arg.**
-  `GoFishGame#play_turn(inquired_player_id, inquired_rank)` vs.
-  `CrazyEightsGame#play_turn(active_card, placed_card = nil)`. In Crazy Eights, `active_card`
-  is a `Card`, `placed_card` is a `"rank suit"` string (`Card.objectify`'d); the *domain*
-  `CrazyEights::Game#play_turn` ignores `active_card` entirely — it only matters to the AR
-  wrapper's no-`placed_card` branch, which draws from the deck until a card matches the
-  active card's suit or rank. Improvement 2 unifies these into one polymorphic signature.
+  ranks (`'A'`, `'K'`) are unaffected. (Untouched by Improvement 2 — deliberately out of scope.)
+- **`CrazyEightsGame#play_turn` computes its own `active_card`** (always `william.active_card`)
+  and reads `params[:rank]` as the placed card; a **blank `:rank`** triggers the
+  `draw_until_playable` loop — drawing from the deck until a card matches the active card's
+  suit or rank. Both subclasses now share one polymorphic `play_turn(params)` signature but
+  read different keys (Go Fish: `:player`/`:rank`; Crazy Eights: `:rank`/`:suit`).
 
 ## Key context
 
@@ -131,12 +129,14 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/testing.md` — TDD workflow and spec organization
 - `docs/games/go-fish.md` — Go Fish rules and implementation notes
 - `docs/games/crazy-eights.md` — Crazy Eights rules, William, and implementation notes
-- `docs/improvement-plan.md` — foundation work before a third game is added: (1) lock the
-  shared "game contract" with tests, then (2) replace type-branching with polymorphic
-  dispatch + a game registry. Read this before touching game dispatch or serialization.
-- `docs/improvement-1-breakdown.md` — step-by-step Given/When/Then for Improvement 1
-  (tests-only). **Improvement 1 is complete**: STI subclass `play_turn` specs, serialization
-  round-trips, the shared `"a persisted card game"` example, and the winner/game-over system
-  specs are all green. Two specs are deliberately `pending` on the undefined
-  `CrazyEights::Game#winner` (shared example + system spec) — they auto-flag **FIXED** when
-  Improvement 2 defines that method, which is the intended handoff signal.
+- `docs/improvement-plan.md` — foundation work for adding a third game: (1) lock the shared
+  "game contract" with tests, then (2) replace type-branching with polymorphic dispatch + a
+  game registry. **Both improvements are complete.** Only the optional stretch item (extract a
+  shared `Card`/`Deck`) remains unstarted.
+- `docs/improvement-1-breakdown.md` — Improvement 1 (tests-only), **complete**: STI subclass
+  specs, serialization round-trips, the shared `"a persisted card game"` example, and the
+  winner/game-over system specs.
+- `docs/improvement-2-breakdown.md` — Improvement 2 (the refactor), **complete**: all five
+  deliverables done — `CrazyEights::Game#winner`, the `Game::PLAYABLE_TYPES` registry,
+  polymorphic `build_game`, the unified `play_turn(params)`, and removal of the last stray
+  view conditional. No `type ==` branching remains in source.
