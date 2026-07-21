@@ -58,6 +58,11 @@ bin/rubocop  # rubocop-rails-omakase house style
 bin/ci       # run the full CI pipeline locally (setup + rubocop + security scans)
 ```
 
+## Git / commits
+
+- **Do not add a `Co-Authored-By: Claude` trailer** (or any AI co-author/attribution
+  line) to commit messages or PR bodies. Keep the message to the change itself.
+
 ## Architecture (big picture)
 
 Persisted games use **single-table inheritance**: a `Game` base model with `GoFishGame`
@@ -99,6 +104,16 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **Routes are inconsistent** — they grew through the apprenticeship's learning phases
   (e.g. `users/show` as a GET path, repeated `member` blocks). Don't treat existing route
   style as the intended convention.
+- **`winner` is Go Fish-only (latent bug).** `GamesController#winner` calls
+  `game_state.winner`, but only `GoFish::Game` defines `winner` — `CrazyEights::Game` does
+  not, so the CE winner screen raises `NoMethodError`. Tracked for fix in the improvement
+  plan (Improvement 2). Related trap: `GamesController#play` checks `game_over?` *before*
+  playing, so the turn that ends a game redirects to the game page, not the winner screen —
+  the winner screen is only reached on a later request against an already-over game.
+- **Type-branching bypasses the STI polymorphism** in three places (`Game#build_game`'s
+  `if/else`, `GamesController#play`, and a stray conditional in the Crazy Eights partial),
+  and `GamesController#create` rebuilds the class via string surgery
+  (`"#{type}Game".delete(' ').constantize`). These are the target of Improvement 2.
 
 ## Key context
 
@@ -106,3 +121,10 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/testing.md` — TDD workflow and spec organization
 - `docs/games/go-fish.md` — Go Fish rules and implementation notes
 - `docs/games/crazy-eights.md` — Crazy Eights rules, William, and implementation notes
+- `docs/improvement-plan.md` — foundation work before a third game is added: (1) lock the
+  shared "game contract" with tests, then (2) replace type-branching with polymorphic
+  dispatch + a game registry. Read this before touching game dispatch or serialization.
+- `docs/improvement-1-breakdown.md` — step-by-step Given/When/Then for Improvement 1
+  (tests-only). Note the current test gaps it addresses: `spec/models/go_fish_game_spec.rb`
+  and `spec/models/crazy_eights_game_spec.rb` are empty `pending` stubs, and the winner /
+  game-over system spec is `pending: 'broken'`.
