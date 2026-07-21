@@ -153,6 +153,21 @@ RSpec.describe CrazyEights::Game, type: :model do
     end
   end
 
+  describe '#winner' do
+    let(:num_players) { 2 }
+    let!(:players) { Array.new(num_players) { |id| CrazyEights::Player.new(id) } }
+    let!(:game) { described_class.new(players) }
+
+    before do
+      game.deal!
+      game.players.first.hand = []
+    end
+
+    it 'returns the player who emptied their hand' do
+      expect(game.winner).to eq game.players.first
+    end
+  end
+
   describe '#play_turn' do
     let!(:placed_card) { CrazyEights::Card.new('2', 'Hearts') }
     it 'removes the placed card from the players hand' do

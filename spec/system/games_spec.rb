@@ -330,7 +330,7 @@ RSpec.describe 'Games', type: :system do
       game.save!
     end
 
-    it 'shows the winner screen', pending: 'CrazyEights::Game#winner undefined — fixed in Improvement 2' do
+    it 'shows the winner screen' do
       visit winner_game_path(game)
       expect(page).to have_content 'winner'
     end

@@ -26,8 +26,8 @@ RSpec.shared_examples 'a persisted card game' do
     expect(game.reload.game_state.as_json).to eq before_json
   end
 
-  it 'reports a winner' do
-    pending 'CrazyEights::Game#winner undefined — fixed in Improvement 2' if game.is_a?(CrazyEightsGame)
+  it 'reports a winner once the game is over' do
+    game.game_state.current_player.hand = []
     expect(game.game_state.winner).to be_present
   end
 end
