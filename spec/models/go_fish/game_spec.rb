@@ -24,7 +24,7 @@ RSpec.describe GoFish::Game, type: :model do
   describe "#load" do
     before do
       go_fish_game.deal!
-      go_fish_game.players.first.books << GoFish::Book.new([GoFish::Card.new])
+      go_fish_game.players.first.books << GoFish::Book.new([Card.new])
     end
 
     let!(:original_first_hand) { go_fish_game.players.first.hand }
@@ -46,7 +46,7 @@ RSpec.describe GoFish::Game, type: :model do
       game = described_class.load(json.as_json)
       new_top_card = game.deck.cards.first
 
-      expect(game.deck).to be_a GoFish::Deck
+      expect(game.deck).to be_a Deck
       expect(new_top_card.rank).to eq original_top_card.rank
     end
 
@@ -70,7 +70,7 @@ RSpec.describe GoFish::Game, type: :model do
         expect(it).to be_a GoFish::RoundResult
         expect(it.user_taken_from).to be_a GoFish::Player
         expect(it.user_given_to).to be_a GoFish::Player
-        expect(it.cards_exchanged).to all be_a GoFish::Card
+        expect(it.cards_exchanged).to all be_a Card
       end
     end
   end
@@ -85,7 +85,7 @@ RSpec.describe GoFish::Game, type: :model do
 
         expect(dealt_players_hands.first.count).to eq small_game_hand
         dealt_players_hands.first.each do
-          expect(it).to be_a GoFish::Card
+          expect(it).to be_a Card
         end
       end
     end
@@ -101,7 +101,7 @@ RSpec.describe GoFish::Game, type: :model do
 
         expect(dealt_players_hands.first.count).to eq large_game_hand
         dealt_players_hands.first.each do
-          expect(it).to be_a GoFish::Card
+          expect(it).to be_a Card
         end
       end
     end
@@ -121,7 +121,7 @@ RSpec.describe GoFish::Game, type: :model do
   end
 
   describe '#play_turn' do
-    let(:card) { GoFish::Card.new('A', 'Spades') }
+    let(:card) { Card.new('A', 'Spades') }
     let(:player_in_question) { go_fish_game.players.last }
     let(:inquired_player_id) { go_fish_game.players.last.id }
     let(:inquired_player_id2) { go_fish_game.players.first.id }
@@ -139,7 +139,7 @@ RSpec.describe GoFish::Game, type: :model do
         go_fish_game.play_turn(inquired_player_id, inquired_rank)
         expect(player_in_question.hand).to be_empty
         expect(go_fish_game.current_player.hand_size).to eq default_hand_size + 1
-        expect(go_fish_game.current_player.hand).to all be_a GoFish::Card
+        expect(go_fish_game.current_player.hand).to all be_a Card
       end
 
       it 'does not fish a card from the deck' do
@@ -186,7 +186,7 @@ RSpec.describe GoFish::Game, type: :model do
       # let!(:current_user) { go_fish_game.current_user }
 
       before do
-        go_fish_game.deck.cards = [GoFish::Card.new('A', 'Spades')]
+        go_fish_game.deck.cards = [Card.new('A', 'Spades')]
         go_fish_game.play_turn(inquired_player_index, matched_rank)
       end
 
@@ -203,7 +203,7 @@ RSpec.describe GoFish::Game, type: :model do
     context 'when one player has more books than the others' do
       before do
         game.players.last.books = []
-        game.current_player.books = [GoFish::Book.new([GoFish::Card.new('A', 'Spades')])]
+        game.current_player.books = [GoFish::Book.new([Card.new('A', 'Spades')])]
       end
 
       it 'returns the winner' do
@@ -213,8 +213,8 @@ RSpec.describe GoFish::Game, type: :model do
 
     context 'when all players have the same amount of books' do
       before do
-        game.players.last.books = [GoFish::Book.new([GoFish::Card.new('K', 'Spades')])]
-        game.current_player.books = [GoFish::Book.new([GoFish::Card.new('A', 'Spades')])]
+        game.players.last.books = [GoFish::Book.new([Card.new('K', 'Spades')])]
+        game.current_player.books = [GoFish::Book.new([Card.new('A', 'Spades')])]
       end
 
       it 'displays the winner' do
@@ -255,7 +255,7 @@ RSpec.describe GoFish::Game, type: :model do
 
     context 'when the deck is not empty and the players are out of cards' do
       before do
-        game.deck = GoFish::Deck.new
+        game.deck = Deck.new
         game.players.each { it.hand = [] }
       end
 

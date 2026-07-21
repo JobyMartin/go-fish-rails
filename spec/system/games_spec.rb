@@ -263,7 +263,7 @@ RSpec.describe 'Games', type: :system do
       before do
         game.start
         game.game_state.players.each do |player|
-          player.hand = [GoFish::Card.new('A')]
+          player.hand = [Card.new('A')]
         end
         game.save!
       end
@@ -279,8 +279,8 @@ RSpec.describe 'Games', type: :system do
     context 'when the card makes a book' do
       before do
         game.start
-        game.game_state.players.first.hand = [GoFish::Card.new]
-        game.game_state.players.last.hand = [GoFish::Card.new, GoFish::Card.new, GoFish::Card.new]
+        game.game_state.players.first.hand = [Card.new]
+        game.game_state.players.last.hand = [Card.new, Card.new, Card.new]
         game.save!
       end
 

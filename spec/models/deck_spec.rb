@@ -1,7 +1,7 @@
 require 'rails_helper'
 
-RSpec.describe CrazyEights::Deck, type: :model do
-  let(:deck) { CrazyEights::Deck.new }
+RSpec.describe Deck, type: :model do
+  let(:deck) { Deck.new }
   let(:full_deck_size) { 52 }
 
   it 'should have 52 cards when created' do
@@ -11,7 +11,7 @@ RSpec.describe CrazyEights::Deck, type: :model do
   describe '#top_card' do
     it 'should deal the top card' do
       card = deck.top_card
-      expect(card).to be_a CrazyEights::Card
+      expect(card).to be_a Card
       expect(card).to respond_to(:rank)
       expect(deck.cards_left).to eq full_deck_size - 1
     end
@@ -24,7 +24,7 @@ RSpec.describe CrazyEights::Deck, type: :model do
   end
 
   describe '#shuffle' do
-    let(:example_deck) { CrazyEights::Deck.new }
+    let(:example_deck) { Deck.new }
     before { deck.shuffle }
 
     it 'shuffles the deck' do
@@ -48,4 +48,3 @@ RSpec.describe CrazyEights::Deck, type: :model do
     end
   end
 end
-

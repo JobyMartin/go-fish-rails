@@ -48,7 +48,7 @@
 
           = simple_form_for :play_turn, url: play_game_path(game) do |f|
             = f.input :rank, as: :select, collection: game.game_state.valid_player_cards(current_player), selected: game.game_state.valid_player_cards(current_player).first
-            = f.input :suit, as: :select, collection: CrazyEights::Card::SUITS
+            = f.input :suit, as: :select, collection: Card::SUITS
             - if current_player.id == implementation.current_player.id
               = f.button :submit, 'Place card'
             - else

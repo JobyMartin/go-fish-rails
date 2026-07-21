@@ -5,7 +5,7 @@ class CrazyEightsGame < Game
     active_card = game_state.william.active_card
     placed_card = params[:rank]
     if placed_card.present?
-      game_state.play_turn(active_card, CrazyEights::Card.objectify(placed_card))
+      game_state.play_turn(active_card, Card.objectify(placed_card))
     else
       draw_until_playable(active_card)
     end
