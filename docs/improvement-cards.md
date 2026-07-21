@@ -50,6 +50,15 @@ The audit rated this **Medium (Code Design)** and the architecture review listed
 - Note from `docs/improvement-plan.md` (stretch item) — sequence this last, since a shared module touches every domain spec
 - Cleanup opportunity while here: the test-only `Deck#create_stacked_deck` and commented-out lines in `card.rb`/`deck.rb`
 
+**Note (from BRAVE breakdown — `docs/brave-card-2-shared-card-deck.md`):** the two `Card` classes
+are byte-for-byte identical but for `objectify` (used once, in `crazy_eights_game.rb:8`, and generic
+enough to share); the two `Deck`s differ only in shuffle, and **neither `deck_spec` pins that
+difference** — the Go Fish per-suit shuffle is very likely an artifact. Decision: **flat top-level
+`::Card`/`::Deck`** (bare refs in the game namespaces resolve for free) and **Approach A** — collapse
+the fork to one whole-deck shuffle rather than passing a strategy in; fall back to "pass the shuffle
+in" only if the full suite goes red. `create_stacked_deck` is dead (zero callers) — remove it.
+Sized X-Small (~under 2h).
+
 ---
 
 ## Card 3 — Authorize game actions to participants

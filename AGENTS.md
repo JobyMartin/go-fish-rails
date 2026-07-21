@@ -161,3 +161,10 @@ See `docs/architecture.md` for the full model map and serialization details.
   iterate `result.feed_lines` (styling by `role`: `action`/`player_response`/`game_response`)
   instead of branching on `for_other_players.count`. The `count == 3` path was dead then and is
   **preserved** (still dead) — a pure, behavior-identical refactor. See `spec/models/round_feed_spec.rb`.
+- `docs/brave-card-2-shared-card-deck.md` — BRAVE breakdown for Card 2 (shared `Card`/`Deck`),
+  **planned, not yet built**. Decisions locked: flat top-level `::Card`/`::Deck` (bare `Card`/`Deck`
+  refs in the game namespaces resolve to them for free); **Approach A** — collapse the fork and use
+  one whole-deck shuffle rather than parameterizing it, because the Go Fish per-suit shuffle is an
+  untested artifact (neither `deck_spec` pins it). `objectify` moves onto the shared `Card`; delete
+  the dead `create_stacked_deck` and stray comments. Fallback if the suite goes red: pass the shuffle
+  in (the card's original wording). Sized X-Small.
