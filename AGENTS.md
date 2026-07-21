@@ -127,12 +127,12 @@ See `docs/architecture.md` for the full model map and serialization details.
   computed, for the winner screen. So `Game#status` never returns `Finished` and
   `StatsController` win % is permanently `0%`. Surfaced by the rails-audit; deferred out of the
   current improvement round (see `docs/improvement-cards.md`).
-- **No membership check on game actions.** `GamesController#show`/`#start`/`#play` and
-  `PlayersController#create` require only authentication, not participation — a non-participant
-  can POST against any game id, and hitting `show` for a game you're not in raises
-  `NoMethodError` (`find_player` → `nil`, then `current_player.hand` in the partial). Card 3 of
-  `docs/improvement-cards.md` — **broken down, not yet implemented** (see
-  `docs/brave-card-3-authorize-game-actions.md`).
+- **Game actions are participant-gated; `join` is not.** `GamesController` runs `set_game` then
+  `require_participation` (`before_action`, `only: %i[show start play winner]`) — a non-participant
+  is redirected to the lobby with a flash instead of reading state or hitting the old `show`
+  `NoMethodError` (`find_player` → `nil` → `current_player.hand`). `PlayersController#create` (join)
+  is **deliberately left open** — joining is a non-participant action by nature. Card 3 of
+  `docs/improvement-cards.md`, **complete** (see `docs/brave-card-3-authorize-game-actions.md`).
 
 ## Key context
 
@@ -153,10 +153,10 @@ See `docs/architecture.md` for the full model map and serialization details.
   view conditional. No `type ==` branching remains in source.
 - `docs/improvement-cards.md` — the post-Improvement-2 scoped round: three ~1–2h cards —
   (1) a `RoundResult` feed presenter **(done)**, (2) the shared `Card`/`Deck` extraction
-  **(done)**, (3) authorization on game actions **(broken down, not yet implemented)**.
+  **(done)**, (3) authorization on game actions **(done)**.
   `RAILS_AUDIT_REPORT.md` (repo root) is the
-  full audit behind them; its two other High findings (game-over persistence, authorization)
-  map to the gotchas above.
+  full audit behind them; its one remaining High finding (game-over persistence)
+  maps to the gotcha above.
 - `docs/brave-card-1-round-feed-presenter.md` — BRAVE breakdown for Card 1 (the feed presenter),
   **complete**. `RoundFeed` (+ `FeedLine`) at `app/models/round_feed.rb` is a namespace-neutral
   presentation seam: each `RoundResult#feed_lines` delegates to it, and both game partials
@@ -171,10 +171,12 @@ See `docs/architecture.md` for the full model map and serialization details.
   was an untested artifact, not pinned behavior. See `spec/models/card_spec.rb` and
   `spec/models/deck_spec.rb`.
 - `docs/brave-card-3-authorize-game-actions.md` — BRAVE breakdown for Card 3 (authorize game
-  actions), **not yet implemented**. Plan: two scoped before_actions in `GamesController` —
-  `set_game` (drops the repeated `Game.find`) then `require_participation`
-  (`@game.users.include?(Current.session.user)`, else redirect to lobby with a flash), both
-  `only: %i[show start play winner]`. Decisions: **include `winner`** (leaks state like `show`);
-  **leave `join` alone** (non-participant action by nature); **redirect-with-flash, not 404**.
-  Sized Small (~4 pts). Non-participant coverage via system specs (the inverse of the existing
-  participant setup in `spec/system/games_spec.rb`).
+  actions), **complete**. Two scoped before_actions in `GamesController` — `set_game` (drops the
+  repeated `Game.find`) then `require_participation` (`@game.users.include?(Current.session.user)`,
+  else redirect to lobby with a flash), both `only: %i[show start play winner]`. Decisions held:
+  **include `winner`** (leaks state like `show`); **leave `join` alone**; **redirect-with-flash,
+  not 404**. Discovered during implementation: **the application layout rendered no flash at all**
+  (only the auth pages did), so `flash[:alert]`/`flash[:notice]` had to be wired into
+  `app/views/layouts/application.html.slim` for the redirect message to surface. Non-participant
+  coverage is system-spec only (`spec/system/games_spec.rb`) — the shared `before_action` guards
+  all four actions, so the two GET cases pin the POST cases too.

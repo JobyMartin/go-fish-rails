@@ -90,7 +90,9 @@ resolved: **redirect to the lobby with a flash**, not 404. Approach: two scoped 
 `GamesController` — `set_game` (removes the duplicated `Game.find`) then `require_participation`
 (`@game.users.include?(Current.session.user)`), both `only: %i[show start play winner]`; ordering
 `set_game → require_participation → body` is what also fixes the latent 500. Sized **Small (~4
-pts)**; non-participant coverage via system specs. Not yet implemented.
+pts)**; non-participant coverage via system specs. **Complete** — see
+`spec/system/games_spec.rb` (`when the user is not a participant`) and
+`docs/plans/authorize-game-actions-spec-plan.md`.
 
 ---
 

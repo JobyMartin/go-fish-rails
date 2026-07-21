@@ -81,16 +81,21 @@ were bounced and leaves them in the lobby to pick a game they're actually in.
 - **Incremental shipping:** small enough to do in **one pass** (not carved into show-first /
   rest-later). All-or-nothing at this size.
 
-## Implementation Plan
+## Implementation Plan — **complete**
 
-- [ ] Write a failing system spec: a non-participant visiting `game_path(other_game)` is
+- [x] Write a failing system spec: a non-participant visiting `game_path(other_game)` is
       redirected to `games_path` with the flash and sees no game content.
-- [ ] Add a matching spec (or specs) for the `POST` actions — a non-participant hitting
-      `start`/`play` is redirected and does not mutate the game.
-- [ ] Add `before_action :set_game, only: %i[show start play winner]` and move `@game = Game.find(params[:id])` out of those four action bodies.
-- [ ] Add `before_action :require_participation, only: %i[show start play winner]` running after
+- [x] Cover the `POST` actions (`start`/`play`) — resolved to **system-spec-on-the-GETs only**:
+      one `before_action` guards all four in the same `only:` list, so the `show`/`winner` specs
+      pin the POST paths too. No request specs, per project convention.
+- [x] Add `before_action :set_game, only: %i[show start play winner]` and move `@game = Game.find(params[:id])` out of those four action bodies.
+- [x] Add `before_action :require_participation, only: %i[show start play winner]` running after
       `set_game`; redirect to lobby with `alert:` when `@game.users` excludes the current user.
-- [ ] Confirm ordering: `set_game` → `require_participation` → action; verify the non-participant
+- [x] Confirm ordering: `set_game` → `require_participation` → action; verify the non-participant
       `show` no longer reaches `current_player.hand`.
-- [ ] Run the full suite — new specs green, existing happy-path system specs still green.
-- [ ] Run `bin/rubocop`.
+- [x] Run the full suite — new specs green, existing happy-path system specs still green.
+- [x] Run `bin/rubocop`.
+
+**Unplanned discovery:** the application layout (`app/views/layouts/application.html.slim`)
+rendered no flash at all — only the auth pages did — so the redirect's `alert:` never surfaced.
+Fixed by wiring `flash[:alert]`/`flash[:notice]` into the layout, matching the auth-page pattern.
