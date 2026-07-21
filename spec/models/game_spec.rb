@@ -35,6 +35,22 @@ RSpec.describe Game, type: :model do
     end
   end
 
+  describe '.playable_types' do
+    it 'lists exactly the playable subclasses with labels' do
+      expect(Game.playable_types).to eq('GoFishGame' => 'Go Fish', 'CrazyEightsGame' => 'Crazy Eights')
+    end
+  end
+
+  describe '.playable_class' do
+    it 'returns the subclass for a registered type' do
+      expect(Game.playable_class('CrazyEightsGame')).to eq CrazyEightsGame
+    end
+
+    it 'returns nil for an unregistered type' do
+      expect(Game.playable_class('EvilGame')).to be_nil
+    end
+  end
+
   describe '#start' do
   let!(:game) { create(:game) }
   let!(:player) { create(:player, user:, game:) }

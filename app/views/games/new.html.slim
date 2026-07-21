@@ -1,7 +1,7 @@
 
 = simple_form_for @game do |f|
   = f.input :name
-  = f.input :type, collection: ['Go Fish', 'Crazy Eights'], include_blank: false
+  = f.input :type, collection: Game.playable_types.map { |type, label| [label, type] }, include_blank: false
 
   = content_for :modal_footer do
     = f.button :submit, "Create Game", form: f.id

@@ -69,6 +69,10 @@ RSpec.describe 'Games', type: :system do
       fill_in 'Name', with: 'Toast'
     end
 
+    it 'offers every registry entry in the type select' do
+      expect(page).to have_select('Type', with_options: Game.playable_types.values)
+    end
+
     it 'creates a GoFishGame' do
       select 'Go Fish', from: 'Type'
       expect do

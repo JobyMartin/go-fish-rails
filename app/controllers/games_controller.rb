@@ -11,8 +11,7 @@ class GamesController < ApplicationController
   end
 
   def create
-    type = params[:game][:type]
-    type_class = "#{type}Game".delete(' ').constantize
+    type_class = Game.playable_class(params[:game][:type])
     @game = type_class.new(game_params)
     @player = @game.players.new(user: Current.session.user)
 
@@ -72,6 +71,6 @@ class GamesController < ApplicationController
   end
 
   def game_params
-    params.require(:game).permit(:name, :game_type)
+    params.require(:game).permit(:name)
   end
 end

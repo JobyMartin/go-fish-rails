@@ -11,7 +11,15 @@ class Game < ApplicationRecord
   IN_PROGRESS_MESSAGE = 'In progress'
   FINISHED_MESSAGE = 'Finished'
   GO_FISH_GAME_TYPE = 'GoFishGame'
+  PLAYABLE_TYPES = { 'GoFishGame' => 'Go Fish', 'CrazyEightsGame' => 'Crazy Eights' }.freeze
 
+  def self.playable_types
+    PLAYABLE_TYPES
+  end
+
+  def self.playable_class(type)
+    type.constantize if playable_types.key?(type)
+  end
 
   def status
     return WAITING_MESSAGE if started_at.nil?
