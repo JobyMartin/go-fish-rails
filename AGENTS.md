@@ -135,8 +135,8 @@ See `docs/architecture.md` for the full model map and serialization details.
   shared "game contract" with tests, then (2) replace type-branching with polymorphic
   dispatch + a game registry. Read this before touching game dispatch or serialization.
 - `docs/improvement-1-breakdown.md` — step-by-step Given/When/Then for Improvement 1
-  (tests-only). Progress: **Deliverable A (STI subclass `play_turn` specs) is complete** —
-  `spec/models/go_fish_game_spec.rb` and `spec/models/crazy_eights_game_spec.rb` now pin
-  both branches of each game's `play_turn`. Still open: B (serialization round-trips),
-  D (shared `"a persisted card game"` example), and C (the winner / game-over system spec,
-  still `pending: 'broken'`).
+  (tests-only). **Improvement 1 is complete**: STI subclass `play_turn` specs, serialization
+  round-trips, the shared `"a persisted card game"` example, and the winner/game-over system
+  specs are all green. Two specs are deliberately `pending` on the undefined
+  `CrazyEights::Game#winner` (shared example + system spec) — they auto-flag **FIXED** when
+  Improvement 2 defines that method, which is the intended handoff signal.
