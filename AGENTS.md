@@ -122,6 +122,16 @@ See `docs/architecture.md` for the full model map and serialization details.
   `draw_until_playable` loop — drawing from the deck until a card matches the active card's
   suit or rank. Both subclasses now share one polymorphic `play_turn(params)` signature but
   read different keys (Go Fish: `:player`/`:rank`; Crazy Eights: `:rank`/`:suit`).
+- **Game-over is computed but never persisted.** `Game#end` (sets `ended_at`) has no caller,
+  and the `players.winner` boolean is never written — only the in-memory domain `winner` is
+  computed, for the winner screen. So `Game#status` never returns `Finished` and
+  `StatsController` win % is permanently `0%`. Surfaced by the rails-audit; deferred out of the
+  current improvement round (see `docs/improvement-cards.md`).
+- **No membership check on game actions.** `GamesController#show`/`#start`/`#play` and
+  `PlayersController#create` require only authentication, not participation — a non-participant
+  can POST against any game id, and hitting `show` for a game you're not in raises
+  `NoMethodError` (`find_player` → `nil`, then `current_player.hand` in the partial). Being
+  fixed as Card 3 of `docs/improvement-cards.md`.
 
 ## Key context
 
@@ -131,8 +141,8 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/games/crazy-eights.md` — Crazy Eights rules, William, and implementation notes
 - `docs/improvement-plan.md` — foundation work for adding a third game: (1) lock the shared
   "game contract" with tests, then (2) replace type-branching with polymorphic dispatch + a
-  game registry. **Both improvements are complete.** Only the optional stretch item (extract a
-  shared `Card`/`Deck`) remains unstarted.
+  game registry. **Both improvements are complete.** The optional stretch item (extract a
+  shared `Card`/`Deck`) is now scoped as Card 2 of `docs/improvement-cards.md`.
 - `docs/improvement-1-breakdown.md` — Improvement 1 (tests-only), **complete**: STI subclass
   specs, serialization round-trips, the shared `"a persisted card game"` example, and the
   winner/game-over system specs.
@@ -140,3 +150,14 @@ See `docs/architecture.md` for the full model map and serialization details.
   deliverables done — `CrazyEights::Game#winner`, the `Game::PLAYABLE_TYPES` registry,
   polymorphic `build_game`, the unified `play_turn(params)`, and removal of the last stray
   view conditional. No `type ==` branching remains in source.
+- `docs/improvement-cards.md` — the post-Improvement-2 scoped round: three ~1–2h cards —
+  (1) a `RoundResult` feed presenter **(done)**, (2) the shared `Card`/`Deck` extraction,
+  (3) authorization on game actions. `RAILS_AUDIT_REPORT.md` (repo root) is the full audit
+  behind them; its two other High findings (game-over persistence, authorization) map to the
+  gotchas above.
+- `docs/brave-card-1-round-feed-presenter.md` — BRAVE breakdown for Card 1 (the feed presenter),
+  **complete**. `RoundFeed` (+ `FeedLine`) at `app/models/round_feed.rb` is a namespace-neutral
+  presentation seam: each `RoundResult#feed_lines` delegates to it, and both game partials
+  iterate `result.feed_lines` (styling by `role`: `action`/`player_response`/`game_response`)
+  instead of branching on `for_other_players.count`. The `count == 3` path was dead then and is
+  **preserved** (still dead) — a pure, behavior-identical refactor. See `spec/models/round_feed_spec.rb`.
