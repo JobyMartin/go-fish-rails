@@ -311,6 +311,31 @@ RSpec.describe 'Games', type: :system do
     end
   end
 
+  context 'when the user is not a participant' do
+    let!(:game) { create(:game) }
+    let!(:player) { create(:player, user: user2, game:) }
+
+    it 'redirects to the lobby with a flash from the game page' do
+      visit game_path(game)
+
+      expect(page).to have_current_path(games_path)
+      expect(page).to have_content "You're not in that game."
+    end
+
+    it 'shows no game content on the redirect' do
+      visit game_path(game)
+
+      expect(page).to have_no_content 'Start game'
+    end
+
+    it 'redirects to the lobby from the winner screen' do
+      visit winner_game_path(game)
+
+      expect(page).to have_current_path(games_path)
+      expect(page).to have_content "You're not in that game."
+    end
+  end
+
   context 'when a go fish game is over' do
     let!(:game) { create :game }
     let!(:player) { create(:player, user:, game:) }

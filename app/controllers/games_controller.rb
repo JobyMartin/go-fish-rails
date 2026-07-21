@@ -1,5 +1,8 @@
 
 class GamesController < ApplicationController
+  before_action :set_game, only: %i[show start play winner]
+  before_action :require_participation, only: %i[show start play winner]
+
   def index
     @user = Current.session.user
     @games = Game.all
@@ -23,7 +26,6 @@ class GamesController < ApplicationController
   end
 
   def show
-    @game = Game.find(params[:id])
     @started = @game.started_at.present?
     return unless @started
     @implementation = @game.game_state
@@ -32,7 +34,6 @@ class GamesController < ApplicationController
   end
 
   def start
-    @game = Game.find(params[:id])
     @game.start
     redirect_to game_path(@game)
   end
@@ -41,8 +42,6 @@ class GamesController < ApplicationController
     @user_games = Current.session.user.games
   end
   def play
-    @game = Game.find(params[:id])
-
     redirect_to winner_game_path(@game) and return if @game.game_state.game_over?
 
     @game.play_turn(play_turn_params)
@@ -52,11 +51,20 @@ class GamesController < ApplicationController
   end
 
   def winner
-    @game = Game.find(params[:id])
     @winner = @game.game_state.winner
   end
 
   private
+
+  def set_game
+    @game = Game.find(params[:id])
+  end
+
+  def require_participation
+    return if @game.users.include?(Current.session.user)
+
+    redirect_to games_path, alert: "You're not in that game."
+  end
 
   def play_turn_params
     params.require(:play_turn).permit(:player, :rank, :suit)
