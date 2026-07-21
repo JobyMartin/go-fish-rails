@@ -26,22 +26,18 @@ RSpec.describe GoFishGame, type: :model do
     end
   end
 
-  describe 'game_state serialization' do
+  describe 'shared contract' do
     let(:game) { create(:game, type: 'GoFishGame') }
 
     before do
       create(:player, game:)
       create(:player, game:)
       game.start
+      game.play_turn(game.game_state.players.last.id, 'A')
+      game.save!
     end
 
-    it 'round-trips game_state through the DB with fidelity' do
-      opponent = game.game_state.players.last
-      game.play_turn(opponent.id, 'A')
-      game.save!
-      before = game.game_state.as_json
-      expect(game.reload.game_state.as_json).to eq before
-    end
+    it_behaves_like 'a persisted card game'
   end
 
   describe 'an unstarted game' do
