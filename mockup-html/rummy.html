@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rummy — UI mockup (Variant 1 + slide-out feed)</title>
+
+  <!-- Same Optics build the real app loads, so utility classes + design tokens match -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@rolemodel/optics@2.3.1/dist/css/optics+phosphor_icons.min.css">
+
+  <style>
+    /* ---- token overrides copied from app/assets/stylesheets/application.css ---- */
+    :root {
+      --op-color-primary-h: 156;
+      --op-color-primary-s: 58%;
+      --op-color-primary-l: 38%;
+      --op-space-scale-unit: 2rem;
+      --gf-card-margin-shift: 25px;
+      --gf-negative-card-margin-shift: -25px;
+      --animate-duration: 0s;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+
+    /* ---- .game grid, copied from components/game.css (Variant 1 content) ---- */
+    .game {
+      --gf-grid-column-width: calc(var(--op-size-unit) * 83.5);
+      display: grid;
+      grid-template-columns: 1fr var(--gf-grid-column-width);
+      grid-template-rows: 1fr min-content;
+      grid-template-areas:
+        "players feed"
+        "hand books";
+      height: 100dvh;
+    }
+    .game__players { grid-area: players; overflow: auto; background-color: var(--op-color-neutral-plus-max); }
+    .game__feed {
+      grid-area: feed;
+      background-color: var(--op-color-primary-plus-eight);
+      border-inline-start: var(--op-border-width) solid var(--op-color-border);
+      display: flex; flex-direction: column; overflow: auto;
+    }
+    .game__hand  { grid-area: hand;  background-color: var(--op-color-neutral-plus-eight); }
+    .game__books { grid-area: books; background-color: var(--op-color-neutral-plus-eight); }
+
+    /* ---- .panel, copied/trimmed from components/panel.css ---- */
+    .panel { display: flex; flex-direction: column; border-inline-start: var(--op-border-width) solid var(--op-color-border); }
+    .panel__header {
+      height: 60px; padding-inline: var(--op-space-medium);
+      padding-block-start: var(--op-space-small); padding-block-end: var(--op-space-x-small);
+      display: flex; align-items: flex-end; font-weight: var(--op-font-weight-semi-bold);
+      font-size: var(--op-font-small); border-block: var(--op-border-width) solid var(--op-color-border);
+    }
+    .panel__content { padding: var(--op-space-medium); }
+    .panel--players .panel__header { align-items: center; font-size: var(--op-font-large); }
+    .panel--players .panel__content { padding-inline: var(--op-space-x-large); overflow-y: auto; }
+    .panel--feed .panel__header {
+      color: var(--op-color-primary-on-plus-eight-alt); justify-content: space-between; align-items: center;
+    }
+    .panel--feed .panel__header .badge {
+      background-color: var(--op-color-primary-base);
+      border: var(--op-border-width-x-large) solid var(--op-color-neutral-plus-eight);
+      padding-block: var(--op-space-3x-small); padding-inline: var(--op-space-2x-small);
+    }
+    .panel--feed .panel__content {
+      display: flex; flex-direction: column; justify-content: center; align-items: center;
+      gap: var(--op-space-large); flex: 1;
+      /* symmetric padding: right side clears the Game Feed tab, matching left keeps it centered */
+      padding-inline: 52px;
+    }
+    .panel--hand .panel__header,
+    .panel--books .panel__header { color: var(--op-color-neutral-on-plus-eight-alt); }
+    .panel--hand .panel__content,
+    .panel--books .panel__content { margin-inline-start: var(--gf-card-margin-shift); }
+
+    /* ---- .playing-card, copied from components/playing-card.css ---- */
+    .playing-card { margin-inline-start: var(--gf-negative-card-margin-shift); border: var(--op-border-width) solid var(--op-color-neutral-minus-two); }
+    .playing-card--small  { border-radius: var(--op-radius-small);  height: calc(var(--op-size-unit) * 24); }
+    .playing-card--medium { border-radius: var(--op-radius-medium); height: calc(var(--op-size-unit) * 29.75); }
+    .playing-card--large  { border-radius: var(--op-radius-large);  height: calc(var(--op-size-unit) * 35.25); }
+
+    /* ---- mockup-only helpers ---- */
+    /* The Table: melds flow left-to-right and wrap to the next line */
+    .melds { display: flex; flex-direction: row; flex-wrap: wrap; gap: var(--op-space-x-large); }
+    /* each meld stacks its cards over a centered "Lay off" button with space between */
+    .meld { display: flex; flex-direction: column; align-items: center; }
+    /* the first card's negative overlap-margin shifts the whole row left of its box,
+       throwing off the centered button — zero it so the button lines up with the cards */
+    .meld .playing-card:first-child { margin-inline-start: 0; }
+    .meld__layoff { margin-block-start: var(--op-space-medium); }
+    .pile { display: flex; flex-direction: column; align-items: center; gap: var(--op-space-2x-small); }
+    .pile img { margin-inline-start: 0; }
+    .player-row { display: flex; align-items: center; justify-content: space-between; padding-block: var(--op-space-x-small); }
+    .player-row .badge { background-color: var(--op-color-primary-base); padding-inline: var(--op-space-2x-small); }
+
+    /* turn action buttons: full-width stack, centered as a group (see panel__content padding).
+       The two disabled ones get a top margin to read as the "later in the turn" group. */
+    .turn-actions { display: flex; flex-direction: column; gap: var(--op-space-small); width: 100%; }
+    .turn-actions .btn { width: 100%; }
+    .turn-actions .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .turn-actions .btn:disabled:first-of-type { margin-block-start: var(--op-space-medium); }
+
+    /* hand cards act as the selection control: click to toggle a selected state */
+    .hand .playing-card { cursor: pointer; transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; }
+    .hand .playing-card.is-selected {
+      border-color: var(--op-color-primary-base);
+      box-shadow: 0 0 0 3px var(--op-color-primary-base), 0 10px 18px rgba(0, 0, 0, .55);
+      transform: translateY(-12px);
+      position: relative; z-index: 1;
+    }
+
+    /* ---- the slide-out feed drawer (the thing we're mocking) ---- */
+    .feed-tab {
+      position: fixed; top: 50%; right: 0; transform: translateY(-50%);
+      writing-mode: vertical-rl; text-orientation: mixed;
+      background-color: var(--op-color-primary-base); color: var(--op-color-primary-on-base);
+      border: none; padding: var(--op-space-medium) var(--op-space-2x-small);
+      /* physical (not logical) radii: the element is writing-mode: vertical-rl, which
+         rotates logical corners — so round the left (inward) edge, flush on the right */
+      border-top-left-radius: var(--op-radius-medium); border-bottom-left-radius: var(--op-radius-medium);
+      cursor: pointer; font-weight: var(--op-font-weight-semi-bold); letter-spacing: .05em; z-index: 30;
+    }
+    .feed-tab__dot { /* unread indicator */
+      display: inline-block; width: 8px; height: 8px; border-radius: 50%;
+      background-color: var(--op-color-neutral-plus-eight); margin-block-start: var(--op-space-2x-small);
+    }
+    .feed-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,.45);
+      opacity: 0; pointer-events: none; transition: opacity .25s ease; z-index: 40;
+    }
+    .feed-drawer {
+      position: fixed; top: 0; right: 0; height: 100dvh; width: min(380px, 90vw);
+      background-color: var(--op-color-primary-plus-eight);
+      /* shadow + accent edge so it reads as a distinct layer over the same-green control panel */
+      border-inline-start: 3px solid var(--op-color-primary-base);
+      box-shadow: -16px 0 40px rgba(0, 0, 0, .55);
+      display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform .28s ease; z-index: 50;
+    }
+    .feed-drawer .panel__header { color: var(--op-color-primary-on-plus-eight-alt); justify-content: space-between; align-items: center; }
+    .feed-drawer__close { background: none; border: none; color: inherit; font-size: 1.4rem; cursor: pointer; line-height: 1; }
+    .feed-content { flex: 1; overflow-y: auto; padding: var(--op-space-medium); display: flex; flex-direction: column; gap: var(--op-space-small); }
+    .feed-content__line {
+      background-color: var(--op-color-primary-plus-six); border-radius: var(--op-radius-medium);
+      padding: var(--op-space-small) var(--op-space-medium); color: var(--op-color-primary-on-plus-six);
+    }
+    /* open state (toggled by the tiny script below) */
+    body.feed-open .feed-drawer { transform: translateX(0); }
+    body.feed-open .feed-backdrop { opacity: 1; pointer-events: auto; }
+    body.feed-open .feed-tab { display: none; }
+  </style>
+</head>
+<body>
+  <div class="game">
+
+    <!-- Top-left: The Table (shared melds) -->
+    <div class="game__players panel panel--players">
+      <div class="panel__header">
+        <span class="flex items-center gap-xs">
+          <span class="btn btn--medium"><i class="ph ph-arrow-left icon"></i></span>
+          Rummy · "Rummy Mock"
+        </span>
+      </div>
+      <div class="panel__content">
+        <div class="op-stack">
+          <span>The Table</span>
+
+          <div class="melds">
+            <div class="meld">
+              <div class="flex">
+                <img class="playing-card playing-card--small" src="cards/7_spades.svg" alt="7 of Spades">
+                <img class="playing-card playing-card--small" src="cards/8_spades.svg" alt="8 of Spades">
+                <img class="playing-card playing-card--small" src="cards/9_spades.svg" alt="9 of Spades">
+              </div>
+              <button class="btn btn--medium meld__layoff">Lay off here</button>
+            </div>
+
+            <div class="meld">
+              <div class="flex">
+                <img class="playing-card playing-card--small" src="cards/q_hearts.svg" alt="Q of Hearts">
+                <img class="playing-card playing-card--small" src="cards/q_diamonds.svg" alt="Q of Diamonds">
+                <img class="playing-card playing-card--small" src="cards/q_clubs.svg" alt="Q of Clubs">
+              </div>
+              <button class="btn btn--medium meld__layoff">Lay off here</button>
+            </div>
+
+            <div class="meld">
+              <div class="flex">
+                <img class="playing-card playing-card--small" src="cards/3_hearts.svg" alt="3 of Hearts">
+                <img class="playing-card playing-card--small" src="cards/4_hearts.svg" alt="4 of Hearts">
+                <img class="playing-card playing-card--small" src="cards/5_hearts.svg" alt="5 of Hearts">
+                <img class="playing-card playing-card--small" src="cards/6_hearts.svg" alt="6 of Hearts">
+              </div>
+              <button class="btn btn--medium meld__layoff">Lay off here</button>
+            </div>
+
+            <div class="meld">
+              <div class="flex">
+                <img class="playing-card playing-card--small" src="cards/9_spades.svg" alt="9 of Spades">
+                <img class="playing-card playing-card--small" src="cards/9_diamonds.svg" alt="9 of Diamonds">
+                <img class="playing-card playing-card--small" src="cards/9_hearts.svg" alt="9 of Hearts">
+                <img class="playing-card playing-card--small" src="cards/9_clubs.svg" alt="9 of Clubs">
+              </div>
+              <button class="btn btn--medium meld__layoff">Lay off here</button>
+            </div>
+
+            <div class="meld">
+              <div class="flex">
+                <img class="playing-card playing-card--small" src="cards/10_spades.svg" alt="10 of Spades">
+                <img class="playing-card playing-card--small" src="cards/j_spades.svg" alt="J of Spades">
+                <img class="playing-card playing-card--small" src="cards/q_spades.svg" alt="Q of Spades">
+                <img class="playing-card playing-card--small" src="cards/k_spades.svg" alt="K of Spades">
+              </div>
+              <button class="btn btn--medium meld__layoff">Lay off here</button>
+            </div>
+
+            <div class="meld">
+              <div class="flex">
+                <img class="playing-card playing-card--small" src="cards/10_hearts.svg" alt="10 of Hearts">
+                <img class="playing-card playing-card--small" src="cards/j_hearts.svg" alt="J of Hearts">
+                <img class="playing-card playing-card--small" src="cards/q_hearts.svg" alt="Q of Hearts">
+              </div>
+              <button class="btn btn--medium meld__layoff">Lay off here</button>
+            </div>
+
+            <div class="meld">
+              <div class="flex">
+                <img class="playing-card playing-card--small" src="cards/k_spades.svg" alt="K of Spades">
+                <img class="playing-card playing-card--small" src="cards/k_hearts.svg" alt="K of Hearts">
+                <img class="playing-card playing-card--small" src="cards/k_diamonds.svg" alt="K of Diamonds">
+                <img class="playing-card playing-card--small" src="cards/k_clubs.svg" alt="K of Clubs">
+              </div>
+              <button class="btn btn--medium meld__layoff">Lay off here</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Top-right: turn controls + draw piles (feed now lives in the drawer) -->
+    <div class="game__feed panel panel--feed">
+      <div class="panel__header">
+        <span>Draw a card</span>
+        <span class="badge">Your Turn</span>
+      </div>
+      <div class="panel__content">
+        <div class="flex gap-xs items-center">
+          <div class="pile">
+            <img class="playing-card playing-card--medium" src="cards/card_back_green.svg" alt="Deck">
+            <span>Deck (47)</span>
+          </div>
+          <div class="pile">
+            <img class="playing-card playing-card--medium" src="cards/k_clubs.svg" alt="Discard top">
+            <span>Discard</span>
+          </div>
+        </div>
+        <div class="turn-actions">
+          <button class="btn btn--primary">Draw deck</button>
+          <button class="btn">Take discard</button>
+          <button class="btn" disabled>Meld selected</button>
+          <button class="btn" disabled>Discard selected</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom-left: Your Hand (+ meld/discard selection) -->
+    <div class="game__hand panel panel--hand">
+      <div class="panel__header">Your Hand</div>
+      <div class="panel__content">
+        <!-- Cards are the selection control: click to toggle. A few are pre-selected here
+             to show the selected look (green border + shadow + lift). -->
+        <div class="flex hand">
+          <img class="playing-card playing-card--large is-selected" src="cards/3_hearts.svg" alt="3 of Hearts" data-card>
+          <img class="playing-card playing-card--large is-selected" src="cards/4_hearts.svg" alt="4 of Hearts" data-card>
+          <img class="playing-card playing-card--large is-selected" src="cards/5_hearts.svg" alt="5 of Hearts" data-card>
+          <img class="playing-card playing-card--large" src="cards/6_hearts.svg" alt="6 of Hearts" data-card>
+          <img class="playing-card playing-card--large" src="cards/9_spades.svg" alt="9 of Spades" data-card>
+          <img class="playing-card playing-card--large" src="cards/9_diamonds.svg" alt="9 of Diamonds" data-card>
+          <img class="playing-card playing-card--large" src="cards/2_clubs.svg" alt="2 of Clubs" data-card>
+          <img class="playing-card playing-card--large" src="cards/k_spades.svg" alt="K of Spades" data-card>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom-right: Players (name + card count, no accordion) -->
+    <div class="game__books panel panel--books">
+      <div class="panel__header">Players</div>
+      <div class="panel__content">
+        <div class="op-stack">
+          <div class="player-row">
+            <span class="flex items-center gap-xs">You <span class="badge">turn</span></span>
+            <span>8 cards</span>
+          </div>
+          <div class="player-row">
+            <span>Josh</span>
+            <span>5 cards</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Slide-out feed: edge tab, backdrop, drawer -->
+  <button class="feed-tab" data-feed-open>
+    Game Feed
+    <span class="feed-tab__dot" title="new activity"></span>
+  </button>
+
+  <div class="feed-backdrop" data-feed-close></div>
+
+  <aside class="feed-drawer">
+    <div class="panel__header">
+      <span>Game Feed</span>
+      <button class="feed-drawer__close" data-feed-close aria-label="Close feed">&times;</button>
+    </div>
+    <div class="feed-content">
+      <div class="feed-content__line">Josh discarded K of Clubs</div>
+      <div class="feed-content__line">Josh melded 7♠ 8♠ 9♠</div>
+      <div class="feed-content__line">Josh laid off Q♦ onto your set</div>
+      <div class="feed-content__line">You drew from the stock</div>
+      <div class="feed-content__line">It's your turn — draw a card</div>
+    </div>
+  </aside>
+
+  <!-- Mockup note (not part of the design) -->
+  <p style="position:fixed;bottom:6px;left:8px;margin:0;font:11px/1.4 system-ui;color:#888;z-index:10;">
+    Static mockup · mock data · click the “Game Feed” tab on the right →
+  </p>
+
+  <script>
+    const body = document.body;
+    document.querySelectorAll('[data-feed-open]').forEach(el =>
+      el.addEventListener('click', () => body.classList.add('feed-open')));
+    document.querySelectorAll('[data-feed-close]').forEach(el =>
+      el.addEventListener('click', () => body.classList.remove('feed-open')));
+    document.querySelectorAll('[data-card]').forEach(card =>
+      card.addEventListener('click', () => card.classList.toggle('is-selected')));
+  </script>
+</body>
+</html>

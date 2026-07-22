@@ -180,3 +180,11 @@ See `docs/architecture.md` for the full model map and serialization details.
   `app/views/layouts/application.html.slim` for the redirect message to surface. Non-participant
   coverage is system-spec only (`spec/system/games_spec.rb`) — the shared `before_action` guards
   all four actions, so the two GET cases pin the POST cases too.
+- `mockup-html/RUMMY-HANDOFF.md` (+ `mockup-html/rummy.html`) — **Rummy, the third game:
+  design/mockup stage, NOT yet implemented** (no Rummy code in `app/` — an earlier stub was
+  reverted). The static HTML is the visual source of truth; the handoff captures the locked
+  rules/scope (single hand, aces low, sets/runs), the "Variant 1" layout (The Table + a
+  slide-out feed drawer + clickable-card selection + phase-aware controls), the
+  `play_turn[move]=draw/meld/layoff/discard` turn contract, CSS gotchas found while mocking,
+  and the next step: build the `rummy_games` partial + stub domain **with mock data**
+  following the "adding a game" pattern.
