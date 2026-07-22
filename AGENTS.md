@@ -96,6 +96,13 @@ See `docs/architecture.md` for the full model map and serialization details.
   `simple_form` input before hand-writing markup or a new component.
 - **BEM** for CSS class naming; component styles live in `app/assets/stylesheets/components/`.
 - Ruby's implicit block parameter `it` is used throughout (e.g. `players.find { it.id == x }`).
+- **Comments are a last resort, not a courtesy.** Before writing one, ask: can this be
+  induced by reading the code? If yes, the comment is dead weight — delete it, or better,
+  rename/restructure so the code says it. If no — the reason genuinely can't be derived from
+  the code, tests, or a linked doc (a business rule, a bug workaround, "why this exists at
+  all") — that's the only case a comment earns its place. When in doubt, put the explanation
+  in the relevant `docs/*.md` file instead of the source; code comments rot in place, docs get
+  read and updated.
 
 ## Gotchas
 

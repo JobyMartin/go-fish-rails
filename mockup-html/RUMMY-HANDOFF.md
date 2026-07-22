@@ -147,10 +147,12 @@ rules engine.
 - **Drawer vs. same-green panel**: the feed drawer uses the same green token as the control
   panel; laid directly over it they blend into one flat block. It only reads as a separate
   layer with a **shadow + a small accent edge** (and a dimmed backdrop). Bake that in.
-- **Logical radius + vertical writing-mode don't compose**: the edge tab uses
-  `writing-mode: vertical-rl`; using *logical* `border-start-start-radius` etc. rounded the
-  **wrong** corners (top instead of the inward-facing left edge). Use **physical**
-  `border-top-left-radius` / `border-bottom-left-radius` on rotated-text elements.
+- **Logical properties + vertical writing-mode don't compose**: `writing-mode: vertical-rl`
+  swaps which axis is "block" vs. "inline", so logical properties round/space the **wrong**
+  side. *Logical* `border-start-start-radius` etc. rounded the top instead of the inward-facing
+  left edge; `margin-block-start` (meant to add space *below* the tab's dot) shifted it
+  *sideways* instead, since block-start is now horizontal. Use **physical** properties
+  (`border-top-left-radius`/`border-bottom-left-radius`, `margin-top`) on rotated-text elements.
 - **First-card overlap margin breaks centering**: `.playing-card` has a negative
   `margin-inline-start` (to fan/overlap). On the *first* card of a row it just shifts the
   whole row left of its layout box, so a centered button below looks off-center. **Zero the
@@ -165,8 +167,12 @@ rules engine.
 
 ## Deferred / out of scope (don't do now)
 
-- The pre-existing **card-corner border quirk** (double rounded outline on `.playing-card`)
-  — an implementation-phase cleanup, not a mockup concern.
+- The pre-existing **card-corner border quirk** (double rounded outline on `.playing-card`) —
+  **partially fixed** in the preview build: `.playing-card--flush-border` (zeroed
+  border/radius, since the card SVG already draws its own frame) is applied to the standalone
+  Deck/Discard pile images. **Not** applied to melds/hand — those fan cards with overlapping
+  negative margins, and removing the outer border there made the overlap seams look worse, not
+  better. Full fix (or a different approach for the fanned case) is still open.
 - Real turn logic, `Meld` validation, scoring, winner detection.
 - **Game-over persistence** (`Game#end`/`ended_at` + `players.winner` boolean) — a known
   deferred High finding; when Rummy's real scoring is built, do this as a **game-agnostic**

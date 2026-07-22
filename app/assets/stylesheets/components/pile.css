@@ -1,0 +1,11 @@
+
+.pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--op-space-2x-small);
+
+  img {
+    margin-inline-start: 0;
+  }
+}

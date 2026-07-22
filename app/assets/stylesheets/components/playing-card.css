@@ -24,7 +24,25 @@
   &.playing-card--large:hover {
     transition: var(--op-transition-modal);
     margin-top: var(--gf-negative-card-margin-shift);
-    
+
     --animate-duration: 2s;
+  }
+
+  &.playing-card--flush-border {
+    border-width: 0;
+    border-radius: 0;
+  }
+
+  &.playing-card--selectable {
+    cursor: pointer;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+  }
+
+  &.is-selected {
+    border-color: var(--op-color-primary-base);
+    box-shadow: 0 0 0 3px var(--op-color-primary-base), 0 10px 18px rgba(0, 0, 0, .55);
+    transform: translateY(-12px);
+    position: relative;
+    z-index: 1;
   }
 }

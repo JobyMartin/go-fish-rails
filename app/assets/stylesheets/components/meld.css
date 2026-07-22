@@ -1,0 +1,21 @@
+
+.melds {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: var(--op-space-x-large);
+}
+
+.meld {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .playing-card:first-child {
+    margin-inline-start: 0;
+  }
+
+  .meld__layoff {
+    margin-block-start: var(--op-space-medium);
+  }
+}

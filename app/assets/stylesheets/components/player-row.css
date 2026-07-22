@@ -1,0 +1,16 @@
+
+.panel--books .panel__content > .op-stack {
+  flex: 1;
+}
+
+.player-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-block: var(--op-space-x-small);
+
+  .badge {
+    background-color: var(--op-color-primary-base);
+    padding-inline: var(--op-space-2x-small);
+  }
+}

@@ -1,0 +1,20 @@
+
+.turn-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--op-space-small);
+  width: 100%;
+
+  .btn {
+    width: 100%;
+  }
+
+  .btn:disabled {
+    opacity: var(--op-opacity-disabled);
+    cursor: not-allowed;
+  }
+
+  .btn:disabled:first-of-type {
+    margin-block-start: var(--op-space-medium);
+  }
+}

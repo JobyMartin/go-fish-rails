@@ -37,6 +37,7 @@ Rails.application.routes.draw do
   end
 
   get "pages/rules", to: "pages#rules"
+  get "pages/rummy_preview", to: "pages#rummy_preview"
   resources :pages, only: [:index]
 
   resources :offlines, only: [:index]
