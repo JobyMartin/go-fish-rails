@@ -59,6 +59,10 @@ module CrazyEights
       players.any? { it.hand.empty? }
     end
 
+    def winner
+      players.find { it.hand.empty? }
+    end
+
     def play_turn(active_card, placed_card)
       current_player.hand.delete placed_card
       william.cards << placed_card

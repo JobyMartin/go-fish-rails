@@ -2,7 +2,6 @@
 - game = @game || game
 - implementation = game.game_state
 - current_player = implementation.find_player(Current.session.user.id) if game.game_state.present?
-- opponents = game.game_state.players - [current_player] if game.game_state.present?
 
 - unless game.started_at.present?
   .simple-page
@@ -30,36 +29,26 @@
 
         .panel__content
           .feed-content
-            - if !implementation.round_results.empty?
-              - implementation.round_results.each do |result|
-                - if result.for_other_players.count == 3
-                  span.feed-content__player-action = result.for_other_players.first
-                  .action-responses
+            - implementation.round_results.each do |result|
+              - lines = result.feed_lines
+              - lines.select { it.role == :action }.each do |line|
+                span.feed-content__player-action = line.text
+              - responses = lines.reject { it.role == :action }
+              - if responses.any?
+                .action-responses
+                  - responses.each do |line|
                     .response-group
                       i.ph.ph-arrow-bend-down-right.icon.response-group__reply-arrow
-                      .response-group__player-response.flex.items-center.gap-xxs
-                        = result.for_other_players[1]
-
-                    .response-group
-                      i.ph.ph-arrow-bend-down-right.icon.response-group__reply-arrow
-                      .response-group__game-response
-                        = result.for_other_players[2]
-
-                - elsif result.for_other_players.count == 2
-                  span.feed-content__player-action = result.for_other_players.first
-                  .action-responses
-                    .response-group
-                      i.ph.ph-arrow-bend-down-right.icon.response-group__reply-arrow
-                      .response-group__game-response
-                        = result.for_other_players[1]
-
-                - elsif result.for_other_players.count == 1
-                  span.feed-content__player-action = result.for_other_players.first
+                      - if line.role == :player_response
+                        .response-group__player-response.flex.items-center.gap-xxs
+                          = line.text
+                      - else
+                        .response-group__game-response
+                          = line.text
 
           = simple_form_for :play_turn, url: play_game_path(game) do |f|
-            = f.input :player, as: :select, collection: opponents, selected: opponents.first if game.type == "GoFishGame"
             = f.input :rank, as: :select, collection: game.game_state.valid_player_cards(current_player), selected: game.game_state.valid_player_cards(current_player).first
-            = f.input :suit, as: :select, collection: CrazyEights::Card::SUITS
+            = f.input :suit, as: :select, collection: Card::SUITS
             - if current_player.id == implementation.current_player.id
               = f.button :submit, 'Place card'
             - else

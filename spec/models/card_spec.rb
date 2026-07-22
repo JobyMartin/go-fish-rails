@@ -1,9 +1,9 @@
 require 'rails_helper'
 
-RSpec.describe CrazyEights::Card, type: :model do
-  let(:card1) { CrazyEights::Card.new('A', 'Spades') }
-  let(:card2) { CrazyEights::Card.new('K', 'Spades') }
-  let(:card3) { CrazyEights::Card.new('A', 'Spades') }
+RSpec.describe Card, type: :model do
+  let(:card1) { Card.new('A', 'Spades') }
+  let(:card2) { Card.new('K', 'Spades') }
+  let(:card3) { Card.new('A', 'Spades') }
   let(:card1_rank) { 'A' }
   let(:card1_suit) { 'Spades' }
 
@@ -13,25 +13,25 @@ RSpec.describe CrazyEights::Card, type: :model do
   end
 
   it 'cards of the same rank and suit are equal' do
-    expect(card1).not_to eq card2 
+    expect(card1).not_to eq card2
     expect(card1).to eq card3
   end
 
   it 'should allow valid ranks' do
     expect {
-      CrazyEights::Card.new('15', 'Spades')
-    }.to raise_error CrazyEights::Card::InvalidRank
+      Card.new('15', 'Spades')
+    }.to raise_error Card::InvalidRank
   end
 
   it 'should allow valid suits' do
     expect {
-      CrazyEights::Card.new('8', 'Emeralds')
-    }.to raise_error CrazyEights::Card::InvalidSuit
+      Card.new('8', 'Emeralds')
+    }.to raise_error Card::InvalidSuit
   end
 
   describe '#value' do
-    let(:card1) { CrazyEights::Card.new('A', 'Spades') }
-    let(:card2) { CrazyEights::Card.new('5', 'Spades') }
+    let(:card1) { Card.new('A', 'Spades') }
+    let(:card2) { Card.new('5', 'Spades') }
     let(:card1_value) { 12 }
     let(:card2_value) { 3 }
 
@@ -43,15 +43,15 @@ RSpec.describe CrazyEights::Card, type: :model do
 
   describe '#to_s' do
     let(:card_to_string) { 'A of Spades' }
-    
+
     it 'returns formatted card' do
       expect(card1.to_s).to eq card_to_string
     end
   end
-  
+
   describe '#to_pathname' do
     let(:card_pathname) { 'a_spades.svg' }
-    
+
     it 'returns formatted card' do
       expect(card1.to_pathname).to eq card_pathname
     end
@@ -61,7 +61,7 @@ RSpec.describe CrazyEights::Card, type: :model do
     it 'turns a card string into an object' do
       card_string = '6 of Diamonds'
       objectified_card = described_class.objectify(card_string)
-      expect(objectified_card).to be_a CrazyEights::Card
+      expect(objectified_card).to be_a Card
       expect(objectified_card.rank).to eq '6'
       expect(objectified_card.suit).to eq 'Diamonds'
     end

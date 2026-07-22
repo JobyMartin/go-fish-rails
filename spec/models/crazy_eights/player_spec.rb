@@ -2,14 +2,14 @@ require 'rails_helper'
 
 RSpec.describe CrazyEights::Player, type: :model do
   let(:player) { CrazyEights::Player.new('Joby') }
-  let(:card1) { CrazyEights::Card.new('A', 'Spades') }
-  let(:card2) { CrazyEights::Card.new('K', 'Spades') }
-  let(:card3) { CrazyEights::Card.new('A', 'Hearts') }
-  let(:card4) { CrazyEights::Card.new('A', 'Diamonds') }
-  let(:card5) { CrazyEights::Card.new('A', 'Clubs') }
-  let(:card6) { CrazyEights::Card.new('K', 'Hearts') }
-  let(:card7) { CrazyEights::Card.new('K', 'Diamonds') }
-  let(:card8) { CrazyEights::Card.new('K', 'Clubs') }
+  let(:card1) { Card.new('A', 'Spades') }
+  let(:card2) { Card.new('K', 'Spades') }
+  let(:card3) { Card.new('A', 'Hearts') }
+  let(:card4) { Card.new('A', 'Diamonds') }
+  let(:card5) { Card.new('A', 'Clubs') }
+  let(:card6) { Card.new('K', 'Hearts') }
+  let(:card7) { Card.new('K', 'Diamonds') }
+  let(:card8) { Card.new('K', 'Clubs') }
 
   describe '#add_cards' do
     it 'adds cards to the bottom of the deck' do

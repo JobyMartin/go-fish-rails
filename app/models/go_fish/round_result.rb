@@ -29,9 +29,13 @@ module GoFish
       message << "\n#{user_given_to.name} went fishing!" if went_fishing
       message << "\n#{user_given_to.name} made a catch!" if made_a_catch
 
-      message << "\n#{user_given_to.name} took #{cards_exchanged.map(&:to_s).join(', ')} from #{user_taken_from.name}" unless went_fishing || made_a_catch 
+      message << "\n#{user_given_to.name} took #{cards_exchanged.map(&:to_s).join(', ')} from #{user_taken_from.name}" unless went_fishing || made_a_catch
 
       message
+    end
+
+    def feed_lines
+      RoundFeed.new(for_other_players).lines
     end
 
     def self.load(hash)

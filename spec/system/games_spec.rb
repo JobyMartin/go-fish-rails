@@ -69,6 +69,10 @@ RSpec.describe 'Games', type: :system do
       fill_in 'Name', with: 'Toast'
     end
 
+    it 'offers every registry entry in the type select' do
+      expect(page).to have_select('Type', with_options: Game.playable_types.values)
+    end
+
     it 'creates a GoFishGame' do
       select 'Go Fish', from: 'Type'
       expect do
@@ -118,6 +122,12 @@ RSpec.describe 'Games', type: :system do
       it 'shows the crazy eights game view' do
         click_on 'Start game'
         expect(page).to have_css "div.game"
+      end
+
+      it 'renders the play form with no opponent select' do
+        click_on 'Start game'
+        expect(page).to have_button 'Place card'
+        expect(page).to have_no_select 'Player'
       end
 
       context 'when the user starts the game' do
@@ -253,7 +263,7 @@ RSpec.describe 'Games', type: :system do
       before do
         game.start
         game.game_state.players.each do |player|
-          player.hand = [GoFish::Card.new('A')]
+          player.hand = [Card.new('A')]
         end
         game.save!
       end
@@ -269,8 +279,8 @@ RSpec.describe 'Games', type: :system do
     context 'when the card makes a book' do
       before do
         game.start
-        game.game_state.players.first.hand = [GoFish::Card.new]
-        game.game_state.players.last.hand = [GoFish::Card.new, GoFish::Card.new, GoFish::Card.new]
+        game.game_state.players.first.hand = [Card.new]
+        game.game_state.players.last.hand = [Card.new, Card.new, Card.new]
         game.save!
       end
 
@@ -301,60 +311,63 @@ RSpec.describe 'Games', type: :system do
     end
   end
 
-  context 'when the game is over', pending: 'broken and cannot figure out' do
+  context 'when the user is not a participant' do
+    let!(:game) { create(:game) }
+    let!(:player) { create(:player, user: user2, game:) }
+
+    it 'redirects to the lobby with a flash from the game page' do
+      visit game_path(game)
+
+      expect(page).to have_current_path(games_path)
+      expect(page).to have_content "You're not in that game."
+    end
+
+    it 'shows no game content on the redirect' do
+      visit game_path(game)
+
+      expect(page).to have_no_content 'Start game'
+    end
+
+    it 'redirects to the lobby from the winner screen' do
+      visit winner_game_path(game)
+
+      expect(page).to have_current_path(games_path)
+      expect(page).to have_content "You're not in that game."
+    end
+  end
+
+  context 'when a go fish game is over' do
     let!(:game) { create :game }
     let!(:player) { create(:player, user:, game:) }
     let!(:player2) { create(:player, user: user2, game:) }
 
     before do
       game.start
-
-      game.go_fish.players.each do |player|
-        player.hand = [GoFish::Card.new('A'), GoFish::Card.new('A')]
-      end
-
-      game.go_fish.deck.cards = []
-
+      game.game_state.players.each { it.hand = [] }
+      game.game_state.deck.cards = []
       game.save!
     end
 
-    it 'displays the winner' do
-      visit game_path(game)
-      click_on 'Ask for a card'
+    it 'shows the winner screen' do
+      visit winner_game_path(game)
       expect(page).to have_content 'winner'
     end
   end
 
-  # fcontext 'when the game ends' do
-  #   let(:winner_message) { 'winner' }
-  #   let(:name_message) { 'Name' }
-  #   let!(:game) { create :game }
-  #   let!(:player) { create(:player, user:, game:) }
-  #   let!(:player2) { create(:player, user: user2, game:) }
+  context 'when a crazy eights game is over' do
+    let!(:game) { create(:game, type: 'CrazyEightsGame') }
+    let!(:player) { create(:player, user:, game:) }
+    let!(:player2) { create(:player, user: user2, game:) }
 
-  #   before do
-  #     game.start
-  #     binding.irb
-      
-  #     game.go_fish.deck.cards = []
-  #     game.go_fish.players.first.hand = [GoFish::Card.new('A', 'Spades')]
-  #     game.go_fish.players.last.hand = [GoFish::Card.new('A', 'Diamonds'), GoFish::Card.new('A', 'Hearts'), GoFish::Card.new('A', 'Clubs')]
-      
-  #     # game.players.first.books = [Book.new([Card.new('A', 'Spades')])]
-  #     game.save!
-  #     binding.irb
-  #   end
+    before do
+      game.start
+      game.game_state.players.first.hand = []
+      game.save!
+    end
 
-  #   fit 'displays the winner' do
-  #     visit game_path(game)
-  #     page.click_on 'Ask for a card'
-  #     expect(page).to have_content winner_message
-  #   end
-
-  #   xit 'resets the game' do
-  #     session1.click_on "Play Again"
-  #     expect(game.game_started?).to be false
-  #     expect(session1).to have_content name_message
-  #   end
-  # end
+    it 'shows the winner screen' do
+      visit winner_game_path(game)
+      expect(page).to have_content 'winner'
+    end
+  end
 end

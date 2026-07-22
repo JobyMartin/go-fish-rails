@@ -27,6 +27,12 @@ RSpec.configure do |config|
     driven_by :firefox
   end
 
+  config.after(:each, :chrome, type: :system) do
+    devtools = page.driver.browser.devtools(target_type: 'page')
+    devtools.service_worker.enable
+    devtools.service_worker.stop_all_workers
+  end
+
   def create_driver(app, options = {})
     default_options = {
       browser_type: :chromium,

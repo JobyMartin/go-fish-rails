@@ -35,6 +35,31 @@ RSpec.describe Game, type: :model do
     end
   end
 
+  describe '.playable_types' do
+    it 'lists exactly the playable subclasses with labels' do
+      expect(Game.playable_types).to eq('GoFishGame' => 'Go Fish', 'CrazyEightsGame' => 'Crazy Eights')
+    end
+  end
+
+  describe '.playable_class' do
+    it 'returns the subclass for a registered type' do
+      expect(Game.playable_class('CrazyEightsGame')).to eq CrazyEightsGame
+    end
+
+    it 'returns nil for an unregistered type' do
+      expect(Game.playable_class('EvilGame')).to be_nil
+    end
+  end
+
+  describe '#build_game' do
+    it 'does not silently coerce an unknown type into Crazy Eights' do
+      stub_const('EvilGame', Class.new(Game))
+      game = EvilGame.new(name: 'Evil')
+      create(:player, user:, game:)
+      expect { game.send(:build_game) }.to raise_error(NoMethodError)
+    end
+  end
+
   describe '#start' do
   let!(:game) { create(:game) }
   let!(:player) { create(:player, user:, game:) }
@@ -82,7 +107,7 @@ RSpec.describe Game, type: :model do
         game.game_state.current_player.hand = []
       end
       it 'fishes and skips' do
-        game.play_turn(inquired_player_id, bad_inquired_rank)
+        game.play_turn(player: inquired_player_id, rank: bad_inquired_rank)
         expect(game.game_state.current_player.hand_size).to eq 7
         expect(game.game_state.players.first.hand_size).to eq 1
       end
@@ -95,7 +120,7 @@ RSpec.describe Game, type: :model do
       end
 
       it 'plays a turn' do
-        game.play_turn(inquired_player_id, good_inquired_rank)
+        game.play_turn(player: inquired_player_id, rank: good_inquired_rank)
         expect(game.game_state.players.first.hand_size).to eq 8
       end
     end

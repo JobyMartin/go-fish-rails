@@ -2,14 +2,14 @@ require 'rails_helper'
 
 RSpec.describe GoFish::Player, type: :model do
   let(:player) { GoFish::Player.new('Joby') }
-  let(:card1) { GoFish::Card.new('A', 'Spades') }
-  let(:card2) { GoFish::Card.new('K', 'Spades') }
-  let(:card3) { GoFish::Card.new('A', 'Hearts') }
-  let(:card4) { GoFish::Card.new('A', 'Diamonds') }
-  let(:card5) { GoFish::Card.new('A', 'Clubs') }
-  let(:card6) { GoFish::Card.new('K', 'Hearts') }
-  let(:card7) { GoFish::Card.new('K', 'Diamonds') }
-  let(:card8) { GoFish::Card.new('K', 'Clubs') }
+  let(:card1) { Card.new('A', 'Spades') }
+  let(:card2) { Card.new('K', 'Spades') }
+  let(:card3) { Card.new('A', 'Hearts') }
+  let(:card4) { Card.new('A', 'Diamonds') }
+  let(:card5) { Card.new('A', 'Clubs') }
+  let(:card6) { Card.new('K', 'Hearts') }
+  let(:card7) { Card.new('K', 'Diamonds') }
+  let(:card8) { Card.new('K', 'Clubs') }
 
   describe '#add_cards' do
     it 'adds cards to the bottom of the deck' do

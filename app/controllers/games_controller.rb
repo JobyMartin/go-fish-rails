@@ -1,5 +1,8 @@
 
 class GamesController < ApplicationController
+  before_action :set_game, only: %i[show start play winner]
+  before_action :require_participation, only: %i[show start play winner]
+
   def index
     @user = Current.session.user
     @games = Game.all
@@ -11,8 +14,7 @@ class GamesController < ApplicationController
   end
 
   def create
-    type = params[:game][:type]
-    type_class = "#{type}Game".delete(' ').constantize
+    type_class = Game.playable_class(params[:game][:type])
     @game = type_class.new(game_params)
     @player = @game.players.new(user: Current.session.user)
 
@@ -24,7 +26,6 @@ class GamesController < ApplicationController
   end
 
   def show
-    @game = Game.find(params[:id])
     @started = @game.started_at.present?
     return unless @started
     @implementation = @game.game_state
@@ -33,7 +34,6 @@ class GamesController < ApplicationController
   end
 
   def start
-    @game = Game.find(params[:id])
     @game.start
     redirect_to game_path(@game)
   end
@@ -42,36 +42,35 @@ class GamesController < ApplicationController
     @user_games = Current.session.user.games
   end
   def play
-    @game = Game.find(params[:id])
-
     redirect_to winner_game_path(@game) and return if @game.game_state.game_over?
 
-    if @game.type == 'GoFishGame'
-      @game.play_turn(params[:play_turn][:player].to_i, params[:play_turn][:rank])
-    else
-      play_crazy_eights(params[:play_turn][:rank])
-    end
+    @game.play_turn(play_turn_params)
 
     @game.save!
     redirect_to game_path(@game)
   end
 
   def winner
-    @game = Game.find(params[:id])
     @winner = @game.game_state.winner
   end
 
   private
 
-  def play_crazy_eights(rank)
-    if rank.nil?
-      @game.play_turn(@game.game_state.william.active_card)
-    else
-      @game.play_turn(@game.game_state.william.active_card, rank)
-    end
+  def set_game
+    @game = Game.find(params[:id])
+  end
+
+  def require_participation
+    return if @game.users.include?(Current.session.user)
+
+    redirect_to games_path, alert: "You're not in that game."
+  end
+
+  def play_turn_params
+    params.require(:play_turn).permit(:player, :rank, :suit)
   end
 
   def game_params
-    params.require(:game).permit(:name, :game_type)
+    params.require(:game).permit(:name)
   end
 end

@@ -17,6 +17,10 @@ module CrazyEights
       message
     end
 
+    def feed_lines
+      RoundFeed.new(for_other_players).lines
+    end
+
     def self.load(hash)
       self.new(
           current_player: Player.load(hash['current_player']),
