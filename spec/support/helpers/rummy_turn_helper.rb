@@ -4,13 +4,13 @@ module RummyTurnHelper
   end
 
   def select_only_hand_card
-    within('.game__hand') do
+    within(data_test('game-hand')) do
       click_retrying_stale_element { all("[data-rummy-turn-target='card']", minimum: 1).first.click }
     end
   end
 
   def hand_card_count
-    all('.game__hand img.playing-card').count
+    all("#{data_test('game-hand')} #{data_test('card')}").count
   end
 
   def draw_and_discard(token)
@@ -30,7 +30,7 @@ module RummyTurnHelper
   def discard_only_hand_card
     select_only_hand_card
     click_button 'Discard selected'
-    expect(page).to have_no_css '.game__hand img.playing-card'
+    expect(page).to have_no_css "#{data_test('game-hand')} #{data_test('card')}"
   end
 
   private

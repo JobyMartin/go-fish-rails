@@ -51,11 +51,11 @@ RSpec.describe 'Games', type: :system do
     end
 
     it 'updates the games page correctly' do
-      within '[data-testid="your-games"]' do
+      within data_test('your-games') do
         expect(page).to have_content game_name1
       end
 
-      within '[data-testid="all-games"]' do
+      within data_test('all-games') do
         expect(page).not_to have_content game_name1
         expect(page).to have_content game_name2
       end
@@ -90,7 +90,7 @@ RSpec.describe 'Games', type: :system do
 
       it 'shows the go fish game view' do
         click_on 'Start game'
-        expect(page).to have_css("div.game__aside.panel.panel--aside")
+        expect(page).to have_css(data_test('game-aside'))
       end
     end
   end
@@ -121,7 +121,7 @@ RSpec.describe 'Games', type: :system do
 
       it 'shows the crazy eights game view' do
         click_on 'Start game'
-        expect(page).to have_css "div.game"
+        expect(page).to have_css data_test('game')
       end
 
       it 'renders the play form with no opponent select' do
@@ -144,22 +144,22 @@ RSpec.describe 'Games', type: :system do
         end
 
         it 'displays the players' do
-          within(".game__board.panel.panel--board") do
-            expect(page).to have_css("details.accordion", count: 1)
+          within(data_test('game-board')) do
+            expect(page).to have_css(data_test('accordion'), count: 1)
           end
         end
 
         it 'displays the discard pile' do
-          within '.game__aside.panel.panel--aside' do
-            expect(page).to have_css "img.playing-card"
+          within data_test('game-aside') do
+            expect(page).to have_css data_test('card')
           end
         end
 
         context 'when the user plays a turn' do
           it 'shows the turn in the turn results' do
             click_on 'Place card'
-            within '.feed-content' do
-              expect(page).to have_css('span.feed-content__player-action', count: 1)
+            within data_test('feed-content') do
+              expect(page).to have_css(data_test('feed-action'), count: 1)
             end
           end
         end
@@ -192,35 +192,35 @@ RSpec.describe 'Games', type: :system do
       end
 
       it 'shows the game board' do
-        expect(page).to have_css 'div.game'
+        expect(page).to have_css data_test('game')
       end
 
       it 'starts with no melds on the table' do
-        within '.game__board.panel.panel--board' do
-          expect(page).to have_no_css '.meld'
+        within data_test('game-board') do
+          expect(page).to have_no_css data_test('meld')
         end
       end
 
       it 'shows the deck and discard piles' do
-        within '.game__controls.panel.panel--controls' do
-          expect(page).to have_css '.pile', count: 2
+        within data_test('game-controls') do
+          expect(page).to have_css data_test('pile'), count: 2
         end
       end
 
       it 'shows the current player hand' do
-        within '.game__hand.panel.panel--hand' do
-          expect(page).to have_css 'img.playing-card', minimum: 1
+        within data_test('game-hand') do
+          expect(page).to have_css data_test('card'), minimum: 1
         end
       end
 
       it 'shows the players panel' do
-        within '.game__aside.panel.panel--aside' do
-          expect(page).to have_css '.player-row', minimum: 1
+        within data_test('game-aside') do
+          expect(page).to have_css data_test('player-row'), minimum: 1
         end
       end
 
       it 'shows the game feed drawer tab' do
-        expect(page).to have_css 'button.feed-tab'
+        expect(page).to have_css data_test('feed-tab')
       end
     end
 
@@ -234,13 +234,13 @@ RSpec.describe 'Games', type: :system do
       it 'slides the game feed drawer onto the screen' do
         click_button 'Game Feed'
 
-        expect(page).to have_css 'body.feed-open'
+        expect(page).to have_css 'body[data-feed-open="true"]'
       end
 
       it 'shows an empty state before any moves have happened' do
         click_button 'Game Feed'
 
-        within '.feed-content' do
+        within data_test('feed-content') do
           expect(page).to have_content 'No moves yet'
         end
       end
@@ -249,7 +249,7 @@ RSpec.describe 'Games', type: :system do
         click_button 'Game Feed'
         find('[aria-label="Close game feed"]').click
 
-        expect(page).to have_no_css 'body.feed-open'
+        expect(page).to have_css 'body[data-feed-open="false"]'
       end
     end
 
@@ -258,7 +258,7 @@ RSpec.describe 'Games', type: :system do
         select 'Rummy', from: 'Type'
         click_on 'Create Game'
         click_on 'Start game'
-        expect(page).to have_css 'div.game'
+        expect(page).to have_css data_test('game')
 
         game = Game.last
         game.game_state.current_player.hand = [
@@ -267,7 +267,7 @@ RSpec.describe 'Games', type: :system do
         game.game_state.discard_pile = [ Card.new('K', 'Clubs') ]
         game.save!
         visit game_path(game)
-        expect(page).to have_css 'div.game'
+        expect(page).to have_css data_test('game')
       end
 
       it 'drawing from the deck adds a card to the hand' do
@@ -275,14 +275,14 @@ RSpec.describe 'Games', type: :system do
 
         click_button 'Draw deck'
 
-        expect(page).to have_css('.game__hand img.playing-card', count: before_count + 1)
+        expect(page).to have_css("#{data_test('game-hand')} #{data_test('card')}", count: before_count + 1)
       end
 
       it 'discarding a card ends the turn and shows the move in the game feed' do
         draw_and_discard('2 Clubs')
 
-        within '.feed-content' do
-          expect(page).to have_css('span.feed-content__player-action', count: 1)
+        within data_test('feed-content') do
+          expect(page).to have_css(data_test('feed-action'), count: 1)
         end
       end
 
@@ -290,8 +290,8 @@ RSpec.describe 'Games', type: :system do
         draw_and_discard('2 Clubs')
         click_button 'Game Feed'
 
-        within '.feed-content' do
-          expect(page).to have_css 'span.feed-content__player-action', text: /discarded a 2 of Clubs/i
+        within data_test('feed-content') do
+          expect(page).to have_css data_test('feed-action'), text: /discarded a 2 of Clubs/i
         end
       end
 
@@ -300,18 +300,18 @@ RSpec.describe 'Games', type: :system do
 
         click_button 'Game Feed'
 
-        within '.feed-content' do
-          expect(page).to have_css 'span.feed-content__player-action', text: /took a K of Clubs from the discard pile/i
+        within data_test('feed-content') do
+          expect(page).to have_css data_test('feed-action'), text: /took a K of Clubs from the discard pile/i
         end
       end
 
       it 'melding a valid run from the hand adds it to the table' do
-        melds_before = all('.meld').count
+        melds_before = all(data_test('meld')).count
 
         meld_hearts_run
 
-        within '.game__board.panel.panel--board' do
-          expect(page).to have_css '.meld', count: melds_before + 1
+        within data_test('game-board') do
+          expect(page).to have_css data_test('meld'), count: melds_before + 1
         end
       end
     end
@@ -321,13 +321,13 @@ RSpec.describe 'Games', type: :system do
         select 'Rummy', from: 'Type'
         click_on 'Create Game'
         click_on 'Start game'
-        expect(page).to have_css 'div.game'
+        expect(page).to have_css data_test('game')
 
         game = Game.last
         game.game_state.current_player.hand = [ Card.new('2', 'Clubs') ]
         game.save!
         visit game_path(game)
-        expect(page).to have_css 'div.game'
+        expect(page).to have_css data_test('game')
 
         click_button 'Draw deck'
       end
@@ -335,7 +335,7 @@ RSpec.describe 'Games', type: :system do
       it 'highlights the card as selected' do
         select_hand_card('2 Clubs')
 
-        expect(find("[data-card='2 Clubs']")[:class]).to include 'is-selected'
+        expect(find("[data-card='2 Clubs']")['data-selected']).to eq 'true'
       end
 
       it 'enables the discard button once a card is selected' do
@@ -357,7 +357,7 @@ RSpec.describe 'Games', type: :system do
         select 'Rummy', from: 'Type'
         click_on 'Create Game'
         click_on 'Start game'
-        expect(page).to have_css 'div.game'
+        expect(page).to have_css data_test('game')
 
         game = Game.last
         game.game_state.current_player.hand = [
@@ -365,7 +365,7 @@ RSpec.describe 'Games', type: :system do
         ]
         game.save!
         visit game_path(game)
-        expect(page).to have_css 'div.game'
+        expect(page).to have_css data_test('game')
       end
 
       it 'ends the game once the last card is discarded' do
@@ -389,8 +389,8 @@ RSpec.describe 'Games', type: :system do
         discard_only_hand_card
         click_button 'Game Feed'
 
-        within '.feed-content' do
-          expect(page).to have_css '.response-group__game-response', text: /went out/i
+        within data_test('feed-content') do
+          expect(page).to have_css data_test('feed-game-response'), text: /went out/i
         end
       end
     end
@@ -423,7 +423,7 @@ RSpec.describe 'Games', type: :system do
     end
 
     it 'is listed under their games' do
-      within '[data-testid="your-games"]' do
+      within data_test('your-games') do
         expect(page).to have_content game_name
       end
     end
@@ -468,7 +468,7 @@ RSpec.describe 'Games', type: :system do
     it 'a timer is there' do
       visit game_path(game)
       click_on 'Start game'
-      expect(page).to have_css 'div.timer'
+      expect(page).to have_css data_test('timer')
     end
 
     xit 'takes the turn for them if they wait 10 seconds' do
@@ -516,7 +516,7 @@ RSpec.describe 'Games', type: :system do
       it 'makes a book' do
         visit game_path(game)
         page.click_on 'Ask for a card'
-        within '[data-testid="books"]' do
+        within data_test('books') do
           expect(page).to have_css('img')
         end
       end

@@ -10,7 +10,8 @@ export default class extends Controller {
   ]
 
   toggle(event) {
-    event.currentTarget.classList.toggle("is-selected")
+    const isSelected = event.currentTarget.classList.toggle("is-selected")
+    event.currentTarget.dataset.selected = isSelected
     this.sync()
   }
 
