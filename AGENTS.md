@@ -15,7 +15,8 @@ prefer following them over "better" alternatives.
 - **PostgreSQL** via Active Record
 - **Hotwire**: Turbo (including Turbo Streams broadcasting) + Stimulus
 - **Views**: Slim, `simple_form` (custom inputs in `app/inputs/`), RoleModel **Optics** component styles
-- **Assets**: esbuild (`yarn build`), PostCSS/SCSS
+- **Assets**: Propshaft auto-links every file under `app/assets/stylesheets` (no manifest);
+  esbuild (`yarn build`) bundles JS only — see `docs/architecture.md` "CSS / asset pipeline"
 - **Background jobs**: GoodJob
 - **Auth**: hand-rolled sessions (`has_secure_password` + `Current.session`)
 - **PWA**: manifest + service worker with an offline fallback page
@@ -187,11 +188,9 @@ See `docs/architecture.md` for the full model map and serialization details.
   `app/views/layouts/application.html.slim` for the redirect message to surface. Non-participant
   coverage is system-spec only (`spec/system/games_spec.rb`) — the shared `before_action` guards
   all four actions, so the two GET cases pin the POST cases too.
-- `mockup-html/RUMMY-HANDOFF.md` (+ `mockup-html/rummy.html`) — **Rummy, the third game:
-  design/mockup stage, NOT yet implemented** (no Rummy code in `app/` — an earlier stub was
-  reverted). The static HTML is the visual source of truth; the handoff captures the locked
-  rules/scope (single hand, aces low, sets/runs), the "Variant 1" layout (The Table + a
-  slide-out feed drawer + clickable-card selection + phase-aware controls), the
-  `play_turn[move]=draw/meld/layoff/discard` turn contract, CSS gotchas found while mocking,
-  and the next step: build the `rummy_games` partial + stub domain **with mock data**
-  following the "adding a game" pattern.
+- `mockup-html/RUMMY-HANDOFF.md` (+ `mockup-html/rummy.html`) — **Rummy, the third game:**
+  the design now renders in the real app as an **isolated preview** at `/pages/rummy_preview`
+  (mock data, no `Game::PLAYABLE_TYPES` entry or `Rummy::*` domain yet — deliberately not
+  wired into the lobby/STI). Next: wire the STI registry + domain per the "adding a game"
+  pattern above, port the preview into the real `rummy_games` partial, then build real turn
+  logic. The handoff has the full status, locked rules/turn contract, and CSS gotchas.

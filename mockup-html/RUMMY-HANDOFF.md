@@ -1,17 +1,40 @@
 # Rummy — Design Handoff
 
-Purpose: implement the **Rummy UI** into the real app **with mock data** (no real game
-logic yet), matching the static mockup. Written for a fresh session (Sonnet).
+Purpose: bring the **Rummy UI** to life in the real app, then wire it into the STI game
+registry and build the real rules engine. Written across two sessions (Sonnet).
 
-## Status / what happened this session
+## Status / what happened
 
-- This was a **planning + design** session. **No real Rails code was changed** — an earlier
-  stub implementation was built and then **fully reverted** at the user's request.
-- The only committed artifact is the **static mockup**: `mockup-html/rummy.html` +
-  `mockup-html/cards/*.svg`. That file is the **visual source of truth** — open it in a
-  browser (or `python3 -m http.server` from `mockup-html/`) to see the target design.
-- Next step (your job): build the real `rummy_games/_rummy_game.html.slim` partial + a
-  **stub domain** that seeds mock data, so the design renders in the actual app.
+**Session 1 (planning + design):** static mockup only, no Rails code.
+`mockup-html/rummy.html` + `mockup-html/cards/*.svg` remain the **visual source of truth**
+(open in a browser, or `python3 -m http.server` from `mockup-html/`) — but the real app now
+renders the same design, so reach for that first; the mockup is a fallback reference.
+
+**Session 2 (this one, done): static render in the real app, isolated from the game
+registry.** Deliberately scoped narrow — mock data, no `Game::PLAYABLE_TYPES` entry, no
+`RummyGame`/`Rummy::*` domain classes, no lobby changes, so nothing here needed specs yet:
+- `app/views/pages/rummy_preview.html.slim` — the ported design, driven entirely by hardcoded
+  Ruby literals (arrays of card filenames/hashes) at the top of the file. Reachable at
+  `/pages/rummy_preview` (real auth required) via `PagesController#rummy_preview` + a route,
+  mirroring the existing `pages/rules` pattern.
+- One CSS component file per new block under `app/assets/stylesheets/components/`: `meld.css`,
+  `pile.css`, `turn-actions.css`, `rummy-turn.css`, `player-row.css`, `feed-drawer.css`. No
+  manifest edit needed — resolved the CSS-bundling open question from session 1: Propshaft's
+  `stylesheet_link_tag :app` auto-links **every** file under `app/assets/stylesheets`, so a new
+  file in `components/` is picked up automatically.
+- `playing-card.css` gained `playing-card--flush-border` (removes the double-border artifact
+  on **standalone** cards only — see gotchas below), `playing-card--selectable`, `is-selected`.
+- The feed drawer (tab/backdrop/slide-in panel) is static — no Stimulus controller yet, by
+  design; toggle it manually via `document.body.classList.add('feed-open')` in devtools.
+- Ran an accessibility/polish pass (impeccable skill): hover state on the feed tab, real
+  Optics tokens throughout instead of hardcoded px/rgba/ms values (see gotchas below).
+- **Also renamed the shared 4-panel grid classes app-wide** (Go Fish + Crazy Eights + this
+  preview): `panel--players/--feed/--books` → `panel--board/--controls/--aside` (`--hand`
+  unchanged). The old names were Go-Fish-specific nouns that didn't fit what Crazy Eights/Rummy
+  actually put in those slots. Full RSpec suite passes with the new names.
+
+**Next session (your job): wire the STI registry + real domain, then real turn logic** — see
+"Implementation plan" below, steps 1–3 are what's left.
 
 ## The game we're adding
 
@@ -37,21 +60,24 @@ Standard Rummy ("Rum"), 2–6 players. Source: assignment brief + bicyclecards.c
 ## Layout — "Variant 1" mapped onto the existing four-panel `.game` grid
 
 Reuse the shared `.game` grid + `.panel`/`.panel--*` + `.playing-card` classes and the
-`image_tag "generated_cards/#{card.to_pathname}"` rendering. The grid areas stay
-`"players feed" / "hand books"`; we just put Rummy content in each slot:
+`image_tag "generated_cards/#{card.to_pathname}"` rendering. The grid areas (as of the
+universal-panel rename — see Status) are `"board controls" / "hand aside"`; we put Rummy
+content in each slot:
 
-- **Top-left slot (`game__players`) → "The Table"** — the shared meld collection. Melds flow
-  in a **`flex-direction: row; flex-wrap: wrap`** layout. Each meld = a row of card images
-  with a **centered "Lay off here" button** below it (space above the button). Melds are
-  table-level/shared, **not per-player** (no accordion).
-- **Top-right slot (`game__feed`) → turn controls** (the feed itself moved to a drawer, see
-  below). Header: **"Draw a card"** (phase text, left) + **"Your Turn" badge** (right).
-  Content is **centered vertically and horizontally**: the **Deck + Discard piles** (centered
-  row) above a **full-width stacked** button group.
-- **Bottom-left slot (`game__hand`) → "Your Hand"** — your cards; **cards are clickable to
-  select** (see interactions).
-- **Bottom-right slot (`game__books`) → "Players"** — a plain list of **name + card count**
-  (+ a whose-turn marker). No accordion.
+- **Top-left slot (`game__board` / `panel--board`) → "The Table"** — the shared meld
+  collection. Melds flow in a **`flex-direction: row; flex-wrap: wrap`** layout. Each meld = a
+  row of card images with a **centered "Lay off here" button** below it (space above the
+  button). Melds are table-level/shared, **not per-player** (no accordion).
+- **Top-right slot (`game__controls` / `panel--controls`) → turn controls** (the feed itself
+  moved to a drawer, see below). Header: **"Draw a card"** (phase text, left) + **"Your Turn"
+  badge** (right). Content is **centered vertically and horizontally**: the **Deck + Discard
+  piles** (centered row) above a **full-width stacked** button group.
+- **Bottom-left slot (`game__hand` / `panel--hand`) → "Your Hand"** — your cards; **cards are
+  clickable to select** (see interactions).
+- **Bottom-right slot (`game__aside` / `panel--aside`) → "Players"** — a plain list of **name +
+  card count** (+ a whose-turn marker). No accordion. (This slot has no consistent role across
+  the three games — Go Fish puts "Your Books" here, Crazy Eights the discard pile — hence the
+  neutral `aside` name rather than something content-specific.)
 
 ## The slide-out feed drawer
 
@@ -101,11 +127,23 @@ inside Rummy.
 Keeping the meld param as `card_ids[]` means the click-select UI is a drop-in with no
 server/spec change.
 
-## Implementation plan for THIS task (mock-data render in the real app)
+## Implementation plan
 
 Follow the existing "adding a game" pattern (see `AGENTS.md` "Adding a game" + Go Fish /
-Crazy Eights as templates). You are building a **stub that renders the design**, not the
-rules engine.
+Crazy Eights as templates).
+
+**Done (session 2):**
+- ~~Step 4, partial~~ — done, but as an **isolated preview**, not the real STI partial: the
+  ported markup lives at `app/views/pages/rummy_preview.html.slim`, driven by hardcoded Ruby
+  arrays instead of a real domain object. When you build the real partial (step 4 below), port
+  this file's structure over and swap the hardcoded arrays for real `Rummy::Game` state — the
+  markup itself shouldn't need to change much.
+- ~~Step 5, CSS~~ — done, and the bundling question is **resolved**: `stylesheet_link_tag :app`
+  (Propshaft) auto-links every file under `app/assets/stylesheets`, no manifest edit needed.
+  One file per new component already exists in `components/`: `meld.css`, `pile.css`,
+  `turn-actions.css`, `rummy-turn.css`, `player-row.css`, `feed-drawer.css`.
+
+**Still open — start here next session:**
 
 1. **`Game::PLAYABLE_TYPES`** (`app/models/game.rb`): add `'RummyGame' => 'Rummy'`.
    Update the pinning spec `spec/models/game_spec.rb` (`.playable_types`) to include it.
@@ -117,7 +155,8 @@ rules engine.
      `self.from_json`) like `CrazyEights::Game`. Hold `players, deck, current_player_index,
      round_results, melds, discard_pile, drawn_this_turn`. `deal!` **seeds fixed demo state**
      (a nice hand, several melds — mix of sets & runs incl. a 4-card run and a four-of-a-kind
-     — a discard top, opponents with card counts). Add `find_player`, `current_player`,
+     — a discard top, opponents with card counts) — the exact shape already visible in
+     `rummy_preview.html.slim`'s hardcoded arrays. Add `find_player`, `current_player`,
      `active_card (= discard_pile.last)`, `stock_size`, `game_over? = false`, `winner = nil`.
    - `Rummy::Player` — mirror `CrazyEights::Player` (id, name, hand, `add_cards`, `self.load`).
    - `Rummy::Meld` — holds `cards` + `self.load`; leave real validation (set/run, aces-low,
@@ -127,20 +166,16 @@ rules engine.
    - Serialization round-trips through the `game_state` jsonb, so every field needs
      load/dump coverage — miss one and it silently drops on reload. Smoke-test with
      `bin/rails runner` (build → deal! → dump → `JSON.parse(dump.to_json)` → load).
-4. **Partial** `app/views/rummy_games/_rummy_game.html.slim` — port the mockup's structure
-   into Slim (STI resolves `render @game` to this path). Reuse existing classes; render the
-   phase-aware controls from `drawn_this_turn?`.
-5. **CSS** — the new bits (melds `flex-wrap` row, centered/spaced lay-off buttons, centered
-   control panel, clickable-card `.is-selected`, the feed drawer + edge tab) need to go where
-   the app actually bundles component CSS. ⚠️ **Open question:** the bundling path is unclear
-   — `stylesheet_link_tag :app`, Propshaft, an **empty** `application.scss` manifest, and a
-   `webpack.config.js` that isn't what `bin/dev` runs (`bin/dev` runs esbuild via `yarn
-   build`, JS only). The existing `components/*.css` (game.css, panel.css, playing-card.css)
-   **are** applied in the running app, so trace how before adding a new component file.
-   The mockup **inlines copies** of those component styles — do **not** copy that approach
-   into the app; add a real `components/rummy.css` (or wherever the trail leads) instead.
-6. **Verify** by running the app (`bin/dev`) and viewing a created+started Rummy game; the
-   demo state should render the full board. Match against the mockup.
+4. **Real partial** `app/views/rummy_games/_rummy_game.html.slim` — STI resolves `render @game`
+   to this path. Port `rummy_preview.html.slim`'s structure over; render the phase-aware
+   controls from `drawn_this_turn?` instead of the hardcoded button states. Once this works
+   end-to-end from the lobby, retire the `/pages/rummy_preview` route/controller action/view
+   — it was scaffolding for the design pass, not meant to stick around.
+5. **Verify** by running the app (`bin/dev`) and viewing a created+started Rummy game; the
+   demo state should render the full board. Match against the mockup / `rummy_preview`.
+6. **Then**, real turn logic: `play_turn(params)` dispatch on `params[:move]`, `Meld`
+   validation (set/run, aces-low), lay-off, discard, going-out/scoring — see "Turn contract"
+   below for the param shapes already locked in.
 
 ## CSS learnings / gotchas discovered while building the mockup
 
