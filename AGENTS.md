@@ -63,6 +63,8 @@ bin/ci       # run the full CI pipeline locally (setup + rubocop + security scan
 
 - **Do not add a `Co-Authored-By: Claude` trailer** (or any AI co-author/attribution
   line) to commit messages or PR bodies. Keep the message to the change itself.
+- **Commit messages are header-only — no body.** One line, no blank line + explanatory
+  paragraph underneath.
 
 ## Architecture (big picture)
 
