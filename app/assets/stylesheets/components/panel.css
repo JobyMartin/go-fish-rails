@@ -21,7 +21,7 @@
     padding: var(--op-space-medium);
   }
 
-  &.panel--players {
+  &.panel--board {
     .panel__header {
       display: flex;
       align-items: center;
@@ -39,7 +39,7 @@
     }
   }
 
-  &.panel--feed {
+  &.panel--controls {
     .panel__header {
       color: var(--op-color-primary-on-plus-eight-alt);
       justify-content: space-between;
@@ -73,7 +73,7 @@
     }
   }
 
-  &.panel--books {
+  &.panel--aside {
     .panel__header {
       color: var(--op-color-neutral-on-plus-eight-alt);
     }

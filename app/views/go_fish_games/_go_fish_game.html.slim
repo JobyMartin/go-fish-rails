@@ -12,7 +12,7 @@
 - else
   div id=dom_id(game)
     .game
-      .game__players.panel.panel--players
+      .game__board.panel.panel--board
         .panel__header
           span.flex.items-center.gap-xs
             = link_to games_path, class: 'btn btn--medium' do
@@ -37,7 +37,7 @@
                       = image_tag "generated_cards/#{book.cards.first.rank.downcase}_spades.svg", class: "playing-card playing-card--small"
               = render 'game-accordion', player: player, accordion_content: accordion_content, book_collection: book_collection
 
-      .game__feed.panel.panel--feed
+      .game__controls.panel.panel--controls
         div.timer data={ controller: 'timer' }
           .panel__header
             span Game Feed
@@ -81,7 +81,7 @@
             - current_player.hand.each do |card|
               = image_tag "generated_cards/#{card.to_pathname}", class: "playing-card playing-card--large"
 
-      .game__books.panel.panel--books
+      .game__aside.panel.panel--aside
         .panel__header
           | Your Books
 
