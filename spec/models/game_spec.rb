@@ -37,7 +37,9 @@ RSpec.describe Game, type: :model do
 
   describe '.playable_types' do
     it 'lists exactly the playable subclasses with labels' do
-      expect(Game.playable_types).to eq('GoFishGame' => 'Go Fish', 'CrazyEightsGame' => 'Crazy Eights')
+      expect(Game.playable_types).to eq(
+        'GoFishGame' => 'Go Fish', 'CrazyEightsGame' => 'Crazy Eights', 'RummyGame' => 'Rummy'
+      )
     end
   end
 

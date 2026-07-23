@@ -167,6 +167,65 @@ RSpec.describe 'Games', type: :system do
     end
   end
 
+  context 'when user creates a rummy game' do
+    let(:game_name) { 'Toast' }
+
+    before do
+      visit games_path
+      click_on 'New Game'
+      fill_in 'Name', with: game_name
+    end
+
+    it 'creates a RummyGame' do
+      select 'Rummy', from: 'Type'
+      expect do
+        click_on 'Create Game'
+      end.to change(Game, :count).by 1
+
+      expect(Game.last).to be_a RummyGame
+    end
+
+    context 'when the user starts the game' do
+      before do
+        select 'Rummy', from: 'Type'
+        click_on 'Create Game'
+        click_on 'Start game'
+      end
+
+      it 'shows the game board' do
+        expect(page).to have_css 'div.game'
+      end
+
+      it 'shows the table melds' do
+        within '.game__board.panel.panel--board' do
+          expect(page).to have_css '.meld', minimum: 1
+        end
+      end
+
+      it 'shows the deck and discard piles' do
+        within '.game__controls.panel.panel--controls' do
+          expect(page).to have_css '.pile', count: 2
+        end
+      end
+
+      it 'shows the current player hand' do
+        within '.game__hand.panel.panel--hand' do
+          expect(page).to have_css 'img.playing-card', minimum: 1
+        end
+      end
+
+      it 'shows the players panel' do
+        within '.game__aside.panel.panel--aside' do
+          expect(page).to have_css '.player-row', minimum: 1
+        end
+      end
+
+      it 'shows the game feed drawer tab' do
+        expect(page).to have_css 'button.feed-tab'
+      end
+    end
+  end
+
   context 'when there is an open game' do
     let(:game_content) { "Start game" }
     let!(:game) { create(:game) }
@@ -174,7 +233,7 @@ RSpec.describe 'Games', type: :system do
     before do
       visit games_path
     end
-    
+
     it 'allows them to join' do
       expect do
         click_on 'Join'
@@ -205,7 +264,7 @@ RSpec.describe 'Games', type: :system do
       end
       it 'lets them in and shows the game' do
         unique_content = 'Start game'
-        expect(page).to have_content unique_content 
+        expect(page).to have_content unique_content
       end
     end
   end
@@ -263,11 +322,11 @@ RSpec.describe 'Games', type: :system do
       before do
         game.start
         game.game_state.players.each do |player|
-          player.hand = [Card.new('A')]
+          player.hand = [ Card.new('A') ]
         end
         game.save!
       end
-      
+
       it 'exchanges the cards between players' do
         visit game_path(game)
         click_on 'Ask for a card'
@@ -279,8 +338,8 @@ RSpec.describe 'Games', type: :system do
     context 'when the card makes a book' do
       before do
         game.start
-        game.game_state.players.first.hand = [Card.new]
-        game.game_state.players.last.hand = [Card.new, Card.new, Card.new]
+        game.game_state.players.first.hand = [ Card.new ]
+        game.game_state.players.last.hand = [ Card.new, Card.new, Card.new ]
         game.save!
       end
 

@@ -1,0 +1,88 @@
+- game = @game || game
+- implementation = game.game_state
+- current_player = implementation.find_player(Current.session.user.id) if implementation.present?
+
+- unless game.started_at.present?
+  .simple-page
+    = button_to 'Start game', start_game_path(game), method: :post, class: 'btn btn--primary'
+- else
+  div id=dom_id(game)
+    .game
+      .game__board.panel.panel--board
+        .panel__header
+          span.flex.items-center.gap-xs
+            = link_to games_path, class: 'btn btn--medium' do
+              i.ph.ph-arrow-left.icon
+            | #{game.name}
+
+        .panel__content
+          .op-stack
+            span The Table
+
+            .melds
+              - implementation.melds.each do |meld|
+                .meld
+                  .flex
+                    - meld.cards.each do |card|
+                      = image_tag "generated_cards/#{card.to_pathname}", class: 'playing-card playing-card--small'
+                  button.btn.btn--medium.meld__layoff Lay off here
+
+      .game__controls.panel.panel--controls
+        .panel__header
+          span= implementation.drawn_this_turn ? 'Meld or discard' : 'Draw a card'
+          - if current_player.id == implementation.current_player.id
+            .badge Your Turn
+
+        .panel__content
+          .rummy-turn
+            .rummy-turn__piles
+              .pile
+                = image_tag 'generated_cards/card_back_green.svg', class: 'playing-card playing-card--medium playing-card--flush-border'
+                span= "Deck (#{implementation.deck.cards_left})"
+              .pile
+                = image_tag "generated_cards/#{implementation.active_card.to_pathname}", class: 'playing-card playing-card--medium playing-card--flush-border'
+                span Discard
+
+            .turn-actions
+              - is_current_player = current_player.id == implementation.current_player.id
+              button.btn.btn--primary disabled=(!is_current_player || implementation.drawn_this_turn) Draw deck
+              button.btn disabled=(!is_current_player || implementation.drawn_this_turn) Take discard
+              button.btn disabled=(!is_current_player || !implementation.drawn_this_turn) Meld selected
+              button.btn disabled=(!is_current_player || !implementation.drawn_this_turn) Discard selected
+
+      .game__hand.panel.panel--hand
+        .panel__header
+          | Your Hand
+
+        .panel__content
+          .flex.hand
+            - current_player.hand.each do |card|
+              = image_tag "generated_cards/#{card.to_pathname}", class: 'playing-card playing-card--large playing-card--selectable'
+
+      .game__aside.panel.panel--aside
+        .panel__header
+          | Players
+
+        .panel__content
+          .op-stack
+            - implementation.players.each do |player|
+              .player-row
+                span.flex.items-center.gap-xs
+                  = player.name
+                  - if player.id == implementation.current_player.id
+                    .badge turn
+                span= "#{player.hand.count} cards"
+
+  button.feed-tab
+    | Game Feed
+    span.feed-tab__dot aria-hidden="true"
+
+  .feed-backdrop
+
+  aside.feed-drawer
+    .panel__header
+      span Game Feed
+    .feed-content
+      - implementation.round_results.each do |result|
+        - result.feed_lines.each do |line|
+          span.feed-content__player-action = line.text
