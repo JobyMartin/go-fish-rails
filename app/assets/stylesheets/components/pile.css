@@ -8,4 +8,10 @@
   img {
     margin-inline-start: 0;
   }
+
+  .pile__empty {
+    aspect-ratio: 2.5 / 3.5;
+    background-color: var(--op-color-neutral-plus-seven);
+    border-style: dashed;
+  }
 }

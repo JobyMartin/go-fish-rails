@@ -69,6 +69,18 @@ Assets are compiled once per run via `rails spec:prepare` (guarded by an
 `ASSET_PRECOMPILE_SUCCESSFUL` env flag in `rails_helper.rb`); if assets fail to compile the
 suite aborts before running.
 
+**A `:js`-driven sign-in can silently fail** — the spec stays on `/session/new` (no
+exception raised), so the *next* assertion fails on unrelated missing content, which reads
+like a totally different bug. This is a real race in this dev environment's cold
+Puma/Playwright startup (the very first request(s) in a fresh headless-browser process),
+not a bug in the auth code — do not "fix" it by touching `SessionsController`.
+`sign_in` (`spec/support/helpers/sign_in_helper.rb`) already retries up to 3 times,
+re-attempting the login while it's still looking at the "Sign in" button. For the same
+underlying reason, prefer `expect(page).to have_css(...)` right after any `click_on`/
+`click_button` that triggers a page transition and before you do raw ActiveRecord state
+manipulation — the click returning is not a guarantee the resulting page has finished
+loading.
+
 ## CI caveat
 
 `.github/workflows/ci.yml` runs **only** RuboCop + security scans (Brakeman,

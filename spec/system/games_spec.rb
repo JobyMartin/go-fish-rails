@@ -171,7 +171,6 @@ RSpec.describe 'Games', type: :system do
     let(:game_name) { 'Toast' }
 
     before do
-      visit games_path
       click_on 'New Game'
       fill_in 'Name', with: game_name
     end
@@ -196,9 +195,9 @@ RSpec.describe 'Games', type: :system do
         expect(page).to have_css 'div.game'
       end
 
-      it 'shows the table melds' do
+      it 'starts with no melds on the table' do
         within '.game__board.panel.panel--board' do
-          expect(page).to have_css '.meld', minimum: 1
+          expect(page).to have_no_css '.meld'
         end
       end
 
@@ -222,6 +221,177 @@ RSpec.describe 'Games', type: :system do
 
       it 'shows the game feed drawer tab' do
         expect(page).to have_css 'button.feed-tab'
+      end
+    end
+
+    context 'when the user opens the game feed', :js do
+      before do
+        select 'Rummy', from: 'Type'
+        click_on 'Create Game'
+        click_on 'Start game'
+      end
+
+      it 'slides the game feed drawer onto the screen' do
+        click_button 'Game Feed'
+
+        expect(page).to have_css 'body.feed-open'
+      end
+
+      it 'shows an empty state before any moves have happened' do
+        click_button 'Game Feed'
+
+        within '.feed-content' do
+          expect(page).to have_content 'No moves yet'
+        end
+      end
+
+      it 'closes the drawer when the close button is clicked' do
+        click_button 'Game Feed'
+        find('[aria-label="Close game feed"]').click
+
+        expect(page).to have_no_css 'body.feed-open'
+      end
+    end
+
+    context 'when the user takes a full turn', :js do
+      before do
+        select 'Rummy', from: 'Type'
+        click_on 'Create Game'
+        click_on 'Start game'
+        expect(page).to have_css 'div.game'
+
+        game = Game.last
+        game.game_state.current_player.hand = [
+          Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts'), Card.new('2', 'Clubs')
+        ]
+        game.game_state.discard_pile = [ Card.new('K', 'Clubs') ]
+        game.save!
+        visit game_path(game)
+        expect(page).to have_css 'div.game'
+      end
+
+      it 'drawing from the deck adds a card to the hand' do
+        before_count = hand_card_count
+
+        click_button 'Draw deck'
+
+        expect(page).to have_css('.game__hand img.playing-card', count: before_count + 1)
+      end
+
+      it 'discarding a card ends the turn and shows the move in the game feed' do
+        draw_and_discard('2 Clubs')
+
+        within '.feed-content' do
+          expect(page).to have_css('span.feed-content__player-action', count: 1)
+        end
+      end
+
+      it 'shows the discard message in the feed once the drawer is opened' do
+        draw_and_discard('2 Clubs')
+        click_button 'Game Feed'
+
+        within '.feed-content' do
+          expect(page).to have_css 'span.feed-content__player-action', text: /discarded a 2 of Clubs/i
+        end
+      end
+
+      it 'taking from the discard pile shows the move in the game feed' do
+        click_button 'Take discard'
+
+        click_button 'Game Feed'
+
+        within '.feed-content' do
+          expect(page).to have_css 'span.feed-content__player-action', text: /took a K of Clubs from the discard pile/i
+        end
+      end
+
+      it 'melding a valid run from the hand adds it to the table' do
+        melds_before = all('.meld').count
+
+        meld_hearts_run
+
+        within '.game__board.panel.panel--board' do
+          expect(page).to have_css '.meld', count: melds_before + 1
+        end
+      end
+    end
+
+    context 'when the user selects a hand card', :js do
+      before do
+        select 'Rummy', from: 'Type'
+        click_on 'Create Game'
+        click_on 'Start game'
+        expect(page).to have_css 'div.game'
+
+        game = Game.last
+        game.game_state.current_player.hand = [ Card.new('2', 'Clubs') ]
+        game.save!
+        visit game_path(game)
+        expect(page).to have_css 'div.game'
+
+        click_button 'Draw deck'
+      end
+
+      it 'highlights the card as selected' do
+        select_hand_card('2 Clubs')
+
+        expect(find("[data-card='2 Clubs']")[:class]).to include 'is-selected'
+      end
+
+      it 'enables the discard button once a card is selected' do
+        select_hand_card('2 Clubs')
+
+        expect(page).to have_button 'Discard selected', disabled: false
+      end
+
+      it 'deselects the card on a second click, disabling the discard button' do
+        select_hand_card('2 Clubs')
+        select_hand_card('2 Clubs')
+
+        expect(page).to have_button 'Discard selected', disabled: true
+      end
+    end
+
+    context 'when the user goes out', :js do
+      before do
+        select 'Rummy', from: 'Type'
+        click_on 'Create Game'
+        click_on 'Start game'
+        expect(page).to have_css 'div.game'
+
+        game = Game.last
+        game.game_state.current_player.hand = [
+          Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts')
+        ]
+        game.save!
+        visit game_path(game)
+        expect(page).to have_css 'div.game'
+      end
+
+      it 'ends the game once the last card is discarded' do
+        meld_hearts_run
+        discard_only_hand_card
+
+        expect(Game.last.game_state.game_over?).to eq true
+      end
+
+      it 'shows the winner screen on a later visit' do
+        meld_hearts_run
+        discard_only_hand_card
+
+        visit winner_game_path(Game.last)
+
+        expect(page).to have_content 'The winner is'
+      end
+
+      it 'shows a styled going-out message in the game feed' do
+        meld_hearts_run
+        discard_only_hand_card
+        click_button 'Game Feed'
+
+        within '.feed-content' do
+          expect(page).to have_css '.response-group__game-response', text: /went out/i
+        end
       end
     end
   end

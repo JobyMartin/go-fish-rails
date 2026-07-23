@@ -13,10 +13,14 @@ RSpec.configure do |config|
 
   config.before(:each, type: :system) do
     driven_by :rack_test
+    Capybara.default_max_wait_time = 2
   end
 
   config.before(:each, :js, type: :system) do
     driven_by :playwright_headless
+    # first-request cold boot (autoloading + view compilation) can outrun
+    # Capybara's 2s default wait, especially on the first page a spec visits
+    Capybara.default_max_wait_time = 5
   end
 
   config.before(:each, :chrome, type: :system) do

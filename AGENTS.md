@@ -4,7 +4,8 @@
 
 A learning exercise (part of the Craftsmanship Academy apprenticeship) that teaches the
 basics of **Rails, relational databases, Active Record, Hotwire, and PWAs** by building a
-web platform for playing online card games — currently **Go Fish** and **Crazy Eights**.
+web platform for playing online card games — currently **Go Fish**, **Crazy Eights**, and
+**Rummy**.
 Users sign up, create or join a game in a lobby, and play in real time. Because it's a
 teaching vehicle, the patterns below are chosen deliberately to demonstrate concepts;
 prefer following them over "better" alternatives.
@@ -68,12 +69,12 @@ bin/ci       # run the full CI pipeline locally (setup + rubocop + security scan
 
 ## Architecture (big picture)
 
-Persisted games use **single-table inheritance**: a `Game` base model with `GoFishGame`
-and `CrazyEightsGame` subclasses. All actual game logic lives in **plain Ruby objects**
-under `app/models/go_fish/` and `app/models/crazy_eights/`, and each AR subclass
-**serializes** its plain-Ruby game object into the `game_state` jsonb column via a custom
-coder (`serialize :game_state, coder: GoFish::Game`). Teaching serialization is a core
-goal, so **new games must follow this same split.**
+Persisted games use **single-table inheritance**: a `Game` base model with `GoFishGame`,
+`CrazyEightsGame`, and `RummyGame` subclasses. All actual game logic lives in **plain Ruby
+objects** under `app/models/go_fish/`, `app/models/crazy_eights/`, and `app/models/rummy/`,
+and each AR subclass **serializes** its plain-Ruby game object into the `game_state` jsonb
+column via a custom coder (`serialize :game_state, coder: GoFish::Game`). Teaching
+serialization is a core goal, so **new games must follow this same split.**
 
 The AR `Player` is just the join table between `User` and `Game`. The domain
 `GoFish::Player` / `CrazyEights::Player` are plain objects that hold per-game
@@ -115,7 +116,7 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **Game state is one jsonb blob.** History/replay lives entirely inside the serialized
   `game_state` column, not in normalized tables — adding a field means updating the
   domain object's `as_json`/`from_json`/`load`/`dump`.
-- **Deal counts depend on player count** in both games (see the game docs).
+- **Deal counts depend on player count** in all three games (see the game docs).
 - `ArchiveGameJob` auto-archives any game untouched for 2+ days, on a GoodJob schedule.
 - **Routes are inconsistent** — they grew through the apprenticeship's learning phases
   (e.g. `users/show` as a GET path, repeated `member` blocks). Don't treat existing route
@@ -190,9 +191,8 @@ See `docs/architecture.md` for the full model map and serialization details.
   `app/views/layouts/application.html.slim` for the redirect message to surface. Non-participant
   coverage is system-spec only (`spec/system/games_spec.rb`) — the shared `before_action` guards
   all four actions, so the two GET cases pin the POST cases too.
-- `mockup-html/RUMMY-HANDOFF.md` (+ `mockup-html/rummy.html`) — **Rummy, the third game:**
-  the design now renders in the real app as an **isolated preview** at `/pages/rummy_preview`
-  (mock data, no `Game::PLAYABLE_TYPES` entry or `Rummy::*` domain yet — deliberately not
-  wired into the lobby/STI). Next: wire the STI registry + domain per the "adding a game"
-  pattern above, port the preview into the real `rummy_games` partial, then build real turn
-  logic. The handoff has the full status, locked rules/turn contract, and CSS gotchas.
+- `docs/games/rummy.md` — **Rummy, the third game: wired in, with real turn logic.**
+  Registered in `Game::PLAYABLE_TYPES`, real `Rummy::*` domain objects, draw/meld/lay-off/
+  discard all implemented, click-to-select hand UI via a Stimulus controller, and a real
+  per-player-count `deal!` (2p → 10, 3–4p → 7, 5–6p → 6). `mockup-html/rummy.html` remains
+  the visual mockup reference.

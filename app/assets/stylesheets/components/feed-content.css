@@ -11,4 +11,9 @@
     padding: var(--op-space-x-small);
     border-radius: var(--op-radius-medium);
   }
+
+  .feed-content__empty {
+    color: var(--op-color-primary-on-plus-eight-alt);
+    padding: var(--op-space-x-small);
+  }
 }

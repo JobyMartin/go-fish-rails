@@ -1,22 +1,9 @@
 module Rummy
   class Game
-    DEMO_HAND = [
-      Card.new("3", "Hearts"), Card.new("4", "Hearts"), Card.new("5", "Hearts"),
-      Card.new("6", "Hearts"), Card.new("9", "Spades"), Card.new("9", "Diamonds"),
-      Card.new("2", "Clubs"), Card.new("K", "Spades")
-    ].freeze
-
-    DEMO_MELDS = [
-      %w[7_Spades 8_Spades 9_Spades],
-      %w[Q_Hearts Q_Diamonds Q_Clubs],
-      %w[3_Hearts 4_Hearts 5_Hearts 6_Hearts],
-      %w[9_Spades 9_Diamonds 9_Hearts 9_Clubs],
-      %w[10_Spades J_Spades Q_Spades K_Spades],
-      %w[10_Hearts J_Hearts Q_Hearts],
-      %w[K_Spades K_Hearts K_Diamonds K_Clubs]
-    ].freeze
-
-    OPPONENT_HAND_SIZE = 5
+    TWO_PLAYER_DEAL_COUNT = 10
+    SMALL_GAME_DEAL_COUNT = 7
+    BIG_GAME_DEAL_COUNT = 6
+    SMALL_GAME_PLAYER_COUNT = 4
 
     attr_accessor :players, :deck, :current_player_index, :round_results, :melds, :discard_pile, :drawn_this_turn
 
@@ -64,10 +51,8 @@ module Rummy
     end
 
     def deal!
-      players.first.add_cards(DEMO_HAND)
-      players.drop(1).each { |player| player.add_cards(Array.new(OPPONENT_HAND_SIZE) { deck.top_card }) }
-      self.melds = DEMO_MELDS.map { |cards| Meld.new(cards.map { |card| card_from_token(card) }) }
-      self.discard_pile = [ Card.new("K", "Clubs") ]
+      number_of_cards.times { players.each { |player| player.add_cards([ deck.top_card ]) } }
+      self.discard_pile = [ deck.top_card ]
     end
 
     def find_player(user_id)
@@ -86,11 +71,65 @@ module Rummy
 
     def active_card = discard_pile.last
 
+    def draw(source)
+      card = source == "discard" ? discard_pile.pop : deck.top_card
+      current_player.add_cards([ card ])
+      round_results << RoundResult.new(current_player: current_player, card_taken: card) if source == "discard"
+      self.drawn_this_turn = true
+    end
+
+    def meld(card_tokens)
+      cards = cards_from_hand(card_tokens)
+      return unless Meld.valid?(cards)
+
+      cards.each { |card| remove_from_hand(card) }
+      melds << Meld.new(cards)
+    end
+
+    def layoff(meld_id, card_token)
+      meld = melds[meld_id]
+      card = cards_from_hand([ card_token ]).first
+      return unless meld && card && Meld.valid?(meld.cards + [ card ])
+
+      remove_from_hand(card)
+      meld.cards << card
+    end
+
+    def discard(card_token)
+      card = cards_from_hand([ card_token ]).first
+      return unless card
+
+      remove_from_hand(card)
+      discard_pile << card
+      round_results << RoundResult.new(
+        current_player: current_player, card_discarded: card, going_out: current_player.hand.empty?
+      )
+      self.drawn_this_turn = false
+      switch_turns unless current_player.hand.empty?
+    end
+
     private
 
-    def card_from_token(token)
-      rank, suit = token.split("_")
-      Card.new(rank, suit)
+    def number_of_cards
+      return TWO_PLAYER_DEAL_COUNT if players.count == 2
+
+      players.count <= SMALL_GAME_PLAYER_COUNT ? SMALL_GAME_DEAL_COUNT : BIG_GAME_DEAL_COUNT
+    end
+
+    def cards_from_hand(card_tokens)
+      card_tokens.reject(&:blank?).map { |token| current_player.hand.find { it == Card.objectify(token) } }.compact
+    end
+
+    def remove_from_hand(card)
+      current_player.hand.delete_at(current_player.hand.index(card))
+    end
+
+    def switch_turns
+      if current_player_index == players.length - 1
+        self.current_player_index = 0
+      else
+        self.current_player_index += 1
+      end
     end
   end
 end

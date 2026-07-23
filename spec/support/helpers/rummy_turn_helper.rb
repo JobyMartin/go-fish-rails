@@ -1,0 +1,46 @@
+module RummyTurnHelper
+  def select_hand_card(token)
+    click_retrying_stale_element { all("[data-rummy-turn-target='card'][data-card='#{token}']", minimum: 1).first.click }
+  end
+
+  def select_only_hand_card
+    within('.game__hand') do
+      click_retrying_stale_element { all("[data-rummy-turn-target='card']", minimum: 1).first.click }
+    end
+  end
+
+  def hand_card_count
+    all('.game__hand img.playing-card').count
+  end
+
+  def draw_and_discard(token)
+    click_button 'Draw deck'
+    select_hand_card(token)
+    click_button 'Discard selected'
+  end
+
+  def meld_hearts_run
+    click_button 'Draw deck'
+    select_hand_card('3 Hearts')
+    select_hand_card('4 Hearts')
+    select_hand_card('5 Hearts')
+    click_button 'Meld selected'
+  end
+
+  def discard_only_hand_card
+    select_only_hand_card
+    click_button 'Discard selected'
+    expect(page).to have_no_css '.game__hand img.playing-card'
+  end
+
+  private
+
+  def click_retrying_stale_element(attempts = 3)
+    yield
+  rescue Playwright::Error
+    attempts -= 1
+    raise if attempts.zero?
+
+    retry
+  end
+end

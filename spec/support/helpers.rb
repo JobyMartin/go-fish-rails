@@ -12,5 +12,6 @@ RSpec.configure do |c|
   c.include SignInHelper, type: :system
   c.include SignUpHelper, type: :system
   c.include CreateGameHelper, type: :system
+  c.include RummyTurnHelper, type: :system
   c.include PlayTurnHelper, type: :model
 end

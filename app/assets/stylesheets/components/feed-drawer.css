@@ -57,9 +57,32 @@
   z-index: var(--op-z-index-dialog-content);
 
   .panel__header {
-    color: var(--op-color-primary-on-plus-eight-alt);
+    height: 60px;
+    padding-inline: var(--op-space-medium);
+    display: flex;
     justify-content: space-between;
     align-items: center;
+    color: var(--op-color-primary-on-plus-eight-alt);
+    border-bottom: var(--op-border-width) solid var(--op-color-border);
+  }
+
+  .panel__content {
+    padding: var(--op-space-medium);
+    overflow-y: auto;
+  }
+
+  .feed-drawer__close {
+    background: none;
+    border: none;
+    padding: var(--op-space-2x-small);
+    color: inherit;
+    font-size: var(--op-font-large);
+    line-height: 1;
+    cursor: pointer;
+
+    &:hover {
+      color: var(--op-color-primary-base);
+    }
   }
 }
 

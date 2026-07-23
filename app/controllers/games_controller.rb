@@ -10,7 +10,7 @@ class GamesController < ApplicationController
 
   def new
     @game = Game.new
-    render layout: 'modal'
+    render layout: "modal"
   end
 
   def create
@@ -21,7 +21,7 @@ class GamesController < ApplicationController
     if @game.save!
       redirect_to game_path(@game)
     else
-      render :new, status: :unprocessable_content, layout: 'modal'
+      render :new, status: :unprocessable_content, layout: "modal"
     end
   end
 
@@ -30,7 +30,7 @@ class GamesController < ApplicationController
     return unless @started
     @implementation = @game.game_state
     @current_player = @implementation.find_player(Current.session.user.id)
-    @opponents = @implementation.players - [@current_player]
+    @opponents = @implementation.players - [ @current_player ]
   end
 
   def start
@@ -67,7 +67,7 @@ class GamesController < ApplicationController
   end
 
   def play_turn_params
-    params.require(:play_turn).permit(:player, :rank, :suit)
+    params.require(:play_turn).permit(:player, :rank, :suit, :move, :source, :meld_id, :card_id, card_ids: [])
   end
 
   def game_params
