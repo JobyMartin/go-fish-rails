@@ -4,7 +4,7 @@
 - feed_lines = ['Josh discarded K of Clubs', 'Josh melded 7♠ 8♠ 9♠', 'Josh laid off Q♦ onto your set', 'You drew from the stock', "It's your turn — draw a card"]
 
 .game
-  .game__players.panel.panel--players
+  .game__board.panel.panel--board
     .panel__header
       span.flex.items-center.gap-xs
         = link_to games_path, class: 'btn btn--medium' do
@@ -23,7 +23,7 @@
                   = image_tag "generated_cards/#{card}.svg", class: 'playing-card playing-card--small'
               button.btn.btn--medium.meld__layoff Lay off here
 
-  .game__feed.panel.panel--feed
+  .game__controls.panel.panel--controls
     .panel__header
       span Draw a card
       .badge Your Turn
@@ -54,7 +54,7 @@
           - classes = ['playing-card playing-card--large playing-card--selectable', ('is-selected' if entry[:selected])].compact.join(' ')
           = image_tag "generated_cards/#{entry[:card]}.svg", class: classes
 
-  .game__books.panel.panel--books
+  .game__aside.panel.panel--aside
     .panel__header
       | Players
 

@@ -90,7 +90,7 @@ RSpec.describe 'Games', type: :system do
 
       it 'shows the go fish game view' do
         click_on 'Start game'
-        expect(page).to have_css("div.game__books.panel.panel--books")
+        expect(page).to have_css("div.game__aside.panel.panel--aside")
       end
     end
   end
@@ -144,13 +144,13 @@ RSpec.describe 'Games', type: :system do
         end
 
         it 'displays the players' do
-          within(".game__players.panel.panel--players") do
+          within(".game__board.panel.panel--board") do
             expect(page).to have_css("details.accordion", count: 1)
           end
         end
 
         it 'displays the discard pile' do
-          within '.game__books.panel.panel--books' do
+          within '.game__aside.panel.panel--aside' do
             expect(page).to have_css "img.playing-card"
           end
         end
