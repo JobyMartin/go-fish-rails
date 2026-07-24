@@ -67,7 +67,14 @@ tag is the most common cause of a confusing system-spec failure here.
 
 Assets are compiled once per run via `rails spec:prepare` (guarded by an
 `ASSET_PRECOMPILE_SUCCESSFUL` env flag in `rails_helper.rb`); if assets fail to compile the
-suite aborts before running.
+suite aborts before running. That includes the **esbuild JS bundle** (`spec:prepare` chains
+`yarn install` → `yarn build`), so **you don't need to `yarn build` by hand before running
+`:js` specs** — a Stimulus change is picked up by the next `rspec` invocation. Don't go
+looking for the task in this repo: `spec:prepare` is rspec-rails' own rake task, which
+delegates to `test:prepare`, which jsbundling hooks the JS build onto. Grepping the codebase
+for it finds only its two mentions in `spec/rails_helper.rb` and this file. The flag is
+per-*process*, so the rebuild happens once at the first system spec of a run, not between
+examples.
 
 **A `:js`-driven sign-in can silently fail** — the spec stays on `/session/new` (no
 exception raised), so the *next* assertion fails on unrelated missing content, which reads
@@ -110,6 +117,24 @@ doesn't prove the write reached the database. Any system-spec action that trigge
 deriving expected counts/deltas from the test's own setup (e.g. `hand_before - 1`, or a
 `change { ... }.by(1)` block) over hardcoding the resulting number — it documents *why* the
 number is what it is and survives changes to deal sizes or setup data.
+
+## Tightening a client-side guard can strand a server-validation spec
+
+A spec that drives a **disabled-until-valid** button to reach *server* validation is coupled to
+that button's enable threshold, and nothing names the coupling. Tighten the guard and the spec
+can no longer perform the click that got it to the server, so it fails somewhere unrelated —
+looking like the validation broke when only the button did.
+
+This is not hypothetical: raising the Rummy meld button's threshold from "≥ 1 card selected" to
+"≥ 3" broke `'shows an error message when melding an invalid combination'`, which had been
+selecting **two** mismatched cards to trigger `Rummy::InvalidMove`. The fix is to keep the
+spec's original intent — three still-invalid cards, so it clears the button and *still* exercises
+the server path — not to relax the guard or retarget the spec at the button.
+
+So: after changing any client-side enable rule, **run the whole suite, not just the specs you
+wrote.** The casualty is by definition in a spec you weren't thinking about, and both specs are
+legitimate — one pins the button, one pins the server. Keep them that way rather than collapsing
+them into a single client-side assertion.
 
 ## CI caveat
 
