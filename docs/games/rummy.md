@@ -61,6 +61,18 @@ element ids** (`layoff_card_id_#{meld_index}`) — with N melds all using the sa
 field name, the generated ids collided and Capybara silently interacted with the wrong
 form. The feed drawer's own toggle (`feed_drawer_controller.js`) is a two-line controller
 that just flips `body.feed-open`; it's Rummy-only — the other two games keep an inline feed.
+Both controllers also set a parallel `data-selected`/`data-feed-open` attribute alongside the
+class they toggle, so specs assert behavior through that attribute rather than a styling class
+(see `docs/testing.md`).
+
+**`turn-actions.css`'s `.btn:disabled:first-of-type` selector was a per-button trap, not a
+per-group one.** `Draw deck`/`Take discard`/`Meld selected`/`Discard selected` each live alone
+inside their own `<form>` (from `button_to`/`simple_form_for`), so every one of them is
+trivially "first of its type" within that form — the selector fired independently on whichever
+button happened to be disabled, instead of once between the draw-pair and the meld/discard-pair
+as intended. Symptom: buttons visibly drifted apart as they toggled disabled state (e.g. once
+you'd drawn, `Take discard` gained its own top margin and split from `Draw deck`). Fixed by
+keying the gap off DOM position (`form:nth-of-type(3)`) instead of `:disabled` state.
 
 ## Game feed (round results)
 

@@ -81,6 +81,29 @@ underlying reason, prefer `expect(page).to have_css(...)` right after any `click
 manipulation — the click returning is not a guarantee the resulting page has finished
 loading.
 
+## Selecting elements in system specs
+
+Don't select on CSS classes (`have_css '.game__hand img.playing-card'`) — those are styling
+hooks and get renamed during CSS refactors for reasons that have nothing to do with what the
+spec is verifying. Add a `data-testid` to the element in the view instead, and select on it
+with the `data_test(name)` helper (`spec/support/helpers/test_element_helper.rb`, included in
+system specs) rather than hand-writing the `[data-testid="..."]` string. `Capybara.test_id` is
+also configured to `'data-testid'` (`spec/support/capybara_testid.rb`). The same applies to
+JS-driven state classes (`.is-selected`, `.feed-open`): the Stimulus controllers that toggle
+them also set a parallel `data-*` attribute (`data-selected`, `data-feed-open`) so specs assert
+behavior through that attribute instead of the styling class.
+
+## Assert persisted state, not just the DOM, for actions that write to the database
+
+A passing `have_css` after a `click_button`/`click_on` only proves the page re-rendered — it
+doesn't prove the write reached the database. Any system-spec action that triggers a
+`play_turn`/`start`/similar POST should also assert against a freshly-reloaded record (e.g.
+`game.reload.game_state.current_player.hand.size`), the same way the model specs already do
+(`expect { game.play_turn(...) }.to change { state.round_results.size }.by(1)`). Prefer
+deriving expected counts/deltas from the test's own setup (e.g. `hand_before - 1`, or a
+`change { ... }.by(1)` block) over hardcoding the resulting number — it documents *why* the
+number is what it is and survives changes to deal sizes or setup data.
+
 ## CI caveat
 
 `.github/workflows/ci.yml` runs **only** RuboCop + security scans (Brakeman,
