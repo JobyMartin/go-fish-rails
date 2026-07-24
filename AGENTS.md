@@ -99,6 +99,11 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **Reuse before building.** Reach for an existing Optics component or custom
   `simple_form` input before hand-writing markup or a new component.
 - **BEM** for CSS class naming; component styles live in `app/assets/stylesheets/components/`.
+- **Motion is finite and gated.** The app has exactly one animation (the Rummy post-draw card
+  pulse): finite iteration count, wrapped in `prefers-reduced-motion: no-preference`, with a
+  non-motion cue carrying the same message. Hold new motion to that bar, and prefer a local
+  `@keyframes` over an animation library — `animate.css` was weighed and rejected (it doesn't
+  fit Propshaft's no-tree-shaking auto-linking, and its classes fight BEM).
 - Ruby's implicit block parameter `it` is used throughout (e.g. `players.find { it.id == x }`).
 - **Comments are a last resort, not a courtesy.** Before writing one, ask: can this be
   induced by reading the code? If yes, the comment is dead weight — delete it, or better,
@@ -182,19 +187,14 @@ See `docs/architecture.md` for the full model map and serialization details.
   was an untested artifact, not pinned behavior. See `spec/models/card_spec.rb` and
   `spec/models/deck_spec.rb`.
 - `docs/brave-card-3-authorize-game-actions.md` — BRAVE breakdown for Card 3 (authorize game
-  actions), **complete**. Two scoped before_actions in `GamesController` — `set_game` (drops the
-  repeated `Game.find`) then `require_participation` (`@game.users.include?(Current.session.user)`,
-  else redirect to lobby with a flash), both `only: %i[show start play winner]`. Decisions held:
-  **include `winner`** (leaks state like `show`); **leave `join` alone**; **redirect-with-flash,
-  not 404**. The redirect message needs flash rendering, which now lives in a shared
-  `app/views/shared/_flash.html.slim` partial used by both layouts (see `docs/games/rummy.md`
-  "Surfacing invalid moves"). Non-participant
-  coverage is system-spec only (`spec/system/games_spec.rb`) — the shared `before_action` guards
-  all four actions, so the two GET cases pin the POST cases too.
+  actions), **complete**; the gotcha above is the short version. The doc holds the decisions
+  (include `winner`, leave `join` open, redirect-with-flash over 404) and why non-participant
+  coverage is system-spec-on-the-GETs only.
 - `docs/games/rummy.md` — **Rummy, the third game: wired in, with real turn logic.**
   Registered in `Game::PLAYABLE_TYPES`, real `Rummy::*` domain objects, draw/meld/lay-off/
   discard all implemented, click-to-select hand UI via a Stimulus controller, and a real
   per-player-count `deal!` (2p → 10, 3–4p → 7, 5–6p → 6). `mockup-html/rummy.html` remains
   the visual mockup reference. **Invalid moves raise `Rummy::InvalidMove`** (the app's one
   turn-validation exception), surfaced as an auto-dismissing flash toast — see "Surfacing
-  invalid moves".
+  invalid moves". The mid-turn "you've drawn, now pick a card" step is cued by a header
+  change plus the pulse — see "Prompting the …" for why it needs no JS.
