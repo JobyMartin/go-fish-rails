@@ -197,11 +197,7 @@ RSpec.describe 'Games', type: :system do
     end
 
     context 'when the user starts the game' do
-      before do
-        select 'Rummy', from: 'Type'
-        click_on 'Create Game'
-        click_on 'Start game'
-      end
+      before { start_rummy_game }
 
       it 'shows the game board' do
         expect(page).to have_css data_test('game')
@@ -237,11 +233,7 @@ RSpec.describe 'Games', type: :system do
     end
 
     context 'when the user opens the game feed', :js do
-      before do
-        select 'Rummy', from: 'Type'
-        click_on 'Create Game'
-        click_on 'Start game'
-      end
+      before { start_rummy_game }
 
       it 'slides the game feed drawer onto the screen' do
         click_button 'Game Feed'
@@ -267,19 +259,12 @@ RSpec.describe 'Games', type: :system do
 
     context 'when the user takes a full turn', :js do
       before do
-        select 'Rummy', from: 'Type'
-        click_on 'Create Game'
-        click_on 'Start game'
-        expect(page).to have_css data_test('game')
-
-        game = Game.last
-        game.game_state.current_player.hand = [
-          Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts'), Card.new('2', 'Clubs')
-        ]
-        game.game_state.discard_pile = [ Card.new('K', 'Clubs') ]
-        game.save!
-        visit game_path(game)
-        expect(page).to have_css data_test('game')
+        start_rummy_game_with_state do |state|
+          state.current_player.hand = [
+            Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts'), Card.new('2', 'Clubs')
+          ]
+          state.discard_pile = [ Card.new('K', 'Clubs') ]
+        end
       end
 
       it 'drawing from the deck adds a card to the hand' do
@@ -378,18 +363,11 @@ RSpec.describe 'Games', type: :system do
 
     context 'when the user lays off before melding', :js do
       before do
-        select 'Rummy', from: 'Type'
-        click_on 'Create Game'
-        click_on 'Start game'
-        expect(page).to have_css data_test('game')
-
-        game = Game.last
-        game.game_state.melds = [ Rummy::Meld.new([ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ]) ]
-        game.game_state.current_player.hand = [ Card.new('6', 'Hearts') ]
-        game.game_state.drawn_this_turn = true
-        game.save!
-        visit game_path(game)
-        expect(page).to have_css data_test('game')
+        start_rummy_game_with_state do |state|
+          state.melds = [ Rummy::Meld.new([ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ]) ]
+          state.current_player.hand = [ Card.new('6', 'Hearts') ]
+          state.drawn_this_turn = true
+        end
       end
 
       it 'shows an error telling them to meld first' do
@@ -402,18 +380,11 @@ RSpec.describe 'Games', type: :system do
 
     context 'when the user sorts their hand' do
       before do
-        select 'Rummy', from: 'Type'
-        click_on 'Create Game'
-        click_on 'Start game'
-        expect(page).to have_css data_test('game')
-
-        game = Game.last
-        game.game_state.current_player.hand = [
-          Card.new('K', 'Clubs'), Card.new('A', 'Diamonds'), Card.new('2', 'Hearts')
-        ]
-        game.save!
-        visit game_path(game)
-        expect(page).to have_css data_test('game')
+        start_rummy_game_with_state do |state|
+          state.current_player.hand = [
+            Card.new('K', 'Clubs'), Card.new('A', 'Diamonds'), Card.new('2', 'Hearts')
+          ]
+        end
       end
 
       it 'reorders the hand by suit then rank' do
@@ -429,18 +400,11 @@ RSpec.describe 'Games', type: :system do
 
     context 'when the user smart sorts their hand' do
       before do
-        select 'Rummy', from: 'Type'
-        click_on 'Create Game'
-        click_on 'Start game'
-        expect(page).to have_css data_test('game')
-
-        game = Game.last
-        game.game_state.current_player.hand = [
-          Card.new('2', 'Hearts'), Card.new('5', 'Clubs'), Card.new('5', 'Diamonds')
-        ]
-        game.save!
-        visit game_path(game)
-        expect(page).to have_css data_test('game')
+        start_rummy_game_with_state do |state|
+          state.current_player.hand = [
+            Card.new('2', 'Hearts'), Card.new('5', 'Clubs'), Card.new('5', 'Diamonds')
+          ]
+        end
       end
 
       it 'groups the set in the making before the rest of the hand' do
@@ -456,16 +420,7 @@ RSpec.describe 'Games', type: :system do
 
     context 'when the user selects a hand card', :js do
       before do
-        select 'Rummy', from: 'Type'
-        click_on 'Create Game'
-        click_on 'Start game'
-        expect(page).to have_css data_test('game')
-
-        game = Game.last
-        game.game_state.current_player.hand = [ Card.new('2', 'Clubs') ]
-        game.save!
-        visit game_path(game)
-        expect(page).to have_css data_test('game')
+        start_rummy_game_with_state { |state| state.current_player.hand = [ Card.new('2', 'Clubs') ] }
 
         click_button 'Draw deck'
       end
@@ -492,19 +447,12 @@ RSpec.describe 'Games', type: :system do
 
     context 'when the user selects fewer cards than a meld needs', :js do
       before do
-        select 'Rummy', from: 'Type'
-        click_on 'Create Game'
-        click_on 'Start game'
-        expect(page).to have_css data_test('game')
-
-        game = Game.last
-        game.game_state.current_player.hand = [
-          Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts')
-        ]
-        game.game_state.drawn_this_turn = true
-        game.save!
-        visit game_path(game)
-        expect(page).to have_css data_test('game')
+        start_rummy_game_with_state do |state|
+          state.current_player.hand = [
+            Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts')
+          ]
+          state.drawn_this_turn = true
+        end
       end
 
       it 'keeps the meld button disabled with one card selected' do
@@ -531,18 +479,11 @@ RSpec.describe 'Games', type: :system do
 
     context 'when the user goes out', :js do
       before do
-        select 'Rummy', from: 'Type'
-        click_on 'Create Game'
-        click_on 'Start game'
-        expect(page).to have_css data_test('game')
-
-        game = Game.last
-        game.game_state.current_player.hand = [
-          Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts')
-        ]
-        game.save!
-        visit game_path(game)
-        expect(page).to have_css data_test('game')
+        start_rummy_game_with_state do |state|
+          state.current_player.hand = [
+            Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts')
+          ]
+        end
       end
 
       it 'ends the game once the last card is discarded' do

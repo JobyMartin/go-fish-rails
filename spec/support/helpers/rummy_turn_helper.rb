@@ -1,6 +1,28 @@
 module RummyTurnHelper
+  def start_rummy_game
+    select 'Rummy', from: 'Type'
+    click_on 'Create Game'
+    click_on 'Start game'
+  end
+
+  def start_rummy_game_with_state
+    start_rummy_game
+    expect(page).to have_css data_test('game')
+
+    game = Game.last
+    yield game.game_state
+    game.save!
+    revisit_game(game)
+  end
+
   def select_hand_card(token)
     click_retrying_stale_element { all("[data-rummy-turn-target='card'][data-card='#{token}']", minimum: 1).first.click }
+  end
+
+  def revisit_game(game)
+    visit game_path(game)
+    expect(page).to have_css data_test('game')
+    game
   end
 
   def select_only_hand_card
