@@ -3,10 +3,17 @@ module Rummy
     attr_reader :id, :name
     attr_accessor :hand
 
-    def initialize(id, name = "Rummy Player", hand = [])
+    def initialize(id, name = "Rummy Player", hand = [], melded = false)
       @id = id
       @name = name
       @hand = hand
+      @melded = melded
+    end
+
+    def melded? = @melded
+
+    def mark_melded!
+      @melded = true
     end
 
     def add_cards(cards)
@@ -25,7 +32,7 @@ module Rummy
       return nil if hash.nil?
 
       hand_cards = hash["hand"].map { |card| Card.load(card) }
-      self.new(hash["id"], hash["name"], hand_cards)
+      self.new(hash["id"], hash["name"], hand_cards, hash["melded"] || false)
     end
   end
 end

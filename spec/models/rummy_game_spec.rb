@@ -44,6 +44,7 @@ RSpec.describe RummyGame, type: :model do
         Rummy::Meld.new([ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ])
       ]
       game.game_state.current_player.hand = [ Card.new('6', 'Hearts') ]
+      game.game_state.current_player.mark_melded!
 
       game.play_turn(move: 'layoff', meld_id: 0, card_id: '6 Hearts')
 

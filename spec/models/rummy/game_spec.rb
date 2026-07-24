@@ -204,6 +204,18 @@ RSpec.describe Rummy::Game, type: :model do
 
       expect(game.current_player.hand).to include Card.new('5', 'Hearts')
     end
+
+    it 'marks the current player as having melded' do
+      game.meld(run_tokens)
+
+      expect(game.current_player.melded?).to eq true
+    end
+
+    it 'does not mark the current player as having melded on an invalid meld' do
+      game.meld([ '3 Hearts', '4 Hearts' ])
+
+      expect(game.current_player.melded?).to eq false
+    end
   end
 
   describe '#layoff' do
@@ -212,27 +224,38 @@ RSpec.describe Rummy::Game, type: :model do
       game.current_player.hand = [ Card.new('6', 'Hearts') ]
     end
 
-    it 'adds a valid card from hand onto the given table meld' do
+    it 'does not lay off before the current player has melded' do
       game.layoff(0, '6 Hearts')
-
-      expect(game.melds.first.cards).to eq [
-        Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts'), Card.new('6', 'Hearts')
-      ]
-    end
-
-    it 'removes the laid off card from hand' do
-      game.layoff(0, '6 Hearts')
-
-      expect(game.current_player.hand).to be_empty
-    end
-
-    it "does not lay off a card that wouldn't extend a valid set/run" do
-      game.current_player.hand = [ Card.new('2', 'Clubs') ]
-
-      game.layoff(0, '2 Clubs')
 
       expect(game.melds.first.cards.count).to eq 3
-      expect(game.current_player.hand).to eq [ Card.new('2', 'Clubs') ]
+      expect(game.current_player.hand).to eq [ Card.new('6', 'Hearts') ]
+    end
+
+    context 'when the current player has melded' do
+      before { game.current_player.mark_melded! }
+
+      it 'adds a valid card from hand onto the given table meld' do
+        game.layoff(0, '6 Hearts')
+
+        expect(game.melds.first.cards).to eq [
+          Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts'), Card.new('6', 'Hearts')
+        ]
+      end
+
+      it 'removes the laid off card from hand' do
+        game.layoff(0, '6 Hearts')
+
+        expect(game.current_player.hand).to be_empty
+      end
+
+      it "does not lay off a card that wouldn't extend a valid set/run" do
+        game.current_player.hand = [ Card.new('2', 'Clubs') ]
+
+        game.layoff(0, '2 Clubs')
+
+        expect(game.melds.first.cards.count).to eq 3
+        expect(game.current_player.hand).to eq [ Card.new('2', 'Clubs') ]
+      end
     end
   end
 

@@ -92,12 +92,13 @@ module Rummy
 
       cards.each { |card| remove_from_hand(card) }
       melds << Meld.new(cards)
+      current_player.mark_melded!
     end
 
     def layoff(meld_id, card_token)
       meld = melds[meld_id]
       card = cards_from_hand([ card_token ]).first
-      return unless meld && card && Meld.valid?(meld.cards + [ card ])
+      return unless current_player.melded? && meld && card && Meld.valid?(meld.cards + [ card ])
 
       remove_from_hand(card)
       meld.cards << card
