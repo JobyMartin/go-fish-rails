@@ -37,9 +37,9 @@ table) and has been removed.
 - `Rummy::Game` holds `players`, `deck`, `current_player_index`, `round_results`, `melds`,
   `discard_pile`, `drawn_this_turn`.
 - `RummyGame#play_turn(params)` dispatches on `params[:move]` (`draw`/`meld`/`layoff`/
-  `discard`) to the matching `Rummy::Game` method. Cards travel over the wire as
-  `"<rank> <suit>"` tokens, parsed with the shared `Card.objectify` (same trick Crazy
-  Eights already uses for `params[:rank]`).
+  `discard`/`sort`/`smart_sort`) to the matching `Rummy::Game` method. Cards travel over
+  the wire as `"<rank> <suit>"` tokens, parsed with the shared `Card.objectify` (same trick
+  Crazy Eights already uses for `params[:rank]`).
 - `Rummy::Meld.valid_set?`/`.valid_run?` encode aces-low ordering with a Rummy-local
   `RANK_ORDER` constant (`A` first) — deliberately not touched on the shared `Card` class,
   since the other two games don't need a reordered rank scale.
@@ -49,6 +49,31 @@ table) and has been removed.
 - `Rummy::Game#cards_from_hand` `reject(&:blank?)`s incoming tokens before parsing them:
   Rails renders an empty hidden value alongside every *unchecked* box in a collection of
   checkboxes, and blindly `Card.objectify`-ing that blank string raises `InvalidRank`.
+
+## Hand sorting: `sort` vs. `smart_sort`
+
+The hand panel has two buttons, each a `play_turn` move like any other and available
+regardless of whose turn it is (sorting your own hand isn't a turn action):
+
+- **`sort`** → `Rummy::Player#sort_hand!`: plain suit-then-rank ordering, using the everyday
+  (aces-high) `Card::SUITS`/`Card::RANKS`.
+- **`smart_sort`** → `Rummy::Player#smart_sort_hand!` → `Rummy::HandSorter`: groups
+  sets/runs "in the making" (2+ cards, below the real 3-card meld minimum) to the left,
+  suit/rank-sorting whatever's left over after.
+
+`HandSorter` computes sets (by rank) *before* runs, and runs only ever look at the cards
+sets didn't claim. That's a deliberate tie-break, not a semantic ordering — a card that
+could belong to either a set or a run always ends up in the set, and that's the *only*
+reason sets tend to appear before runs in the output. Which group actually sorts first is
+decided by `group_key` (descending size, then the suit/rank of the group's own leading
+card) — there's no explicit "sets outrank runs" rule, so it's easy to misread the output
+and assume there is one.
+
+Run detection reorders each suit's cards using `Rummy::Meld::RANK_ORDER` (aces-low) — the
+same ordering real meld validity uses — so "a run in the making" means something a player
+could actually eventually meld. That's a different rank order than the aces-high
+`Card::RANKS` used for the plain `sort` move and for sorting each group's own cards
+internally; don't assume `HandSorter` only touches one rank scale.
 
 ## Card selection UI (`rummy_turn` Stimulus controller)
 

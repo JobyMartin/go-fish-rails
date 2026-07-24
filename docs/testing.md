@@ -93,6 +93,13 @@ JS-driven state classes (`.is-selected`, `.feed-open`): the Stimulus controllers
 them also set a parallel `data-*` attribute (`data-selected`, `data-feed-open`) so specs assert
 behavior through that attribute instead of the styling class.
 
+Asserting on rendered card *order* (e.g. after a sort action) means reading `img[src]`
+values — but Propshaft fingerprints every asset with a content hash
+(`k_clubs-846574d4.svg`), so a direct `eq` against the plain card filename always fails.
+Strip the hash instead of hand-rolling a regex inline in the spec: see
+`RummyTurnHelper#hand_card_prefixes`/`#card_filename_prefix`
+(`spec/support/helpers/rummy_turn_helper.rb`) for the pattern.
+
 ## Assert persisted state, not just the DOM, for actions that write to the database
 
 A passing `have_css` after a `click_button`/`click_on` only proves the page re-rendered — it
