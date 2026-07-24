@@ -91,6 +91,7 @@ RSpec.describe 'Games', type: :system do
       it 'shows the go fish game view' do
         click_on 'Start game'
         expect(page).to have_css(data_test('game-aside'))
+        expect(Game.last.reload.game_state).to be_present
       end
     end
   end
@@ -122,6 +123,7 @@ RSpec.describe 'Games', type: :system do
       it 'shows the crazy eights game view' do
         click_on 'Start game'
         expect(page).to have_css data_test('game')
+        expect(Game.last.reload.game_state).to be_present
       end
 
       it 'renders the play form with no opponent select' do
@@ -157,10 +159,20 @@ RSpec.describe 'Games', type: :system do
 
         context 'when the user plays a turn' do
           it 'shows the turn in the turn results' do
-            click_on 'Place card'
+            game = Game.last
+            hand_before = game.game_state.current_player.hand.size
+            discard_before = game.game_state.william.cards.size
+
+            expect { click_on 'Place card' }
+              .to change { game.reload.game_state.round_results.size }.by(1)
+
             within data_test('feed-content') do
               expect(page).to have_css(data_test('feed-action'), count: 1)
             end
+
+            state = game.game_state
+            expect(state.current_player.hand.size).to eq hand_before - 1
+            expect(state.william.cards.size).to eq discard_before + 1
           end
         end
       end
@@ -272,10 +284,16 @@ RSpec.describe 'Games', type: :system do
 
       it 'drawing from the deck adds a card to the hand' do
         before_count = hand_card_count
+        deck_before = Game.last.game_state.deck.cards_left
 
         click_button 'Draw deck'
 
         expect(page).to have_css("#{data_test('game-hand')} #{data_test('card')}", count: before_count + 1)
+
+        state = Game.last.game_state
+        expect(state.current_player.hand.size).to eq before_count + 1
+        expect(state.deck.cards_left).to eq deck_before - 1
+        expect(state.drawn_this_turn).to eq true
       end
 
       it 'discarding a card ends the turn and shows the move in the game feed' do
@@ -284,6 +302,11 @@ RSpec.describe 'Games', type: :system do
         within data_test('feed-content') do
           expect(page).to have_css(data_test('feed-action'), count: 1)
         end
+
+        state = Game.last.game_state
+        expect(state.current_player.hand).not_to include(Card.new('2', 'Clubs'))
+        expect(state.discard_pile.last).to eq Card.new('2', 'Clubs')
+        expect(state.drawn_this_turn).to eq false
       end
 
       it 'shows the discard message in the feed once the drawer is opened' do
@@ -293,9 +316,13 @@ RSpec.describe 'Games', type: :system do
         within data_test('feed-content') do
           expect(page).to have_css data_test('feed-action'), text: /discarded a 2 of Clubs/i
         end
+
+        expect(Game.last.game_state.round_results.last.card_discarded).to eq Card.new('2', 'Clubs')
       end
 
       it 'taking from the discard pile shows the move in the game feed' do
+        hand_before = hand_card_count
+
         click_button 'Take discard'
 
         click_button 'Game Feed'
@@ -303,6 +330,11 @@ RSpec.describe 'Games', type: :system do
         within data_test('feed-content') do
           expect(page).to have_css data_test('feed-action'), text: /took a K of Clubs from the discard pile/i
         end
+
+        state = Game.last.game_state
+        expect(state.current_player.hand.size).to eq hand_before + 1
+        expect(state.current_player.hand).to include(Card.new('K', 'Clubs'))
+        expect(state.discard_pile).to be_empty
       end
 
       it 'melding a valid run from the hand adds it to the table' do
@@ -313,6 +345,14 @@ RSpec.describe 'Games', type: :system do
         within data_test('game-board') do
           expect(page).to have_css data_test('meld'), count: melds_before + 1
         end
+
+        state = Game.last.game_state
+        expect(state.melds.last.cards).to contain_exactly(
+          Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts')
+        )
+        expect(state.current_player.hand).not_to include(Card.new('3', 'Hearts'))
+        expect(state.current_player.hand).not_to include(Card.new('4', 'Hearts'))
+        expect(state.current_player.hand).not_to include(Card.new('5', 'Hearts'))
       end
     end
 
@@ -489,6 +529,8 @@ RSpec.describe 'Games', type: :system do
     # let(:session2) { Capybara::Session.new(:rack_test, Rails.application) }
 
     context 'when the rank in question is in a hand' do
+      starting_hand_size = 1
+
       before do
         game.start
         game.game_state.players.each do |player|
@@ -499,26 +541,42 @@ RSpec.describe 'Games', type: :system do
 
       it 'exchanges the cards between players' do
         visit game_path(game)
-        click_on 'Ask for a card'
-        post_turn_card_count = '2'
-        expect(page).to have_content post_turn_card_count
+
+        expect { click_on 'Ask for a card' }
+          .to change { game.reload.game_state.round_results.size }.by(1)
+
+        expect(page).to have_content(starting_hand_size * 2)
+        state = game.game_state
+        expect(state.find_player(user.id).hand.size).to eq starting_hand_size * 2
+        expect(state.find_player(user2.id).hand).to be_empty
       end
     end
 
     context 'when the card makes a book' do
+      asking_player_hand = [ Card.new ]
+      answering_player_hand = [ Card.new, Card.new, Card.new ]
+
       before do
         game.start
-        game.game_state.players.first.hand = [ Card.new ]
-        game.game_state.players.last.hand = [ Card.new, Card.new, Card.new ]
+        game.game_state.players.first.hand = asking_player_hand
+        game.game_state.players.last.hand = answering_player_hand
         game.save!
       end
 
       it 'makes a book' do
         visit game_path(game)
-        page.click_on 'Ask for a card'
+
+        expect { page.click_on 'Ask for a card' }
+          .to change { game.reload.game_state.players.first.books.size }.by(1)
+
         within data_test('books') do
           expect(page).to have_css('img')
         end
+
+        state = game.game_state
+        expect(state.players.first.hand).to be_empty
+        expect(state.players.first.books.first.cards.size).to eq(asking_player_hand.size + answering_player_hand.size)
+        expect(state.players.last.hand).to be_empty
       end
     end
 
