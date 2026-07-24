@@ -69,6 +69,10 @@ module Rummy
       players.find { it.hand.empty? }
     end
 
+    def sort_hand(player_id)
+      find_player(player_id)&.sort_hand!
+    end
+
     def active_card = discard_pile.last
 
     def draw(source)

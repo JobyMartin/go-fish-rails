@@ -12,6 +12,18 @@ RSpec.describe Rummy::Player, type: :model do
     end
   end
 
+  describe '#sort_hand!' do
+    it 'orders the hand by suit then rank' do
+      player.hand = [ Card.new('K', 'Clubs'), Card.new('A', 'Diamonds'), Card.new('2', 'Hearts') ]
+
+      player.sort_hand!
+
+      expect(player.hand).to eq [
+        Card.new('A', 'Diamonds'), Card.new('2', 'Hearts'), Card.new('K', 'Clubs')
+      ]
+    end
+  end
+
   describe '.load' do
     it 'rebuilds a player with id, name, and hand from a hash' do
       hash = { 'id' => 1, 'name' => 'Joby', 'hand' => [ card1.as_json ] }

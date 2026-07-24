@@ -76,6 +76,8 @@
       .game__hand.panel.panel--hand data-testid="game-hand"
         .panel__header
           | Your Hand
+          = button_to 'Sort hand', play_game_path(game), method: :post,
+            params: { play_turn: { move: 'sort', player: current_player.id } }, class: 'btn btn--small'
 
         .panel__content
           .flex.hand

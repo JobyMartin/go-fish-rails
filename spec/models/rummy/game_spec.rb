@@ -95,6 +95,16 @@ RSpec.describe Rummy::Game, type: :model do
     end
   end
 
+  describe '#sort_hand' do
+    it "sorts the given player's hand" do
+      players.first.hand = [ Card.new('K', 'Clubs'), Card.new('A', 'Diamonds') ]
+
+      game.sort_hand(players.first.id)
+
+      expect(players.first.hand).to eq [ Card.new('A', 'Diamonds'), Card.new('K', 'Clubs') ]
+    end
+  end
+
   describe '#draw' do
     before { game.deal! }
 

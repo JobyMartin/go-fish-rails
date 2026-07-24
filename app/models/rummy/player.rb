@@ -13,6 +13,10 @@ module Rummy
       cards.each { |card| hand << card }
     end
 
+    def sort_hand!
+      hand.sort_by! { |card| [ Card::SUITS.index(card.suit), Card::RANKS.index(card.rank) ] }
+    end
+
     def self.load(hash)
       return nil if hash.nil?
 

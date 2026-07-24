@@ -356,6 +356,33 @@ RSpec.describe 'Games', type: :system do
       end
     end
 
+    context 'when the user sorts their hand' do
+      before do
+        select 'Rummy', from: 'Type'
+        click_on 'Create Game'
+        click_on 'Start game'
+        expect(page).to have_css data_test('game')
+
+        game = Game.last
+        game.game_state.current_player.hand = [
+          Card.new('K', 'Clubs'), Card.new('A', 'Diamonds'), Card.new('2', 'Hearts')
+        ]
+        game.save!
+        visit game_path(game)
+        expect(page).to have_css data_test('game')
+      end
+
+      it 'reorders the hand by suit then rank' do
+        click_button 'Sort hand'
+
+        filenames = all("#{data_test('game-hand')} img").map { it['src'].split('/').last }
+
+        expect(filenames[0]).to start_with 'a_diamonds'
+        expect(filenames[1]).to start_with '2_hearts'
+        expect(filenames[2]).to start_with 'k_clubs'
+      end
+    end
+
     context 'when the user selects a hand card', :js do
       before do
         select 'Rummy', from: 'Type'

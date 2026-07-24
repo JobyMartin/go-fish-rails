@@ -7,6 +7,7 @@ class RummyGame < Game
     when "meld" then game_state.meld(Array(params[:card_ids]))
     when "layoff" then game_state.layoff(params[:meld_id].to_i, params[:card_id])
     when "discard" then game_state.discard(params[:card_id])
+    when "sort" then game_state.sort_hand(params[:player].to_i)
     end
   end
 

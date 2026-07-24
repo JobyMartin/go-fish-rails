@@ -67,6 +67,8 @@
   &.panel--hand {
     .panel__header {
       color: var(--op-color-neutral-on-plus-eight-alt);
+      justify-content: space-between;
+      align-items: center;
     }
     .panel__content {
       margin-inline-start: var(--gf-card-margin-shift);
