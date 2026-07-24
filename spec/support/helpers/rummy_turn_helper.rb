@@ -13,6 +13,14 @@ module RummyTurnHelper
     all("#{data_test('game-hand')} #{data_test('card')}").count
   end
 
+  def hand_card_prefixes
+    all("#{data_test('game-hand')} img").map { card_filename_prefix(it['src']) }
+  end
+
+  def card_filename_prefix(src)
+    File.basename(src).sub(/-\h+\.svg\z/, '')
+  end
+
   def draw_and_discard(token)
     click_button 'Draw deck'
     select_hand_card(token)

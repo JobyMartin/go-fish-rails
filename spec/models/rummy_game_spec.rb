@@ -66,6 +66,17 @@ RSpec.describe RummyGame, type: :model do
 
       expect(player.hand).to eq [ Card.new('A', 'Diamonds'), Card.new('K', 'Clubs') ]
     end
+
+    it 'dispatches a smart_sort move to the domain game' do
+      player = game.game_state.current_player
+      player.hand = [ Card.new('2', 'Hearts'), Card.new('5', 'Clubs'), Card.new('5', 'Diamonds') ]
+
+      game.play_turn(move: 'smart_sort', player: player.id.to_s)
+
+      expect(player.hand).to eq [
+        Card.new('5', 'Diamonds'), Card.new('5', 'Clubs'), Card.new('2', 'Hearts')
+      ]
+    end
   end
 
   describe 'shared contract' do

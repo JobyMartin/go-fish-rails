@@ -76,8 +76,11 @@
       .game__hand.panel.panel--hand data-testid="game-hand"
         .panel__header
           | Your Hand
-          = button_to 'Sort hand', play_game_path(game), method: :post,
-            params: { play_turn: { move: 'sort', player: current_player.id } }, class: 'btn btn--small'
+          span.flex.items-center.gap-xs
+            = button_to 'Smart sort', play_game_path(game), method: :post,
+              params: { play_turn: { move: 'smart_sort', player: current_player.id } }, class: 'btn btn--small'
+            = button_to 'Sort by suit', play_game_path(game), method: :post,
+              params: { play_turn: { move: 'sort', player: current_player.id } }, class: 'btn btn--small'
 
         .panel__content
           .flex.hand

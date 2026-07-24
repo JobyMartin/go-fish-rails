@@ -373,13 +373,40 @@ RSpec.describe 'Games', type: :system do
       end
 
       it 'reorders the hand by suit then rank' do
-        click_button 'Sort hand'
+        click_button 'Sort by suit'
 
-        filenames = all("#{data_test('game-hand')} img").map { it['src'].split('/').last }
+        expect(hand_card_prefixes).to eq %w[a_diamonds 2_hearts k_clubs]
 
-        expect(filenames[0]).to start_with 'a_diamonds'
-        expect(filenames[1]).to start_with '2_hearts'
-        expect(filenames[2]).to start_with 'k_clubs'
+        expect(Game.last.game_state.current_player.hand).to eq [
+          Card.new('A', 'Diamonds'), Card.new('2', 'Hearts'), Card.new('K', 'Clubs')
+        ]
+      end
+    end
+
+    context 'when the user smart sorts their hand' do
+      before do
+        select 'Rummy', from: 'Type'
+        click_on 'Create Game'
+        click_on 'Start game'
+        expect(page).to have_css data_test('game')
+
+        game = Game.last
+        game.game_state.current_player.hand = [
+          Card.new('2', 'Hearts'), Card.new('5', 'Clubs'), Card.new('5', 'Diamonds')
+        ]
+        game.save!
+        visit game_path(game)
+        expect(page).to have_css data_test('game')
+      end
+
+      it 'groups the set in the making before the rest of the hand' do
+        click_button 'Smart sort'
+
+        expect(hand_card_prefixes).to eq %w[5_diamonds 5_clubs 2_hearts]
+
+        expect(Game.last.game_state.current_player.hand).to eq [
+          Card.new('5', 'Diamonds'), Card.new('5', 'Clubs'), Card.new('2', 'Hearts')
+        ]
       end
     end
 

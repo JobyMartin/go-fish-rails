@@ -17,6 +17,10 @@ module Rummy
       hand.sort_by! { |card| [ Card::SUITS.index(card.suit), Card::RANKS.index(card.rank) ] }
     end
 
+    def smart_sort_hand!
+      self.hand = HandSorter.new(hand).sorted
+    end
+
     def self.load(hash)
       return nil if hash.nil?
 
