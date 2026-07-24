@@ -16,9 +16,12 @@ and Crazy Eights; real turn logic (draw/meld/lay off/discard) is implemented.
   `Rummy::Player#melded?` (set by `#mark_melded!` inside `Game#meld`) tracks this per player
   and `Game#layoff` checks it. This was previously unenforced — a real bug, not a deliberate
   omission — until this rule was added.
-- **Going out**: emptying your hand on discard ends the hand. The player who went out is
-  the winner — their leftover pips are always the lowest (zero) — so `game_over?`/`winner`
-  reuse the same "does any hand empty?" one-liner Go Fish/Crazy Eights already use. No
+- **Going out**: emptying your hand ends the hand. Per the Bicycle rules we follow, **three
+  actions can empty it** — melding out, laying off your last card, and discarding your last
+  card; a final discard is *not* required. The player who went out is the winner — their
+  leftover pips are always the lowest (zero) — so `game_over?`/`winner` reuse the same "does
+  any hand empty?" one-liner Go Fish/Crazy Eights already use, which means **all three routes
+  are detected correctly**. The *feed* only announces one of them — see "Game feed". No
   separate pip-count scoring display exists; the "rummy" double-score bonus is deliberately
   out of scope.
 - **Can't discard the card you just took from the discard pile.** `Game#draw` records it
@@ -180,6 +183,16 @@ visible/strategic, same as in physical Rummy, so only those two actions log. The
 itself (`aside.feed-drawer` in the partial) mirrors Go Fish/Crazy Eights' `.panel__content >
 .feed-content` structure so it gets the same padding, and reuses their `role`-based
 `.action-responses`/`.response-group` rendering for the going-out line.
+
+**`meld` and `layoff` log nothing — a known gap, not a design choice**, unlike the deck draw
+above. Two consequences, the second of which matters: melds and lay-offs are invisible in the
+feed, and because `going_out` is computed in exactly one place (on the discard result), **a
+player who melds or lays off their last card wins with a silent feed.** Combined with the
+`GamesController#play` ordering gotcha — `game_over?` is checked *before* the turn, so the
+winning move redirects to the game board rather than the winner screen — the feed is the only
+surface that would report those wins, and it says nothing. Scoped in
+`docs/brave-rummy-feed-completeness.md`; the fix replaces the mutually-exclusive
+`card_taken`/`card_discarded` fields with a `move` discriminator.
 
 **`Rummy::Game#active_card` (`discard_pile.last`) can be `nil`** — `deal!` seeds the
 discard pile with exactly one card, so the very first "Take discard" empties it until the

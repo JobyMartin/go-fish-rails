@@ -156,36 +156,25 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/testing.md` — TDD workflow and spec organization
 - `docs/games/go-fish.md` — Go Fish rules and implementation notes
 - `docs/games/crazy-eights.md` — Crazy Eights rules, William, and implementation notes
-- `docs/improvement-plan.md` — foundation work for adding a third game: (1) lock the shared
-  "game contract" with tests, then (2) replace type-branching with polymorphic dispatch + a
-  game registry. **Both improvements are complete.** The optional stretch item (extract a
-  shared `Card`/`Deck`) is now Card 2 of `docs/improvement-cards.md`, **complete**.
-- `docs/improvement-1-breakdown.md` — Improvement 1 (tests-only), **complete**: STI subclass
-  specs, serialization round-trips, the shared `"a persisted card game"` example, and the
-  winner/game-over system specs.
-- `docs/improvement-2-breakdown.md` — Improvement 2 (the refactor), **complete**: all five
-  deliverables done — `CrazyEights::Game#winner`, the `Game::PLAYABLE_TYPES` registry,
-  polymorphic `build_game`, the unified `play_turn(params)`, and removal of the last stray
-  view conditional. No `type ==` branching remains in source.
-- `docs/improvement-cards.md` — the post-Improvement-2 scoped round: three ~1–2h cards —
-  (1) a `RoundResult` feed presenter **(done)**, (2) the shared `Card`/`Deck` extraction
-  **(done)**, (3) authorization on game actions **(done)**.
-  `RAILS_AUDIT_REPORT.md` (repo root) is the
-  full audit behind them; its one remaining High finding (game-over persistence)
-  maps to the gotcha above.
+- `docs/improvement-plan.md` + `docs/improvement-1-breakdown.md` +
+  `docs/improvement-2-breakdown.md` — the foundation work for adding a third game, **all
+  complete**: Improvement 1 locked the shared "game contract" with tests (STI subclass specs,
+  serialization round-trips, the shared `"a persisted card game"` example); Improvement 2
+  replaced type-branching with polymorphic dispatch + the `Game::PLAYABLE_TYPES` registry.
+  **No `type ==` branching remains in source.**
+- `docs/improvement-cards.md` — the post-Improvement-2 scoped round, **all three done**: the
+  `RoundResult` feed presenter, the shared `Card`/`Deck` extraction, and authorization on game
+  actions. `RAILS_AUDIT_REPORT.md` (repo root) is the full audit behind them; its one remaining
+  High finding (game-over persistence) maps to the gotcha above.
 - `docs/brave-card-1-round-feed-presenter.md` — BRAVE breakdown for Card 1 (the feed presenter),
   **complete**. `RoundFeed` (+ `FeedLine`) at `app/models/round_feed.rb` is a namespace-neutral
-  presentation seam: each `RoundResult#feed_lines` delegates to it, and both game partials
-  iterate `result.feed_lines` (styling by `role`: `action`/`player_response`/`game_response`)
-  instead of branching on `for_other_players.count`. The `count == 3` path was dead then and is
-  **preserved** (still dead) — a pure, behavior-identical refactor. See `spec/models/round_feed_spec.rb`.
+  presentation seam: each `RoundResult#feed_lines` delegates to it, and every game partial
+  iterates `result.feed_lines`. **Roles are positional** — first line `action`, last
+  `game_response`, middles `player_response` — so a result's styling depends on how many lines
+  it returns. The `count == 3` path is preserved but still dead.
 - `docs/brave-card-2-shared-card-deck.md` — BRAVE breakdown for Card 2 (shared `Card`/`Deck`),
-  **complete**. `Card`/`Deck` now live at top level (`app/models/card.rb`, `app/models/deck.rb`);
-  the per-game copies are deleted and bare `Card`/`Deck` refs inside `module GoFish` /
-  `module CrazyEights` resolve to them via constant lookup. Went with Approach A (one
-  whole-deck shuffle) — the full suite stayed green, confirming the Go Fish per-suit shuffle
-  was an untested artifact, not pinned behavior. See `spec/models/card_spec.rb` and
-  `spec/models/deck_spec.rb`.
+  **complete**. `Card`/`Deck` live at top level; bare refs inside `module GoFish` /
+  `module CrazyEights` resolve there via constant lookup.
 - `docs/brave-card-3-authorize-game-actions.md` — BRAVE breakdown for Card 3 (authorize game
   actions), **complete**; the gotcha above is the short version. The doc holds the decisions
   (include `winner`, leave `join` open, redirect-with-flash over 404) and why non-participant
@@ -197,4 +186,14 @@ See `docs/architecture.md` for the full model map and serialization details.
   the visual mockup reference. **Invalid moves raise `Rummy::InvalidMove`** (the app's one
   turn-validation exception), surfaced as an auto-dismissing flash toast — see "Surfacing
   invalid moves". The mid-turn "you've drawn, now pick a card" step is cued by a header
-  change plus the pulse — see "Prompting the …" for why it needs no JS.
+  change plus the pulse — see "Prompting the …" for why it needs no JS. **The feed is
+  incomplete** — see the next bullet.
+- `docs/brave-rummy-feed-completeness.md` — BRAVE breakdown, **next card up (4 pts)**, no code
+  written yet. `meld`/`layoff` append no `RoundResult`, and `going_out` is computed only on the
+  discard result — so **a player who melds or lays off their last card wins with a silent
+  feed** (Bicycle rules allow all three routes; `game_over?`/`winner` detect them fine, only
+  the feed doesn't). Fix: replace `Rummy::RoundResult`'s mutually-exclusive
+  `card_taken`/`card_discarded` with a `move` discriminator (`:took`/`:melded`/`:laid_off`/
+  `:discarded` + `cards` + `going_out`). Rummy-only — `GoFish::RoundResult` and `RoundFeed` are
+  untouched. The doc holds the decisions (name the cards; lay-off doesn't say which meld; one
+  entry per action) and **why it can't be split** into "going out" and "meld lines" halves.
