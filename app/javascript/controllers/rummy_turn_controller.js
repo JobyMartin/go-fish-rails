@@ -1,5 +1,7 @@
 import { Controller } from "@hotwired/stimulus"
 
+const MINIMUM_MELD_SIZE = 3
+
 // Connects to data-controller="rummy-turn"
 export default class extends Controller {
   static targets = [
@@ -50,7 +52,7 @@ export default class extends Controller {
 
   syncButtons(tokens) {
     if (this.hasMeldButtonTarget) {
-      this.meldButtonTarget.disabled = this.baseDisabled(this.meldButtonTarget) || tokens.length === 0
+      this.meldButtonTarget.disabled = this.baseDisabled(this.meldButtonTarget) || tokens.length < MINIMUM_MELD_SIZE
     }
     if (this.hasDiscardButtonTarget) {
       this.discardButtonTarget.disabled = this.baseDisabled(this.discardButtonTarget) || tokens.length !== 1

@@ -358,6 +358,7 @@ RSpec.describe 'Games', type: :system do
       it 'shows an error message when melding an invalid combination' do
         click_button 'Draw deck'
         select_hand_card('3 Hearts')
+        select_hand_card('4 Hearts')
         select_hand_card('2 Clubs')
         click_button 'Meld selected'
 
@@ -486,6 +487,45 @@ RSpec.describe 'Games', type: :system do
         select_hand_card('2 Clubs')
 
         expect(page).to have_button 'Discard selected', disabled: true
+      end
+    end
+
+    context 'when the user selects fewer cards than a meld needs', :js do
+      before do
+        select 'Rummy', from: 'Type'
+        click_on 'Create Game'
+        click_on 'Start game'
+        expect(page).to have_css data_test('game')
+
+        game = Game.last
+        game.game_state.current_player.hand = [
+          Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts')
+        ]
+        game.game_state.drawn_this_turn = true
+        game.save!
+        visit game_path(game)
+        expect(page).to have_css data_test('game')
+      end
+
+      it 'keeps the meld button disabled with one card selected' do
+        select_hand_card('3 Hearts')
+
+        expect(page).to have_button 'Meld selected', disabled: true
+      end
+
+      it 'keeps the meld button disabled with two cards selected' do
+        select_hand_card('3 Hearts')
+        select_hand_card('4 Hearts')
+
+        expect(page).to have_button 'Meld selected', disabled: true
+      end
+
+      it 'enables the meld button once three cards are selected' do
+        select_hand_card('3 Hearts')
+        select_hand_card('4 Hearts')
+        select_hand_card('5 Hearts')
+
+        expect(page).to have_button 'Meld selected', disabled: false
       end
     end
 

@@ -105,6 +105,15 @@ Both controllers also set a parallel `data-selected`/`data-feed-open` attribute 
 class they toggle, so specs assert behavior through that attribute rather than a styling class
 (see `docs/testing.md`).
 
+**Each action button's enable threshold mirrors the move's arity.** `Discard selected` and the
+per-meld `Lay off here` need exactly one selected card; `Meld selected` needs at least
+`MINIMUM_MELD_SIZE` (3), matching `Rummy::Meld`'s own floor — a set is `size.between?(3, 4)`,
+a run is `size >= 3`. Meld deliberately has **no upper bound**: sets cap at 4 but runs don't,
+and the button can't know which the player is building, so anything ≥ 3 stays enabled and the
+server decides. This is only a shortcut past a guaranteed-invalid click — `Rummy::InvalidMove`
+is still the real guard, and the "melding an invalid combination" spec selects three
+mismatched cards precisely to keep exercising that server path rather than the button.
+
 **`turn-actions.css`'s `.btn:disabled:first-of-type` selector was a per-button trap, not a
 per-group one.** `Draw deck`/`Take discard`/`Meld selected`/`Discard selected` each live alone
 inside their own `<form>` (from `button_to`/`simple_form_for`), so every one of them is
