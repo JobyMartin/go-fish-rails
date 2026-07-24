@@ -5,10 +5,11 @@ module Rummy
     BIG_GAME_DEAL_COUNT = 6
     SMALL_GAME_PLAYER_COUNT = 4
 
-    attr_accessor :players, :deck, :current_player_index, :round_results, :melds, :discard_pile, :drawn_this_turn
+    attr_accessor :players, :deck, :current_player_index, :round_results, :melds, :discard_pile, :drawn_this_turn,
+                  :taken_from_discard
 
     def initialize(players, deck = Deck.new, current_player_index = 0, round_results = [], melds = [],
-                   discard_pile = [], drawn_this_turn = false)
+                   discard_pile = [], drawn_this_turn = false, taken_from_discard = nil)
       @players = players
       @deck = deck
       @current_player_index = current_player_index
@@ -16,6 +17,7 @@ module Rummy
       @melds = melds
       @discard_pile = discard_pile
       @drawn_this_turn = drawn_this_turn
+      @taken_from_discard = taken_from_discard
     end
 
     def self.load(json)
@@ -36,7 +38,8 @@ module Rummy
         round_results: round_results.as_json,
         melds: melds.map(&:as_json),
         discard_pile: discard_pile.as_json,
-        drawn_this_turn: drawn_this_turn
+        drawn_this_turn: drawn_this_turn,
+        taken_from_discard: taken_from_discard&.as_json
       }
     end
 
@@ -46,8 +49,9 @@ module Rummy
       round_results = json["round_results"].map { |round_hash| RoundResult.load(round_hash) }
       melds = json["melds"].map { |meld_hash| Meld.load(meld_hash) }
       discard_pile = json["discard_pile"].map { |card_hash| Card.load(card_hash) }
+      taken_from_discard = json["taken_from_discard"] && Card.load(json["taken_from_discard"])
       self.new(players, deck, json["current_player_index"], round_results, melds, discard_pile,
-                json["drawn_this_turn"])
+                json["drawn_this_turn"], taken_from_discard)
     end
 
     def deal!
@@ -83,6 +87,7 @@ module Rummy
       card = source == "discard" ? discard_pile.pop : deck.top_card
       current_player.add_cards([ card ])
       round_results << RoundResult.new(current_player: current_player, card_taken: card) if source == "discard"
+      self.taken_from_discard = source == "discard" ? card : nil
       self.drawn_this_turn = true
     end
 
@@ -106,7 +111,7 @@ module Rummy
 
     def discard(card_token)
       card = cards_from_hand([ card_token ]).first
-      return unless card
+      return unless card && !(taken_from_discard && card == taken_from_discard)
 
       remove_from_hand(card)
       discard_pile << card

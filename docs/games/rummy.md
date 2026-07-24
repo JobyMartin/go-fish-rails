@@ -19,8 +19,13 @@ and Crazy Eights; real turn logic (draw/meld/lay off/discard) is implemented.
 - **Going out**: emptying your hand on discard ends the hand. The player who went out is
   the winner — their leftover pips are always the lowest (zero) — so `game_over?`/`winner`
   reuse the same "does any hand empty?" one-liner Go Fish/Crazy Eights already use. No
-  separate pip-count scoring display exists; the "rummy" double-score bonus and "can't
-  discard the card you just drew from discard" are deliberately out of scope.
+  separate pip-count scoring display exists; the "rummy" double-score bonus is deliberately
+  out of scope.
+- **Can't discard the card you just took from the discard pile.** `Game#draw` records it
+  in `taken_from_discard`; `Game#discard` no-ops if the requested card matches (cleared on
+  any deck draw, or once a discard actually goes through). Deliberately **does not** apply
+  to a deck draw — putting back a card you blindly drew from the stock is normal Rummy play;
+  only the discard pile is a deliberate, visible pick, so only that one is restricted.
 - A game is **one hand** — no play-to-target across multiple hands.
 
 ## `deal!` deals a real per-player-count hand
@@ -40,7 +45,7 @@ table) and has been removed.
 ## Implementation notes (`app/models/rummy/`)
 
 - `Rummy::Game` holds `players`, `deck`, `current_player_index`, `round_results`, `melds`,
-  `discard_pile`, `drawn_this_turn`.
+  `discard_pile`, `drawn_this_turn`, `taken_from_discard`.
 - `RummyGame#play_turn(params)` dispatches on `params[:move]` (`draw`/`meld`/`layoff`/
   `discard`/`sort`/`smart_sort`) to the matching `Rummy::Game` method. Cards travel over
   the wire as `"<rank> <suit>"` tokens, parsed with the shared `Card.objectify` (same trick

@@ -155,6 +155,20 @@ RSpec.describe Rummy::Game, type: :model do
 
       expect(game.round_results).to be_empty
     end
+
+    it 'remembers the card taken from the discard pile' do
+      top_card = game.discard_pile.last
+
+      game.draw('discard')
+
+      expect(game.taken_from_discard).to eq top_card
+    end
+
+    it 'does not remember a card taken from the deck' do
+      game.draw('deck')
+
+      expect(game.taken_from_discard).to be_nil
+    end
   end
 
   describe '#meld' do
@@ -316,6 +330,39 @@ RSpec.describe Rummy::Game, type: :model do
 
       expect(game.current_player_index).to eq before_index
     end
+
+    context 'when discarding the card just taken from the discard pile' do
+      before do
+        game.discard_pile = [ Card.new('7', 'Spades') ]
+        game.draw('discard')
+      end
+
+      it 'does not remove the card from hand' do
+        game.discard('7 Spades')
+
+        expect(game.current_player.hand).to include Card.new('7', 'Spades')
+      end
+
+      it 'does not add the card back to the discard pile' do
+        game.discard('7 Spades')
+
+        expect(game.discard_pile).to be_empty
+      end
+
+      it 'does not advance to the next player' do
+        before_index = game.current_player_index
+
+        game.discard('7 Spades')
+
+        expect(game.current_player_index).to eq before_index
+      end
+
+      it 'still allows discarding a different card' do
+        game.discard('8 Spades')
+
+        expect(game.discard_pile.last).to eq Card.new('8', 'Spades')
+      end
+    end
   end
 
   describe '#active_card' do
@@ -357,6 +404,13 @@ RSpec.describe Rummy::Game, type: :model do
 
     it 'preserves whether a card has been drawn this turn' do
       expect(loaded.drawn_this_turn).to eq game.drawn_this_turn
+    end
+
+    it 'preserves the card taken from the discard pile' do
+      game.draw('discard')
+      loaded_with_discard_draw = described_class.load(described_class.dump(game).as_json)
+
+      expect(loaded_with_discard_draw.taken_from_discard).to eq game.taken_from_discard
     end
   end
 end
