@@ -53,9 +53,14 @@ table) and has been removed.
 - `Rummy::Meld.valid_set?`/`.valid_run?` encode aces-low ordering with a Rummy-local
   `RANK_ORDER` constant (`A` first) — deliberately not touched on the shared `Card` class,
   since the other two games don't need a reordered rank scale.
-- Invalid meld/lay-off attempts (wrong shape, or a card not actually in the current
-  player's hand) **silently no-op** — this matches the app's existing precedent of not
-  surfacing turn-validation errors anywhere (no other game does either).
+- Invalid moves **raise `Rummy::InvalidMove`** (its own file, `app/models/rummy/invalid_move.rb`,
+  so Zeitwerk autoloads it independent of `game.rb`) with a player-facing message, *before* any
+  mutation, so nothing half-applies. `meld`/`layoff`/`discard` each carry their own message
+  (bad shape, "meld before laying off", "can't discard the card you just took", …).
+  `GamesController#play` rescues it and redirects with `alert: e.message`. This is the **one
+  exception** to the app's old "never surface turn-validation errors" precedent — Go Fish and
+  Crazy Eights still silently no-op. The rescue is Rummy-specific but doesn't branch on game
+  *type* (the other games simply never raise it). See "Surfacing invalid moves" below.
 - `Rummy::Game#cards_from_hand` `reject(&:blank?)`s incoming tokens before parsing them:
   Rails renders an empty hidden value alongside every *unchecked* box in a collection of
   checkboxes, and blindly `Card.objectify`-ing that blank string raises `InvalidRank`.
@@ -108,6 +113,22 @@ button happened to be disabled, instead of once between the draw-pair and the me
 as intended. Symptom: buttons visibly drifted apart as they toggled disabled state (e.g. once
 you'd drawn, `Take discard` gained its own top margin and split from `Draw deck`). Fixed by
 keying the gap off DOM position (`form:nth-of-type(3)`) instead of `:disabled` state.
+
+## Surfacing invalid moves (the flash toast)
+
+The `Rummy::InvalidMove` message reaches the player through a **shared flash partial**,
+`app/views/shared/_flash.html.slim`, rendered by **both** the `application` and `modal`
+layouts (the four per-page auth flash divs were removed and consolidated here). It renders
+each flash as an Optics `.alert.alert--flash` toast — `alert--danger` for `:alert`,
+`alert--notice` for `:notice` — auto-dismissing after 4s via `flash_controller.js` (adds
+`alert--leaving`, then removes the element on `transitionend`).
+
+**Trap: Optics `.alert` is `display:none` by default *in this app*** — `optics-overrides/alert.css`
+hides it and only `alert--active` (an app-local class, not a real Optics modifier, originally
+for the offline banner) flips it to `display:flex`. So any alert/flash you render **must**
+include `alert--active` or it stays invisible. The auto-dismiss fade also depends on the
+`transition: opacity` on `.alert` staying put — remove the transition and `transitionend`
+never fires, so the toast fades to invisible but is never removed from the DOM.
 
 ## Game feed (round results)
 

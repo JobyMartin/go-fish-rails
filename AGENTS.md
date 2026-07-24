@@ -187,12 +187,15 @@ See `docs/architecture.md` for the full model map and serialization details.
   else redirect to lobby with a flash), both `only: %i[show start play winner]`. Decisions held:
   **include `winner`** (leaks state like `show`); **leave `join` alone**; **redirect-with-flash,
   not 404**. Discovered during implementation: **the application layout rendered no flash at all**
-  (only the auth pages did), so `flash[:alert]`/`flash[:notice]` had to be wired into
-  `app/views/layouts/application.html.slim` for the redirect message to surface. Non-participant
+  (only the auth pages did), so flash had to be wired into the layout. (Superseded: flash now
+  renders through a shared `app/views/shared/_flash.html.slim` partial in **both** layouts — see
+  `docs/games/rummy.md` "Surfacing invalid moves".) Non-participant
   coverage is system-spec only (`spec/system/games_spec.rb`) — the shared `before_action` guards
   all four actions, so the two GET cases pin the POST cases too.
 - `docs/games/rummy.md` — **Rummy, the third game: wired in, with real turn logic.**
   Registered in `Game::PLAYABLE_TYPES`, real `Rummy::*` domain objects, draw/meld/lay-off/
   discard all implemented, click-to-select hand UI via a Stimulus controller, and a real
   per-player-count `deal!` (2p → 10, 3–4p → 7, 5–6p → 6). `mockup-html/rummy.html` remains
-  the visual mockup reference.
+  the visual mockup reference. **Invalid moves raise `Rummy::InvalidMove`** (the app's one
+  turn-validation exception), surfaced as an auto-dismissing flash toast — see "Surfacing
+  invalid moves".
