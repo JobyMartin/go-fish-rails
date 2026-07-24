@@ -105,6 +105,30 @@ Both controllers also set a parallel `data-selected`/`data-feed-open` attribute 
 class they toggle, so specs assert behavior through that attribute rather than a styling class
 (see `docs/testing.md`).
 
+### Prompting the "you've drawn, now pick a card" step
+
+The mid-turn gap — you've drawn, but the next thing to do (click a hand card) has no button
+— is signalled two ways, both driven off state that was already in the DOM, with **no new
+JS**:
+
+- The hand panel header reads `Your Hand — pick a card` instead of `Your Hand` whenever
+  `turn_action_disabled` is false (i.e. it's your turn *and* you've drawn).
+- Hand cards pulse a green glow: `.hand:not(:has(.is-selected)) .playing-card--selectable`
+  in `playing-card.css`. `playing-card--selectable` is only rendered in that same
+  post-draw state, and `:has()` kills the pulse the moment anything is selected.
+
+Three deliberate constraints, since this is the app's **only** animation:
+
+- **Glow, not border.** `.is-selected` already owns the solid `--op-color-primary-base`
+  border + ring; a green border for "please pick me" would collide with "picked".
+- **Three iterations, not infinite.** WCAG 2.2.2 wants a pause control for anything
+  blinking past ~5s; 1.4s × 3 stays under it, and each Turbo re-render re-arms it anyway.
+- **Wrapped in `prefers-reduced-motion: no-preference`**, so the header copy is the
+  accessible half of the same signal.
+
+Nothing here is spec'd: it's pure CSS keyed off existing classes, and a spec would have to
+assert on a styling class, which this repo deliberately avoids (see `docs/testing.md`).
+
 **`turn-actions.css`'s `.btn:disabled:first-of-type` selector was a per-button trap, not a
 per-group one.** `Draw deck`/`Take discard`/`Meld selected`/`Discard selected` each live alone
 inside their own `<form>` (from `button_to`/`simple_form_for`), so every one of them is

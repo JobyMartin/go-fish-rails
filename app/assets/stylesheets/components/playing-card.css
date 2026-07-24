@@ -46,3 +46,15 @@
     z-index: 1;
   }
 }
+
+@media (prefers-reduced-motion: no-preference) {
+  .hand:not(:has(.is-selected)) .playing-card--selectable {
+    animation: playing-card-awaiting 1.4s ease-in-out 3;
+  }
+}
+
+@keyframes playing-card-awaiting {
+  50% {
+    box-shadow: 0 0 0 4px hsl(var(--op-color-primary-h) var(--op-color-primary-s) var(--op-color-primary-l) / .55);
+  }
+}

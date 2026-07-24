@@ -75,7 +75,7 @@
 
       .game__hand.panel.panel--hand data-testid="game-hand"
         .panel__header
-          | Your Hand
+          = turn_action_disabled ? 'Your Hand' : 'Your Hand — pick a card'
           span.flex.items-center.gap-xs
             = button_to 'Smart sort', play_game_path(game), method: :post,
               params: { play_turn: { move: 'smart_sort', player: current_player.id } }, class: 'btn btn--small'
