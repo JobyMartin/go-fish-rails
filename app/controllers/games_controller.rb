@@ -48,6 +48,8 @@ class GamesController < ApplicationController
 
     @game.save!
     redirect_to game_path(@game)
+  rescue Rummy::InvalidMove => e
+    redirect_to game_path(@game), alert: e.message
   end
 
   def winner

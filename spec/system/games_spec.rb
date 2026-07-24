@@ -354,6 +354,49 @@ RSpec.describe 'Games', type: :system do
         expect(state.current_player.hand).not_to include(Card.new('4', 'Hearts'))
         expect(state.current_player.hand).not_to include(Card.new('5', 'Hearts'))
       end
+
+      it 'shows an error message when melding an invalid combination' do
+        click_button 'Draw deck'
+        select_hand_card('3 Hearts')
+        select_hand_card('2 Clubs')
+        click_button 'Meld selected'
+
+        within(data_test('flash')) { expect(page).to have_text("That's not a valid set or run.") }
+        expect(page).to have_css '.alert--danger'
+        expect(all(data_test('meld'))).to be_empty
+      end
+
+      it "shows an error when discarding the card just taken from the discard pile" do
+        click_button 'Take discard'
+        select_hand_card('K Clubs')
+        click_button 'Discard selected'
+
+        within(data_test('flash')) { expect(page).to have_text('you just took from the discard pile') }
+      end
+    end
+
+    context 'when the user lays off before melding', :js do
+      before do
+        select 'Rummy', from: 'Type'
+        click_on 'Create Game'
+        click_on 'Start game'
+        expect(page).to have_css data_test('game')
+
+        game = Game.last
+        game.game_state.melds = [ Rummy::Meld.new([ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ]) ]
+        game.game_state.current_player.hand = [ Card.new('6', 'Hearts') ]
+        game.game_state.drawn_this_turn = true
+        game.save!
+        visit game_path(game)
+        expect(page).to have_css data_test('game')
+      end
+
+      it 'shows an error telling them to meld first' do
+        select_hand_card('6 Hearts')
+        click_button 'Lay off here'
+
+        within(data_test('flash')) { expect(page).to have_text('lay down a meld') }
+      end
     end
 
     context 'when the user sorts their hand' do

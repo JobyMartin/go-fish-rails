@@ -1,0 +1,6 @@
+- flash.each do |type, message|
+  - danger = type.to_s == 'alert'
+  div class=('alert alert--flash alert--active ' + (danger ? 'alert--danger' : 'alert--notice')) role='alert' data-controller='flash' data-testid='flash'
+    i.ph.alert__icon class=(danger ? 'ph-warning-circle' : 'ph-check-circle') aria-hidden='true'
+    .alert__messages
+      .alert__description= message

@@ -1,7 +1,5 @@
 
 .simple-page
-  = tag.div(flash[:alert], style: "color:red") if flash[:alert]
-
   = simple_form_for @user do |f|
     / .form-group
     /   = form.label :email_address, class: "form-label"

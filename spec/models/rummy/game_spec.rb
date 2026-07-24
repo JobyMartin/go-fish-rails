@@ -195,14 +195,12 @@ RSpec.describe Rummy::Game, type: :model do
       expect(game.current_player.hand.count).to eq current_hand_size - 3
     end
 
-    it 'does not meld an invalid combination of cards' do
+    it 'raises and leaves the hand and table untouched on an invalid meld' do
       before_hand = game.current_player.hand.dup
-      before_melds_count = game.melds.count
 
-      game.meld([ '3 Hearts', '4 Hearts' ])
-
+      expect { game.meld([ '3 Hearts', '4 Hearts' ]) }.to raise_error(Rummy::InvalidMove, /valid set or run/)
       expect(game.current_player.hand).to eq before_hand
-      expect(game.melds.count).to eq before_melds_count
+      expect(game.melds).to be_empty
     end
 
     it 'ignores blank tokens from unchecked checkbox hidden fields' do
@@ -226,8 +224,7 @@ RSpec.describe Rummy::Game, type: :model do
     end
 
     it 'does not mark the current player as having melded on an invalid meld' do
-      game.meld([ '3 Hearts', '4 Hearts' ])
-
+      expect { game.meld([ '3 Hearts', '4 Hearts' ]) }.to raise_error(Rummy::InvalidMove)
       expect(game.current_player.melded?).to eq false
     end
   end
@@ -238,9 +235,8 @@ RSpec.describe Rummy::Game, type: :model do
       game.current_player.hand = [ Card.new('6', 'Hearts') ]
     end
 
-    it 'does not lay off before the current player has melded' do
-      game.layoff(0, '6 Hearts')
-
+    it 'raises and does not lay off before the current player has melded' do
+      expect { game.layoff(0, '6 Hearts') }.to raise_error(Rummy::InvalidMove, /lay down a meld/)
       expect(game.melds.first.cards.count).to eq 3
       expect(game.current_player.hand).to eq [ Card.new('6', 'Hearts') ]
     end
@@ -262,11 +258,10 @@ RSpec.describe Rummy::Game, type: :model do
         expect(game.current_player.hand).to be_empty
       end
 
-      it "does not lay off a card that wouldn't extend a valid set/run" do
+      it "raises when the card wouldn't extend a valid set/run" do
         game.current_player.hand = [ Card.new('2', 'Clubs') ]
 
-        game.layoff(0, '2 Clubs')
-
+        expect { game.layoff(0, '2 Clubs') }.to raise_error(Rummy::InvalidMove, /can't be added/)
         expect(game.melds.first.cards.count).to eq 3
         expect(game.current_player.hand).to eq [ Card.new('2', 'Clubs') ]
       end
@@ -337,23 +332,20 @@ RSpec.describe Rummy::Game, type: :model do
         game.draw('discard')
       end
 
-      it 'does not remove the card from hand' do
-        game.discard('7 Spades')
-
+      it 'raises and keeps the card in hand' do
+        expect { game.discard('7 Spades') }.to raise_error(Rummy::InvalidMove, /just took/)
         expect(game.current_player.hand).to include Card.new('7', 'Spades')
       end
 
       it 'does not add the card back to the discard pile' do
-        game.discard('7 Spades')
-
+        expect { game.discard('7 Spades') }.to raise_error(Rummy::InvalidMove)
         expect(game.discard_pile).to be_empty
       end
 
       it 'does not advance to the next player' do
         before_index = game.current_player_index
 
-        game.discard('7 Spades')
-
+        expect { game.discard('7 Spades') }.to raise_error(Rummy::InvalidMove)
         expect(game.current_player_index).to eq before_index
       end
 

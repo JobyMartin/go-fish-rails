@@ -13,6 +13,9 @@ application.register("dialog", DialogController)
 import FeedDrawerController from "./feed_drawer_controller"
 application.register("feed-drawer", FeedDrawerController)
 
+import FlashController from "./flash_controller"
+application.register("flash", FlashController)
+
 import HelloController from "./hello_controller"
 application.register("hello", HelloController)
 

@@ -93,7 +93,7 @@ module Rummy
 
     def meld(card_tokens)
       cards = cards_from_hand(card_tokens)
-      return unless Meld.valid?(cards)
+      raise InvalidMove, "That's not a valid set or run." unless Meld.valid?(cards)
 
       cards.each { |card| remove_from_hand(card) }
       melds << Meld.new(cards)
@@ -103,7 +103,8 @@ module Rummy
     def layoff(meld_id, card_token)
       meld = melds[meld_id]
       card = cards_from_hand([ card_token ]).first
-      return unless current_player.melded? && meld && card && Meld.valid?(meld.cards + [ card ])
+      raise InvalidMove, "You have to lay down a meld of your own before laying off." unless current_player.melded?
+      raise InvalidMove, "That card can't be added to this meld." unless meld && card && Meld.valid?(meld.cards + [ card ])
 
       remove_from_hand(card)
       meld.cards << card
@@ -111,7 +112,8 @@ module Rummy
 
     def discard(card_token)
       card = cards_from_hand([ card_token ]).first
-      return unless card && !(taken_from_discard && card == taken_from_discard)
+      raise InvalidMove, "Pick a card from your hand to discard." unless card
+      raise InvalidMove, "You can't discard the card you just took from the discard pile." if taken_from_discard && card == taken_from_discard
 
       remove_from_hand(card)
       discard_pile << card
