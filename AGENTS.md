@@ -186,10 +186,9 @@ See `docs/architecture.md` for the full model map and serialization details.
   repeated `Game.find`) then `require_participation` (`@game.users.include?(Current.session.user)`,
   else redirect to lobby with a flash), both `only: %i[show start play winner]`. Decisions held:
   **include `winner`** (leaks state like `show`); **leave `join` alone**; **redirect-with-flash,
-  not 404**. Discovered during implementation: **the application layout rendered no flash at all**
-  (only the auth pages did), so flash had to be wired into the layout. (Superseded: flash now
-  renders through a shared `app/views/shared/_flash.html.slim` partial in **both** layouts — see
-  `docs/games/rummy.md` "Surfacing invalid moves".) Non-participant
+  not 404**. The redirect message needs flash rendering, which now lives in a shared
+  `app/views/shared/_flash.html.slim` partial used by both layouts (see `docs/games/rummy.md`
+  "Surfacing invalid moves"). Non-participant
   coverage is system-spec only (`spec/system/games_spec.rb`) — the shared `before_action` guards
   all four actions, so the two GET cases pin the POST cases too.
 - `docs/games/rummy.md` — **Rummy, the third game: wired in, with real turn logic.**
