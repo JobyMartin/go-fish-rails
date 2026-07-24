@@ -11,6 +11,11 @@ and Crazy Eights; real turn logic (draw/meld/lay off/discard) is implemented.
 - **A turn**: **draw** one card (from the deck or the discard pile) → optional **meld**/
   **lay off** (any number, onto your own or anyone's table melds) → **discard** one (ends
   the turn).
+- **Must meld before laying off.** A player can't lay a card onto *anyone's* table meld
+  (including their own) until they've put down at least one meld of their own.
+  `Rummy::Player#melded?` (set by `#mark_melded!` inside `Game#meld`) tracks this per player
+  and `Game#layoff` checks it. This was previously unenforced — a real bug, not a deliberate
+  omission — until this rule was added.
 - **Going out**: emptying your hand on discard ends the hand. The player who went out is
   the winner — their leftover pips are always the lowest (zero) — so `game_over?`/`winner`
   reuse the same "does any hand empty?" one-liner Go Fish/Crazy Eights already use. No
