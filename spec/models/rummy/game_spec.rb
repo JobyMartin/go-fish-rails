@@ -147,7 +147,7 @@ RSpec.describe Rummy::Game, type: :model do
 
       game.draw('discard')
 
-      expect(game.round_results.last.card_taken).to eq top_card
+      expect(game.round_results.last.cards.first).to eq top_card
     end
 
     it 'does not record a round result when drawing from the deck' do
@@ -227,6 +227,32 @@ RSpec.describe Rummy::Game, type: :model do
       expect { game.meld([ '3 Hearts', '4 Hearts' ]) }.to raise_error(Rummy::InvalidMove)
       expect(game.current_player.melded?).to eq false
     end
+
+    it 'records a round result naming the melded cards' do
+      game.meld(run_tokens)
+
+      expect(game.round_results.last.move).to eq :melded
+      expect(game.round_results.last.cards).to eq [ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ]
+    end
+
+    it 'does not mark the round result as going out when cards remain' do
+      game.meld(run_tokens)
+
+      expect(game.round_results.last.going_out).to eq false
+    end
+
+    it 'marks the round result as going out when the meld empties the hand' do
+      game.current_player.hand = [ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ]
+
+      game.meld(run_tokens)
+
+      expect(game.round_results.last.going_out).to eq true
+    end
+
+    it 'records no round result on an invalid meld' do
+      expect { game.meld([ '3 Hearts', '4 Hearts' ]) }.to raise_error(Rummy::InvalidMove)
+      expect(game.round_results).to be_empty
+    end
   end
 
   describe '#layoff' do
@@ -265,6 +291,34 @@ RSpec.describe Rummy::Game, type: :model do
         expect(game.melds.first.cards.count).to eq 3
         expect(game.current_player.hand).to eq [ Card.new('2', 'Clubs') ]
       end
+
+      it 'records a round result naming the laid off card' do
+        game.layoff(0, '6 Hearts')
+
+        expect(game.round_results.last.move).to eq :laid_off
+        expect(game.round_results.last.cards).to eq [ Card.new('6', 'Hearts') ]
+      end
+
+      it 'marks the round result as going out when the lay off empties the hand' do
+        game.layoff(0, '6 Hearts')
+
+        expect(game.round_results.last.going_out).to eq true
+      end
+
+      it 'does not mark the round result as going out when cards remain' do
+        game.current_player.hand << Card.new('K', 'Spades')
+
+        game.layoff(0, '6 Hearts')
+
+        expect(game.round_results.last.going_out).to eq false
+      end
+
+      it 'records no round result on an invalid lay off' do
+        game.current_player.hand = [ Card.new('2', 'Clubs') ]
+
+        expect { game.layoff(0, '2 Clubs') }.to raise_error(Rummy::InvalidMove)
+        expect(game.round_results).to be_empty
+      end
     end
   end
 
@@ -286,7 +340,7 @@ RSpec.describe Rummy::Game, type: :model do
     it 'records a round result describing the discard' do
       game.discard('7 Spades')
 
-      expect(game.round_results.last.card_discarded).to eq Card.new('7', 'Spades')
+      expect(game.round_results.last.cards.first).to eq Card.new('7', 'Spades')
     end
 
     it 'does not mark the round result as going out when cards remain' do
@@ -366,7 +420,14 @@ RSpec.describe Rummy::Game, type: :model do
   end
 
   describe 'as_json / from_json' do
-    before { game.deal! }
+    before do
+      game.deal!
+      game.current_player.hand = [
+        Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts'), Card.new('K', 'Spades')
+      ]
+      game.meld([ '3 Hearts', '4 Hearts', '5 Hearts' ])
+      game.discard('K Spades')
+    end
 
     let(:loaded) { described_class.load(described_class.dump(game).as_json) }
 
@@ -387,7 +448,14 @@ RSpec.describe Rummy::Game, type: :model do
     end
 
     it 'preserves round results' do
-      expect(loaded.round_results).to eq game.round_results
+      expect(loaded.round_results.map(&:move)).to eq game.round_results.map(&:move)
+      expect(loaded.round_results.map(&:cards)).to eq game.round_results.map(&:cards)
+      expect(loaded.round_results.map(&:going_out)).to eq game.round_results.map(&:going_out)
+    end
+
+    it 'preserves the narration of a round result' do
+      expect(loaded.round_results.last.feed_lines.map(&:text))
+        .to eq game.round_results.last.feed_lines.map(&:text)
     end
 
     it 'preserves the current player index' do

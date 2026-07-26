@@ -181,6 +181,11 @@ RSpec.describe 'Games', type: :system do
 
   context 'when user creates a rummy game' do
     let(:game_name) { 'Toast' }
+    let(:went_out_line) { /went out/i }
+    let(:took_king_of_clubs_line) { /took a K of Clubs from the discard pile/i }
+    let(:melded_hearts_run_line) { /melded 3 of Hearts, 4 of Hearts, 5 of Hearts/i }
+    let(:discarded_two_of_clubs_line) { /discarded a 2 of Clubs/i }
+    let(:laid_off_six_of_hearts_line) { /laid off 6 of Hearts/i }
 
     before do
       click_on 'New Game'
@@ -299,10 +304,10 @@ RSpec.describe 'Games', type: :system do
         click_button 'Game Feed'
 
         within data_test('feed-content') do
-          expect(page).to have_css data_test('feed-action'), text: /discarded a 2 of Clubs/i
+          expect(page).to have_css data_test('feed-action'), text: discarded_two_of_clubs_line
         end
 
-        expect(Game.last.game_state.round_results.last.card_discarded).to eq Card.new('2', 'Clubs')
+        expect(Game.last.game_state.round_results.last.cards.first).to eq Card.new('2', 'Clubs')
       end
 
       it 'taking from the discard pile shows the move in the game feed' do
@@ -313,7 +318,7 @@ RSpec.describe 'Games', type: :system do
         click_button 'Game Feed'
 
         within data_test('feed-content') do
-          expect(page).to have_css data_test('feed-action'), text: /took a K of Clubs from the discard pile/i
+          expect(page).to have_css data_test('feed-action'), text: took_king_of_clubs_line
         end
 
         state = Game.last.game_state
@@ -338,6 +343,16 @@ RSpec.describe 'Games', type: :system do
         expect(state.current_player.hand).not_to include(Card.new('3', 'Hearts'))
         expect(state.current_player.hand).not_to include(Card.new('4', 'Hearts'))
         expect(state.current_player.hand).not_to include(Card.new('5', 'Hearts'))
+      end
+
+      it 'shows the melded cards in the feed without announcing a win' do
+        meld_hearts_run
+        click_button 'Game Feed'
+
+        within data_test('feed-content') do
+          expect(page).to have_css data_test('feed-action'), text: melded_hearts_run_line
+          expect(page).to have_no_css data_test('feed-game-response')
+        end
       end
 
       it 'shows an error message when melding an invalid combination' do
@@ -508,8 +523,93 @@ RSpec.describe 'Games', type: :system do
         click_button 'Game Feed'
 
         within data_test('feed-content') do
-          expect(page).to have_css data_test('feed-game-response'), text: /went out/i
+          expect(page).to have_css data_test('feed-game-response'), text: went_out_line
         end
+      end
+    end
+
+    context 'when the user melds out', :js do
+      before do
+        start_rummy_game_with_state do |state|
+          state.current_player.hand = [
+            Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts')
+          ]
+          state.drawn_this_turn = true
+        end
+      end
+
+      it 'shows the meld and a styled going-out message in the game feed' do
+        meld_selected_hearts_run
+        click_button 'Game Feed'
+
+        within data_test('feed-content') do
+          expect(page).to have_css data_test('feed-action'), text: melded_hearts_run_line
+          expect(page).to have_css data_test('feed-game-response'), text: went_out_line
+        end
+      end
+
+      it 'ends the game without a discard' do
+        meld_selected_hearts_run
+
+        expect(page).to have_no_css "#{data_test('game-hand')} #{data_test('card')}"
+        expect(Game.last.game_state.game_over?).to eq true
+      end
+    end
+
+    context 'when the user lays off after melding', :js do
+      before do
+        start_rummy_game_with_state do |state|
+          state.melds = [ Rummy::Meld.new([ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ]) ]
+          state.current_player.mark_melded!
+          state.current_player.hand = [ Card.new('6', 'Hearts'), Card.new('K', 'Spades') ]
+          state.drawn_this_turn = true
+        end
+      end
+
+      it 'shows the laid off card in the game feed' do
+        lay_off_hand_card('6 Hearts')
+        click_button 'Game Feed'
+
+        within data_test('feed-content') do
+          expect(page).to have_css data_test('feed-action'), text: laid_off_six_of_hearts_line
+        end
+      end
+
+      it 'does not announce a win while cards remain in hand' do
+        lay_off_hand_card('6 Hearts')
+        click_button 'Game Feed'
+
+        within data_test('feed-content') do
+          expect(page).to have_no_css data_test('feed-game-response')
+        end
+      end
+    end
+
+    context 'when the user lays off their last card', :js do
+      before do
+        start_rummy_game_with_state do |state|
+          state.melds = [ Rummy::Meld.new([ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ]) ]
+          state.current_player.mark_melded!
+          state.current_player.hand = [ Card.new('6', 'Hearts') ]
+          state.drawn_this_turn = true
+        end
+      end
+
+      it 'shows the lay off and a styled going-out message in the game feed' do
+        lay_off_hand_card('6 Hearts')
+        click_button 'Game Feed'
+
+        within data_test('feed-content') do
+          expect(page).to have_css data_test('feed-action'), text: laid_off_six_of_hearts_line
+          expect(page).to have_css data_test('feed-game-response'), text: went_out_line
+        end
+      end
+
+      it 'ends the game without a discard' do
+        lay_off_hand_card('6 Hearts')
+
+        expect(page).to have_no_css "#{data_test('game-hand')} #{data_test('card')}"
+        expect(Game.last.game_state.game_over?).to eq true
       end
     end
   end

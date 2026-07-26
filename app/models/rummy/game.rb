@@ -86,7 +86,7 @@ module Rummy
     def draw(source)
       card = source == "discard" ? discard_pile.pop : deck.top_card
       current_player.add_cards([ card ])
-      round_results << RoundResult.new(current_player: current_player, card_taken: card) if source == "discard"
+      record_move(:took, [ card ]) if source == "discard"
       self.taken_from_discard = source == "discard" ? card : nil
       self.drawn_this_turn = true
     end
@@ -98,6 +98,7 @@ module Rummy
       cards.each { |card| remove_from_hand(card) }
       melds << Meld.new(cards)
       current_player.mark_melded!
+      record_move(:melded, cards)
     end
 
     def layoff(meld_id, card_token)
@@ -108,6 +109,7 @@ module Rummy
 
       remove_from_hand(card)
       meld.cards << card
+      record_move(:laid_off, [ card ])
     end
 
     def discard(card_token)
@@ -117,14 +119,22 @@ module Rummy
 
       remove_from_hand(card)
       discard_pile << card
-      round_results << RoundResult.new(
-        current_player: current_player, card_discarded: card, going_out: current_player.hand.empty?
-      )
-      self.drawn_this_turn = false
-      switch_turns unless current_player.hand.empty?
+      record_move(:discarded, [ card ])
+      end_turn
     end
 
     private
+
+    def record_move(move, cards)
+      round_results << RoundResult.new(
+        move: move, current_player: current_player, cards: cards, going_out: current_player.hand.empty?
+      )
+    end
+
+    def end_turn
+      self.drawn_this_turn = false
+      switch_turns unless current_player.hand.empty?
+    end
 
     def number_of_cards
       return TWO_PLAYER_DEAL_COUNT if players.count == 2

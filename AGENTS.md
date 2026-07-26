@@ -157,15 +157,14 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/games/go-fish.md` — Go Fish rules and implementation notes
 - `docs/games/crazy-eights.md` — Crazy Eights rules, William, and implementation notes
 - `docs/improvement-plan.md` + `docs/improvement-1-breakdown.md` +
-  `docs/improvement-2-breakdown.md` — the foundation work for adding a third game, **all
-  complete**: Improvement 1 locked the shared "game contract" with tests (STI subclass specs,
-  serialization round-trips, the shared `"a persisted card game"` example); Improvement 2
-  replaced type-branching with polymorphic dispatch + the `Game::PLAYABLE_TYPES` registry.
-  **No `type ==` branching remains in source.**
-- `docs/improvement-cards.md` — the post-Improvement-2 scoped round, **all three done**: the
-  `RoundResult` feed presenter, the shared `Card`/`Deck` extraction, and authorization on game
-  actions. `RAILS_AUDIT_REPORT.md` (repo root) is the full audit behind them; its one remaining
-  High finding (game-over persistence) maps to the gotcha above.
+  `docs/improvement-2-breakdown.md` — foundation work for adding a third game, **all complete**:
+  Improvement 1 locked the shared "game contract" with tests (STI subclass specs, serialization
+  round-trips, the shared `"a persisted card game"` example); Improvement 2 replaced
+  type-branching with polymorphic dispatch + `Game::PLAYABLE_TYPES`. **No `type ==` remains.**
+- `docs/improvement-cards.md` — post-Improvement-2 scoped round, **all three done**: the
+  `RoundResult` feed presenter, the shared `Card`/`Deck` extraction, authorization on game
+  actions. `RAILS_AUDIT_REPORT.md` (repo root) is the audit behind them; its one remaining High
+  finding (game-over persistence) maps to the gotcha above.
 - `docs/brave-card-1-round-feed-presenter.md` — BRAVE breakdown for Card 1 (the feed presenter),
   **complete**. `RoundFeed` (+ `FeedLine`) at `app/models/round_feed.rb` is a namespace-neutral
   presentation seam: each `RoundResult#feed_lines` delegates to it, and every game partial
@@ -186,14 +185,17 @@ See `docs/architecture.md` for the full model map and serialization details.
   the visual mockup reference. **Invalid moves raise `Rummy::InvalidMove`** (the app's one
   turn-validation exception), surfaced as an auto-dismissing flash toast — see "Surfacing
   invalid moves". The mid-turn "you've drawn, now pick a card" step is cued by a header
-  change plus the pulse — see "Prompting the …" for why it needs no JS. **The feed is
-  incomplete** — see the next bullet.
-- `docs/brave-rummy-feed-completeness.md` — BRAVE breakdown, **next card up (4 pts)**, no code
-  written yet. `meld`/`layoff` append no `RoundResult`, and `going_out` is computed only on the
-  discard result — so **a player who melds or lays off their last card wins with a silent
-  feed** (Bicycle rules allow all three routes; `game_over?`/`winner` detect them fine, only
-  the feed doesn't). Fix: replace `Rummy::RoundResult`'s mutually-exclusive
-  `card_taken`/`card_discarded` with a `move` discriminator (`:took`/`:melded`/`:laid_off`/
-  `:discarded` + `cards` + `going_out`). Rummy-only — `GoFish::RoundResult` and `RoundFeed` are
-  untouched. The doc holds the decisions (name the cards; lay-off doesn't say which meld; one
-  entry per action) and **why it can't be split** into "going out" and "meld lines" halves.
+  change plus the pulse — see "Prompting the …" for why it needs no JS. The feed narrates all
+  four actions — see the next bullet.
+- `docs/brave-rummy-feed-completeness.md` — BRAVE breakdown, **complete**. `Rummy::RoundResult`
+  carries a `move` discriminator (`:took`/`:melded`/`:laid_off`/`:discarded`) + `cards` +
+  `going_out`; one private `Game#record_move` sets `going_out` for **every** logged action, so
+  all three Bicycle going-out routes now announce themselves (a meld-out used to win with a
+  silent feed — and per the `GamesController#play` gotcha the feed is the *only* surface
+  reporting it). Rummy-only; `RoundFeed` and the partial are untouched. `record_move` **must**
+  precede `end_turn` in `#discard` — `switch_turns` reassigns `current_player`. Deck draws stay
+  deliberately unnarrated. See `docs/games/rummy.md` "Game feed" for the full vocabulary.
+- **Rummy system specs stage state through `start_rummy_game_with_state`** (block yielding the
+  `game_state`), which prunes staged cards from the deck — otherwise a forced hand leaves its
+  dealt twin in the deck and a later draw returns a duplicate, failing "the melded card left my
+  hand" ~8% of runs. Stage via the helper, never by hand.

@@ -59,10 +59,19 @@ module RummyTurnHelper
 
   def meld_hearts_run
     click_button 'Draw deck'
+    meld_selected_hearts_run
+  end
+
+  def meld_selected_hearts_run
     select_hand_card('3 Hearts')
     select_hand_card('4 Hearts')
     select_hand_card('5 Hearts')
     click_button 'Meld selected'
+  end
+
+  def lay_off_hand_card(token)
+    select_hand_card(token)
+    click_button 'Lay off here'
   end
 
   def discard_only_hand_card

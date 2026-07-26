@@ -1,7 +1,36 @@
 # BRAVE Breakdown: Narrate melds, lay-offs, and every way to go out in the Rummy feed
 
-**Status:** not started — next card up.
+**Status:** complete.
 **Estimate:** 4 points (Small, ~4h; ~4.6h with review/pairing buffer)
+
+## Outcome (what actually happened)
+
+Shipped as planned — `move` discriminator, all four action lines, `going_out` on every logged
+action. Three things the breakdown did not predict:
+
+- **`going_out` collapsed into one place, not three.** A private `Game#record_move(move, cards)`
+  sets `going_out: current_player.hand.empty?` for every call site, so there is no longer a code
+  path that can append a result *without* computing going-out. That is a stronger fix than
+  adding the flag to two more call sites.
+- **`record_move` must precede `end_turn` in `#discard`.** `switch_turns` reassigns
+  `current_player`, so recording after it credits the next player and reads the wrong hand.
+  `#discard` was already over the ≤7-line rule, so the turn-ending pair moved into `end_turn`.
+- **Risk 2 was real: `game_spec.rb`'s `preserves round results` was vacuous.** The round-trip
+  block only called `deal!`, so it compared two empty arrays. It now melds and discards first
+  and asserts `move`/`cards`/`going_out` plus a narration round-trip — confirmed failing before
+  the implementation landed.
+
+Risk 3 resolved favorably: the meld-out win does redirect to the game board, and that page
+renders the feed, so the system spec was simpler than a winner-screen route.
+
+**Found while testing, fixed alongside:** staging a hand via the system-spec helper left the
+dealt twins of those cards in the deck, so `meld_hearts_run`'s draw could return a duplicate and
+fail "the melded card left my hand" ~8% of runs (a pre-existing flake in an untouched spec).
+`start_rummy_game_with_state` now prunes staged cards from the deck.
+
+`action_line` uses an explicit `when :discarded` rather than the `else` sketched below: with
+`else`, an unknown `move` would narrate as `"Alice discarded a "` — the same empty-interpolation
+bug this card removes, just relocated.
 
 ## Brainstorm
 
@@ -179,22 +208,22 @@ facto win report, which *raises* rather than lowers the case for eventually pers
 
 ## Implementation Plan
 
-- [ ] System spec first: a player melds their last cards; feed shows the meld line **and** a
+- [x] System spec first: a player melds their last cards; feed shows the meld line **and** a
       styled `feed-game-response` win line. Watch it fail.
-- [ ] Reshape `Rummy::RoundResult` — `move`/`cards`/`going_out`, `action_line` dispatch,
+- [x] Reshape `Rummy::RoundResult` — `move`/`cards`/`going_out`, `action_line` dispatch,
       `for_other_players` appending the win line.
-- [ ] Update `.load` for `move` (assert Symbol) and `cards` (array via `Card.load`).
-- [ ] Add `going_out: current_player.hand.empty?` to the `meld` and `layoff` results.
-- [ ] Add the meld and lay-off `round_results <<` call sites; convert `draw`/`discard` to `move:`.
-- [ ] Rewrite `round_result_spec.rb` constructor calls; add per-move describe blocks following
+- [x] Update `.load` for `move` (assert Symbol) and `cards` (array via `Card.load`).
+- [x] Add `going_out: current_player.hand.empty?` to the `meld` and `layoff` results.
+- [x] Add the meld and lay-off `round_results <<` call sites; convert `draw`/`discard` to `move:`.
+- [x] Rewrite `round_result_spec.rb` constructor calls; add per-move describe blocks following
       the existing text-plus-roles shape.
-- [ ] Update `game_spec.rb:150`/`:289` and `games_spec.rb:320` to `.cards.first`; verify `:390`
+- [x] Update `game_spec.rb:150`/`:289` and `games_spec.rb:320` to `.cards.first`; verify `:390`
       is not vacuous.
-- [ ] Add system coverage for the lay-off line and lay-off-out.
-- [ ] Confirm the `count: 1` feed tripwires (`games_spec.rb:170`, `:303`) still hold — neither
+- [x] Add system coverage for the lay-off line and lay-off-out.
+- [x] Confirm the `count: 1` feed tripwires (`games_spec.rb:170`, `:303`) still hold — neither
       path melds, so they should.
-- [ ] `bundle exec rspec` + `bin/rubocop`.
-- [ ] Update `docs/games/rummy.md` with the feed's move vocabulary and the three going-out routes.
+- [x] `bundle exec rspec` + `bin/rubocop`.
+- [x] Update `docs/games/rummy.md` with the feed's move vocabulary and the three going-out routes.
 
 ## Follow-ups (deliberately out of scope)
 

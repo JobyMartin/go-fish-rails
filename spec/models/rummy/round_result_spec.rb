@@ -2,80 +2,128 @@ require 'rails_helper'
 
 RSpec.describe Rummy::RoundResult, type: :model do
   let(:current_player) { Rummy::Player.new(0, 'Joby') }
-  let(:card_discarded) { Card.new('7', 'Spades') }
+  let(:hearts_run) { [ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ] }
 
   describe '#feed_lines' do
-    it 'describes what the player discarded' do
-      round_result = Rummy::RoundResult.new(current_player: current_player, card_discarded: card_discarded)
+    context 'when the player took from the discard pile' do
+      it 'names the card and where it came from' do
+        result = described_class.new(move: :took, current_player:, cards: [ Card.new('9', 'Diamonds') ])
 
-      expect(round_result.feed_lines.first.text).to eq 'Joby discarded a 7 of Spades'
-    end
-
-    it 'has a single action line when the player did not go out' do
-      round_result = Rummy::RoundResult.new(current_player: current_player, card_discarded: card_discarded)
-
-      expect(round_result.feed_lines.map(&:role)).to eq [ :action ]
-    end
-
-    context 'when the discard empties the player hand' do
-      it 'adds a going out message' do
-        round_result = Rummy::RoundResult.new(
-          current_player: current_player, card_discarded: card_discarded, going_out: true
-        )
-
-        expect(round_result.feed_lines.last.text).to eq 'Joby went out and won!'
+        expect(result.feed_lines.first.text).to eq 'Joby took a 9 of Diamonds from the discard pile'
       end
 
-      it 'marks the going out message as a game response' do
-        round_result = Rummy::RoundResult.new(
-          current_player: current_player, card_discarded: card_discarded, going_out: true
-        )
+      it 'has a single action line' do
+        result = described_class.new(move: :took, current_player:, cards: [ Card.new('9', 'Diamonds') ])
 
-        expect(round_result.feed_lines.last.role).to eq :game_response
+        expect(result.feed_lines.map(&:role)).to eq [ :action ]
+      end
+    end
+
+    context 'when the player melded' do
+      it 'names every card in the meld' do
+        result = described_class.new(move: :melded, current_player:, cards: hearts_run)
+
+        expect(result.feed_lines.first.text).to eq 'Joby melded 3 of Hearts, 4 of Hearts, 5 of Hearts'
+      end
+
+      it 'has a single action line' do
+        result = described_class.new(move: :melded, current_player:, cards: hearts_run)
+
+        expect(result.feed_lines.map(&:role)).to eq [ :action ]
+      end
+    end
+
+    context 'when the player laid off' do
+      it 'names the card without naming the meld' do
+        result = described_class.new(move: :laid_off, current_player:, cards: [ Card.new('6', 'Hearts') ])
+
+        expect(result.feed_lines.first.text).to eq 'Joby laid off 6 of Hearts'
+      end
+
+      it 'has a single action line' do
+        result = described_class.new(move: :laid_off, current_player:, cards: [ Card.new('6', 'Hearts') ])
+
+        expect(result.feed_lines.map(&:role)).to eq [ :action ]
+      end
+    end
+
+    context 'when the player discarded' do
+      it 'names the discarded card' do
+        result = described_class.new(move: :discarded, current_player:, cards: [ Card.new('7', 'Spades') ])
+
+        expect(result.feed_lines.first.text).to eq 'Joby discarded a 7 of Spades'
+      end
+
+      it 'has a single action line' do
+        result = described_class.new(move: :discarded, current_player:, cards: [ Card.new('7', 'Spades') ])
+
+        expect(result.feed_lines.map(&:role)).to eq [ :action ]
       end
     end
   end
 
-  describe '#feed_lines when taking from the discard pile' do
-    let(:card_taken) { Card.new('9', 'Diamonds') }
+  describe '#feed_lines when the move empties the hand' do
+    it 'announces the win after a discard' do
+      result = described_class.new(
+        move: :discarded, current_player:, cards: [ Card.new('7', 'Spades') ], going_out: true
+      )
 
-    it 'describes what the player took' do
-      round_result = Rummy::RoundResult.new(current_player: current_player, card_taken: card_taken)
-
-      expect(round_result.feed_lines.first.text).to eq 'Joby took a 9 of Diamonds from the discard pile'
+      expect(result.feed_lines.last.text).to eq 'Joby went out and won!'
     end
 
-    it 'has a single action line' do
-      round_result = Rummy::RoundResult.new(current_player: current_player, card_taken: card_taken)
+    it 'announces the win after a meld' do
+      result = described_class.new(move: :melded, current_player:, cards: hearts_run, going_out: true)
 
-      expect(round_result.feed_lines.map(&:role)).to eq [ :action ]
+      expect(result.feed_lines.last.text).to eq 'Joby went out and won!'
+    end
+
+    it 'announces the win after a lay off' do
+      result = described_class.new(
+        move: :laid_off, current_player:, cards: [ Card.new('6', 'Hearts') ], going_out: true
+      )
+
+      expect(result.feed_lines.last.text).to eq 'Joby went out and won!'
+    end
+
+    it 'keeps the action line in front of the win line' do
+      result = described_class.new(move: :melded, current_player:, cards: hearts_run, going_out: true)
+
+      expect(result.feed_lines.map(&:text).first).to eq 'Joby melded 3 of Hearts, 4 of Hearts, 5 of Hearts'
+    end
+
+    it 'styles the win line as a game response' do
+      result = described_class.new(move: :melded, current_player:, cards: hearts_run, going_out: true)
+
+      expect(result.feed_lines.map(&:role)).to eq [ :action, :game_response ]
     end
   end
 
   describe '.load' do
-    it 'rebuilds a round result from a hash' do
-      hash = { 'current_player' => current_player.as_json, 'card_discarded' => card_discarded.as_json }
-      loaded = Rummy::RoundResult.load(hash)
+    let(:hash) do
+      { 'move' => 'melded', 'current_player' => current_player.as_json, 'cards' => hearts_run.map(&:as_json) }
+    end
 
-      expect(loaded.current_player.name).to eq 'Joby'
-      expect(loaded.card_discarded).to eq card_discarded
+    it 'rebuilds the move as a symbol even though the blob stores a string' do
+      expect(described_class.load(hash).move).to eq :melded
+    end
+
+    it 'rebuilds the cards' do
+      expect(described_class.load(hash).cards).to eq hearts_run
+    end
+
+    it 'rebuilds the current player' do
+      expect(described_class.load(hash).current_player.name).to eq 'Joby'
     end
 
     it 'rebuilds whether the player went out' do
-      hash = {
-        'current_player' => current_player.as_json, 'card_discarded' => card_discarded.as_json, 'going_out' => true
-      }
-      loaded = Rummy::RoundResult.load(hash)
+      loaded = described_class.load(hash.merge('going_out' => true))
 
       expect(loaded.going_out).to eq true
     end
 
-    it 'rebuilds a round result describing a card taken from the discard pile' do
-      card_taken = Card.new('9', 'Diamonds')
-      hash = { 'current_player' => current_player.as_json, 'card_taken' => card_taken.as_json }
-      loaded = Rummy::RoundResult.load(hash)
-
-      expect(loaded.card_taken).to eq card_taken
+    it 'narrates a loaded result the same as a built one' do
+      expect(described_class.load(hash).feed_lines.first.text)
+        .to eq 'Joby melded 3 of Hearts, 4 of Hearts, 5 of Hearts'
     end
   end
 end

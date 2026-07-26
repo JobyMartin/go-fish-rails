@@ -21,7 +21,8 @@ and Crazy Eights; real turn logic (draw/meld/lay off/discard) is implemented.
   card; a final discard is *not* required. The player who went out is the winner — their
   leftover pips are always the lowest (zero) — so `game_over?`/`winner` reuse the same "does
   any hand empty?" one-liner Go Fish/Crazy Eights already use, which means **all three routes
-  are detected correctly**. The *feed* only announces one of them — see "Game feed". No
+  are detected correctly** — and, as of the feed-completeness card, all three are also
+  *announced* in the feed (see "Game feed"). No
   separate pip-count scoring display exists; the "rummy" double-score bonus is deliberately
   out of scope.
 - **Can't discard the card you just took from the discard pile.** `Game#draw` records it
@@ -175,24 +176,49 @@ never fires, so the toast fades to invisible but is never removed from the DOM.
 
 ## Game feed (round results)
 
-`Rummy::RoundResult` logs a feed entry for a **discard** (`card_discarded`, plus a styled
-`going_out` game-response line when that discard empties the hand) and for taking the
-**discard pile's top card** (`card_taken`) — but deliberately **not** for drawing from the
-deck. Deck draws are hidden information (nobody else can see the card); discard draws are
-visible/strategic, same as in physical Rummy, so only those two actions log. The drawer
-itself (`aside.feed-drawer` in the partial) mirrors Go Fish/Crazy Eights' `.panel__content >
-.feed-content` structure so it gets the same padding, and reuses their `role`-based
-`.action-responses`/`.response-group` rendering for the going-out line.
+`Rummy::RoundResult` carries a **`move` discriminator** — `:took`, `:melded`, `:laid_off`, or
+`:discarded` — plus the `cards` the move involved and a `going_out` flag. `#action_line`
+switches on `move` to build one line per action:
 
-**`meld` and `layoff` log nothing — a known gap, not a design choice**, unlike the deck draw
-above. Two consequences, the second of which matters: melds and lay-offs are invisible in the
-feed, and because `going_out` is computed in exactly one place (on the discard result), **a
-player who melds or lays off their last card wins with a silent feed.** Combined with the
-`GamesController#play` ordering gotcha — `game_over?` is checked *before* the turn, so the
-winning move redirects to the game board rather than the winner screen — the feed is the only
-surface that would report those wins, and it says nothing. Scoped in
-`docs/brave-rummy-feed-completeness.md`; the fix replaces the mutually-exclusive
-`card_taken`/`card_discarded` fields with a `move` discriminator.
+```
+Alice took a 7 of Hearts from the discard pile
+Alice melded 5 of Hearts, 6 of Hearts, 7 of Hearts
+Alice laid off 8 of Hearts
+Alice discarded a K of Spades
+```
+
+Naming cards is safe on every one of those: melded and laid-off cards are face-up on the
+table, and discards are face-up, so nothing private is leaked. **Drawing from the deck still
+logs nothing** — that card *is* hidden information, so the silence is deliberate there and
+only there. (It does mean a turn reads "melded… discarded…" with no draw between; a card-less
+"drew from the deck" line is a deliberate follow-up, not an oversight.)
+
+`going_out` is set by one private `Game#record_move` helper as
+`current_player.hand.empty?`, so **every** logged action computes it the same way. That is
+what makes all three Bicycle going-out routes announce themselves — melding out, laying off
+your last card, and discarding your last card. This matters more than it looks: the
+`GamesController#play` ordering gotcha means `game_over?` is checked *before* the turn, so the
+winning move redirects to the game board rather than the winner screen, making **the feed the
+only surface that reports a meld-out or lay-off-out win.** It used to be silent on both.
+
+Ordering is load-bearing in `#discard`: `record_move` must run before `end_turn`, because
+`switch_turns` reassigns `current_player` — recording after it would credit the move to the
+next player and read the wrong hand for `going_out`.
+
+Invalid moves never reach the feed. `record_move` sits after each method's `InvalidMove`
+guards, so a rejected move stays a flash toast; the feed is the record of what actually
+happened.
+
+The drawer itself (`aside.feed-drawer` in the partial) mirrors Go Fish/Crazy Eights'
+`.panel__content > .feed-content` structure so it gets the same padding, and reuses their
+`role`-based `.action-responses`/`.response-group` rendering for the going-out line. The win
+line is appended *after* the action line, keeping the result at two lines so `RoundFeed`'s
+positional roles still tag it `[:action, :game_response]` — which is why the styling came
+along for free and `RoundFeed` needed no changes.
+
+**Lay-off doesn't say which meld** it went onto (`"Alice laid off 8 of Hearts"`). Naming the
+target would mean giving `Meld` an owner/id and threading it through serialization —
+deliberately deferred.
 
 **`Rummy::Game#active_card` (`discard_pile.last`) can be `nil`** — `deal!` seeds the
 discard pile with exactly one card, so the very first "Take discard" empties it until the
