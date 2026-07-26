@@ -11,8 +11,16 @@ module RummyTurnHelper
 
     game = Game.last
     yield game.game_state
+    deal_staged_cards(game.game_state)
     game.save!
     revisit_game(game)
+  end
+
+  # Staging a hand/meld/discard pile leaves the dealt copies of those cards in the deck, so a
+  # later deck draw can hand back a duplicate and break "the melded card left my hand".
+  def deal_staged_cards(state)
+    staged = state.players.flat_map(&:hand) + state.melds.flat_map(&:cards) + state.discard_pile
+    state.deck.cards.reject! { |card| staged.include?(card) }
   end
 
   def select_hand_card(token)
