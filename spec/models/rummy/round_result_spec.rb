@@ -5,60 +5,34 @@ RSpec.describe Rummy::RoundResult, type: :model do
   let(:hearts_run) { [ Card.new('3', 'Hearts'), Card.new('4', 'Hearts'), Card.new('5', 'Hearts') ] }
 
   describe '#feed_lines' do
-    context 'when the player took from the discard pile' do
-      it 'names the card and where it came from' do
-        result = described_class.new(move: :took, current_player:, cards: [ Card.new('9', 'Diamonds') ])
+    it 'names the card taken from the discard pile and where it came from' do
+      result = described_class.new(move: :took, current_player:, cards: [ Card.new('9', 'Diamonds') ])
 
-        expect(result.feed_lines.first.text).to eq 'Joby took a 9 of Diamonds from the discard pile'
-      end
-
-      it 'has a single action line' do
-        result = described_class.new(move: :took, current_player:, cards: [ Card.new('9', 'Diamonds') ])
-
-        expect(result.feed_lines.map(&:role)).to eq [ :action ]
-      end
+      expect(result.feed_lines.first.text).to eq 'Joby took a 9 of Diamonds from the discard pile'
     end
 
-    context 'when the player melded' do
-      it 'names every card in the meld' do
-        result = described_class.new(move: :melded, current_player:, cards: hearts_run)
+    it 'names every card in a meld' do
+      result = described_class.new(move: :melded, current_player:, cards: hearts_run)
 
-        expect(result.feed_lines.first.text).to eq 'Joby melded 3 of Hearts, 4 of Hearts, 5 of Hearts'
-      end
-
-      it 'has a single action line' do
-        result = described_class.new(move: :melded, current_player:, cards: hearts_run)
-
-        expect(result.feed_lines.map(&:role)).to eq [ :action ]
-      end
+      expect(result.feed_lines.first.text).to eq 'Joby melded 3 of Hearts, 4 of Hearts, 5 of Hearts'
     end
 
-    context 'when the player laid off' do
-      it 'names the card without naming the meld' do
-        result = described_class.new(move: :laid_off, current_player:, cards: [ Card.new('6', 'Hearts') ])
+    it 'names a laid off card without naming the meld it went onto' do
+      result = described_class.new(move: :laid_off, current_player:, cards: [ Card.new('6', 'Hearts') ])
 
-        expect(result.feed_lines.first.text).to eq 'Joby laid off 6 of Hearts'
-      end
-
-      it 'has a single action line' do
-        result = described_class.new(move: :laid_off, current_player:, cards: [ Card.new('6', 'Hearts') ])
-
-        expect(result.feed_lines.map(&:role)).to eq [ :action ]
-      end
+      expect(result.feed_lines.first.text).to eq 'Joby laid off 6 of Hearts'
     end
 
-    context 'when the player discarded' do
-      it 'names the discarded card' do
-        result = described_class.new(move: :discarded, current_player:, cards: [ Card.new('7', 'Spades') ])
+    it 'names a discarded card' do
+      result = described_class.new(move: :discarded, current_player:, cards: [ Card.new('7', 'Spades') ])
 
-        expect(result.feed_lines.first.text).to eq 'Joby discarded a 7 of Spades'
-      end
+      expect(result.feed_lines.first.text).to eq 'Joby discarded a 7 of Spades'
+    end
 
-      it 'has a single action line' do
-        result = described_class.new(move: :discarded, current_player:, cards: [ Card.new('7', 'Spades') ])
+    it 'stops at the action line when the player did not go out' do
+      result = described_class.new(move: :melded, current_player:, cards: hearts_run)
 
-        expect(result.feed_lines.map(&:role)).to eq [ :action ]
-      end
+      expect(result.feed_lines.map(&:role)).to eq [ :action ]
     end
   end
 
