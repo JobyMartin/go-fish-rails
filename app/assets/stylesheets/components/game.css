@@ -7,19 +7,19 @@
   grid-template-columns: 1fr var(--gf-grid-column-width);
   grid-template-rows: 1fr min-content;
 
-  grid-template-areas: 
-    "players feed"
-    "hand books";
+  grid-template-areas:
+    "board controls"
+    "hand aside";
   height: 100dvh;
 
-  .game__players {
-    grid-area: players;
+  .game__board {
+    grid-area: board;
     overflow: auto;
     background-color: var(--op-color-neutral-plus-max);
   }
 
-  .game__feed {
-    grid-area: feed;
+  .game__controls {
+    grid-area: controls;
     background-color: var(--op-color-primary-plus-eight);
     border-inline-start: var(--op-border-width) solid var(--op-color-border);
     display: flex;
@@ -32,8 +32,8 @@
     background-color: var(--op-color-neutral-plus-eight);
   }
 
-  .game__books {
-    grid-area: books;
+  .game__aside {
+    grid-area: aside;
     background-color: var(--op-color-neutral-plus-eight);
   }
 }

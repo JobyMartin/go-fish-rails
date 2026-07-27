@@ -10,6 +10,12 @@ application.register("auto-play", AutoPlayController)
 import DialogController from "./dialog_controller"
 application.register("dialog", DialogController)
 
+import FeedDrawerController from "./feed_drawer_controller"
+application.register("feed-drawer", FeedDrawerController)
+
+import FlashController from "./flash_controller"
+application.register("flash", FlashController)
+
 import HelloController from "./hello_controller"
 application.register("hello", HelloController)
 
@@ -18,6 +24,9 @@ application.register("location-selection", LocationSelectionController)
 
 import OfflineAlertController from "./offline_alert_controller"
 application.register("offline-alert", OfflineAlertController)
+
+import RummyTurnController from "./rummy_turn_controller"
+application.register("rummy-turn", RummyTurnController)
 
 import ServiceWorkerController from "./service_worker_controller"
 application.register("service-worker", ServiceWorkerController)

@@ -1,0 +1,139 @@
+- game = @game || game
+- implementation = game.game_state
+- current_player = implementation.find_player(Current.session.user.id) if implementation.present?
+- is_current_player = implementation.present? && current_player.id == implementation.current_player.id
+- turn_action_disabled = !is_current_player || !implementation.drawn_this_turn
+
+- unless game.started_at.present?
+  .simple-page
+    = button_to 'Start game', start_game_path(game), method: :post, class: 'btn btn--primary'
+- else
+  div id=dom_id(game)
+    .game data-controller="rummy-turn" data-testid="game"
+      .game__board.panel.panel--board data-testid="game-board"
+        .panel__header
+          span.flex.items-center.gap-xs
+            = link_to games_path, class: 'btn btn--medium' do
+              i.ph.ph-arrow-left.icon
+            | #{game.name}
+
+        .panel__content
+          .op-stack
+            span The Table
+
+            .melds
+              - implementation.melds.each_with_index do |meld, meld_index|
+                .meld data-testid="meld"
+                  .flex
+                    - meld.cards.each do |card|
+                      = image_tag "generated_cards/#{card.to_pathname}", class: 'playing-card playing-card--small', data: { testid: 'card' }
+                  = simple_form_for :play_turn, url: play_game_path(game), method: :post do |f|
+                    = f.hidden_field :move, value: 'layoff'
+                    = f.hidden_field :meld_id, value: meld_index
+                    = f.hidden_field :card_id, data: { rummy_turn_target: 'layoffCardId' }
+                    = f.button :submit, 'Lay off here', class: 'btn btn--medium meld__layoff', disabled: true,
+                      data: { rummy_turn_target: 'layoffButton', base_disabled: turn_action_disabled }
+
+      .game__controls.panel.panel--controls data-testid="game-controls"
+        .panel__header
+          span= implementation.drawn_this_turn ? 'Meld or discard' : 'Draw a card'
+          - if is_current_player
+            .badge Your Turn
+
+        .panel__content
+          .rummy-turn
+            .rummy-turn__piles
+              .pile data-testid="pile"
+                = image_tag 'generated_cards/card_back_green.svg', class: 'playing-card playing-card--medium playing-card--flush-border', data: { testid: 'card' }
+                span= "Deck (#{implementation.deck.cards_left})"
+              .pile data-testid="pile"
+                - if implementation.active_card
+                  = image_tag "generated_cards/#{implementation.active_card.to_pathname}", class: 'playing-card playing-card--medium playing-card--flush-border', data: { testid: 'card' }
+                - else
+                  .playing-card.playing-card--medium.pile__empty
+                span Discard
+
+            .turn-actions
+              = button_to 'Draw deck', play_game_path(game), method: :post,
+                params: { play_turn: { move: 'draw', source: 'deck' } }, class: 'btn btn--primary',
+                disabled: !is_current_player || implementation.drawn_this_turn
+              = button_to 'Take discard', play_game_path(game), method: :post,
+                params: { play_turn: { move: 'draw', source: 'discard' } }, class: 'btn',
+                disabled: !is_current_player || implementation.drawn_this_turn
+
+              = simple_form_for :play_turn, url: play_game_path(game), method: :post do |f|
+                = f.hidden_field :move, value: 'meld'
+                div data-rummy-turn-target="meldCardIdsContainer"
+                = f.button :submit, 'Meld selected', disabled: true,
+                  data: { rummy_turn_target: 'meldButton', base_disabled: turn_action_disabled }
+
+              = simple_form_for :play_turn, url: play_game_path(game), method: :post do |f|
+                = f.hidden_field :move, value: 'discard'
+                = f.hidden_field :card_id, data: { rummy_turn_target: 'discardCardId' }
+                = f.button :submit, 'Discard selected', disabled: true,
+                  data: { rummy_turn_target: 'discardButton', base_disabled: turn_action_disabled }
+
+      .game__hand.panel.panel--hand data-testid="game-hand"
+        .panel__header
+          = turn_action_disabled ? 'Your Hand' : 'Your Hand — pick a card'
+          span.flex.items-center.gap-xs
+            = button_to 'Smart sort', play_game_path(game), method: :post,
+              params: { play_turn: { move: 'smart_sort', player: current_player.id } }, class: 'btn btn--small'
+            = button_to 'Sort by suit', play_game_path(game), method: :post,
+              params: { play_turn: { move: 'sort', player: current_player.id } }, class: 'btn btn--small'
+
+        .panel__content
+          .flex.hand
+            - current_player.hand.each do |card|
+              - if turn_action_disabled
+                = image_tag "generated_cards/#{card.to_pathname}", class: 'playing-card playing-card--large', data: { testid: 'card' }
+              - else
+                = image_tag "generated_cards/#{card.to_pathname}", class: 'playing-card playing-card--large playing-card--selectable',
+                  data: { rummy_turn_target: 'card', card: "#{card.rank} #{card.suit}", action: 'click->rummy-turn#toggle', testid: 'card' }
+
+      .game__aside.panel.panel--aside data-testid="game-aside"
+        .panel__header
+          | Players
+
+        .panel__content
+          .op-stack
+            - implementation.players.each do |player|
+              .player-row data-testid="player-row"
+                span.flex.items-center.gap-xs
+                  = player.name
+                  - if player.id == implementation.current_player.id
+                    .badge turn
+                span= "#{player.hand.count} cards"
+
+  div data-controller="feed-drawer"
+    button.feed-tab data-action="feed-drawer#toggle" data-testid="feed-tab"
+      | Game Feed
+      span.feed-tab__dot aria-hidden="true"
+
+    .feed-backdrop data-action="click->feed-drawer#toggle"
+
+    aside.feed-drawer
+      .panel__header
+        span Game Feed
+        button.feed-drawer__close aria-label="Close game feed" data-action="feed-drawer#toggle"
+          i.ph.ph-x.icon
+      .panel__content
+        .feed-content data-testid="feed-content"
+          - if implementation.round_results.empty?
+            span.feed-content__empty No moves yet — plays will show up here.
+          - implementation.round_results.each do |result|
+            - lines = result.feed_lines
+            - lines.select { it.role == :action }.each do |line|
+              span.feed-content__player-action data-testid="feed-action" = line.text
+            - responses = lines.reject { it.role == :action }
+            - if responses.any?
+              .action-responses
+                - responses.each do |line|
+                  .response-group
+                    i.ph.ph-arrow-bend-down-right.icon.response-group__reply-arrow
+                    - if line.role == :player_response
+                      .response-group__player-response.flex.items-center.gap-xxs
+                        = line.text
+                    - else
+                      .response-group__game-response data-testid="feed-game-response"
+                        = line.text

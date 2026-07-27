@@ -1,0 +1,17 @@
+
+.pile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--op-space-2x-small);
+
+  img {
+    margin-inline-start: 0;
+  }
+
+  .pile__empty {
+    aspect-ratio: 2.5 / 3.5;
+    background-color: var(--op-color-neutral-plus-seven);
+    border-style: dashed;
+  }
+}

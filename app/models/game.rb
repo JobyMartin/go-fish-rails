@@ -10,7 +10,9 @@ class Game < ApplicationRecord
   WAITING_MESSAGE = 'Waiting...'
   IN_PROGRESS_MESSAGE = 'In progress'
   FINISHED_MESSAGE = 'Finished'
-  PLAYABLE_TYPES = { 'GoFishGame' => 'Go Fish', 'CrazyEightsGame' => 'Crazy Eights' }.freeze
+  PLAYABLE_TYPES = {
+    'GoFishGame' => 'Go Fish', 'CrazyEightsGame' => 'Crazy Eights', 'RummyGame' => 'Rummy'
+  }.freeze
 
   def self.playable_types
     PLAYABLE_TYPES

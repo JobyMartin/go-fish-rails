@@ -103,9 +103,9 @@ Manual (primary — this is visual/responsive work):
 Tests: no RSpec changes needed for a CSS-only pass; existing system specs run under
 `rack_test` and don't assert layout. Run `bundle exec rspec` to confirm nothing regressed.
 
-## Follow-up (deferred, NOT in this pass)
+## Follow-up — **done** (was deferred out of this pass)
 
-Tap-to-select-a-card interaction: replace/augment the dropdowns so tapping a hand card
-highlights it (a `.is-selected` state) and a confirm button commits the turn. This needs a
-new Stimulus controller + view/markup changes and is a feature change, not a responsive fix —
-capture as a separate phase once the CSS pass is verified.
+Tap-to-select-a-card interaction: tapping a hand card highlights it (`.is-selected`) and the
+turn buttons commit the selection. Shipped for **Rummy** as the `rummy-turn` Stimulus
+controller (`app/javascript/controllers/rummy_turn_controller.js`) — see `docs/games/rummy.md`,
+"Card selection UI". Go Fish and Crazy Eights still use dropdowns.

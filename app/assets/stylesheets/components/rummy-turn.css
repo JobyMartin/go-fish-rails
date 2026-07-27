@@ -1,0 +1,16 @@
+
+.rummy-turn {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--op-space-large);
+  flex: 1;
+  padding-inline: var(--op-space-medium);
+
+  .rummy-turn__piles {
+    display: flex;
+    gap: var(--op-space-x-small);
+    align-items: center;
+  }
+}

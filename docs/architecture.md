@@ -85,3 +85,13 @@ serialized `round_results` inside `game_state`.
 The routes file grew through the apprenticeship's learning phases and is intentionally left
 somewhat inconsistent (e.g. `users/show` as a plain GET path, repeated single-action
 `member` blocks). Treat existing routes as history, not as the house style to copy.
+
+## CSS / asset pipeline
+
+Component styles under `app/assets/stylesheets/components/*.css` need **no manifest wiring**.
+`stylesheet_link_tag :app` (in `app/views/application/_head.html.slim`) is Propshaft's
+convention for auto-linking every file under `app/assets/stylesheets` — drop a new file in
+`components/` and it's picked up automatically. `application.scss` is an empty legacy
+manifest, and `webpack.config.js` is a **dead** toolchain: `bin/dev` only runs esbuild
+(`yarn build`, JS only, via `Procfile.dev`), so the PostCSS/SCSS compilation `webpack.config.js`
+implies never actually runs. Ignore both when adding CSS.
