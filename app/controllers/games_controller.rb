@@ -39,8 +39,9 @@ class GamesController < ApplicationController
   end
 
   def history
-    @user_games = Current.session.user.games
+    @user_games = Current.session.user.games.includes(players: :user)
   end
+
   def play
     redirect_to winner_game_path(@game) and return if @game.game_state.game_over?
 
