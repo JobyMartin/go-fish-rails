@@ -12,6 +12,15 @@ namespace :perf do
     puts format("Done in %.1fs. Players: %d", elapsed, Player.count)
   end
 
+  desc "Measure query count and timing for a page (default: /leaderboard)"
+  task :measure, %i[path runs] => :environment do |_task, args|
+    require Rails.root.join("lib/perf_measure")
+
+    measure = PerfMeasure.new(path: args[:path] || "/leaderboard",
+                              runs: (args[:runs] || PerfMeasure::DEFAULT_RUNS).to_i)
+    measure.report(measure.call)
+  end
+
   desc "Remove every record created by perf:seed"
   task clear: :environment do
     require Rails.root.join("lib/perf_seed")
