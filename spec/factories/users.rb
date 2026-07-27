@@ -4,6 +4,10 @@ FactoryBot.define do
       "person#{n}@example.com"
     end
 
+    sequence :username do |n|
+      "person#{n}"
+    end
+
     password { "password" }
     confirm_password { 'password' }
   end
