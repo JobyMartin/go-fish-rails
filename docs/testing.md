@@ -100,6 +100,42 @@ for s in $(seq 1 30); do bundle exec rspec spec/models/game_spec.rb:124 --seed $
 
 The fix is to pin that spec's deck the way the Rummy helpers do; carded, not done.
 
+### Undiagnosed: a `:js` intermittent in `spec/system/games_spec.rb`
+
+`games_spec.rb:309` (Rummy, "taking from the discard pile shows the move in the game feed")
+failed once in three consecutive full-suite runs and has never reproduced — not in isolation,
+and not across the whole file at the original seed. **It is not the staged-deck flake above**:
+that spec goes through `start_rummy_game_with_state`, which prunes the duplicates. Most likely
+Playwright timing under full-suite load, but that is inference, not a diagnosis.
+
+If you hit it, **capture the whole failure message** — the first sighting was lost to a
+`| tail -6` on the suite output, which is why there's nothing better written here.
+
+## Arranging a *finished* game in a spec
+
+Leaderboard/stats specs need games with `started_at` **and** `ended_at`, which the `:player`
+factory's `:in_finished_game` trait provides. It updates the game *after* creating the player,
+because `Player`'s `not_started` validation rejects joining a game that has already started —
+the same order the real app uses.
+
+Its duration is `FinishedGame::DURATION` (`spec/support/finished_game.rb`), shared with every
+spec that asserts on the resulting time. **Derive expected times from that constant**, never
+hardcode them: `'120h 0m'` silently encoded "5 games × 24 hours" with the 24 living in a
+different file, so changing the trait would have broken specs for no visible reason.
+
+## Beware substring matches in `have_content`
+
+`expect(page).to have_content '0%'` **passes on a page showing `100%`** — it's a substring
+match, so a win-percentage assertion like this can assert essentially nothing. Row-scoping
+doesn't save you either. Match the cell exactly:
+
+```ruby
+expect(find('tr', text: username)).to have_selector 'td', exact_text: text
+```
+
+Worth mutation-testing any assertion of this shape: change the fixture so it *should* fail,
+and confirm it does. This one was caught only that way, after passing for several runs.
+
 ## Drivers and the `:js` gotcha
 
 System specs default to `rack_test`. Tags switch the driver

@@ -41,6 +41,8 @@ Rails.application.routes.draw do
 
   resources :offlines, only: [:index]
 
+  get "leaderboard", to: "leaderboard#index"
+
   get "stats", to: "stats#index"
   resources :stats, only: [:index]
 

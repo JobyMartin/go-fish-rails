@@ -6,7 +6,7 @@ class Player < ApplicationRecord
   belongs_to :user
 
   validates :game_id, uniqueness: { scope: :user_id, message: JOINED_ERROR_MESSAGE }
-  validate :not_started
+  validate :not_started, on: :create
 
   private
 

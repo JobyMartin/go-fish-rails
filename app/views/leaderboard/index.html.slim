@@ -1,0 +1,29 @@
+.op-page
+  .op-page__sidebar
+    = render "sidebar"
+
+  .op-page__main
+    main.op-page__main-content
+      header.content-header
+        .content-header__details
+          h1.content-header__title
+            | Leaderboard
+
+      table.table.table--container.table--odd-striped
+        thead
+          tr
+            th Rank
+            th Player
+            th Games played
+            th Wins
+            th Win %
+            th Time played
+        tbody
+          - @users.each_with_index do |user, index|
+            tr
+              td = index + 1
+              td = user.username
+              td = user.games_played
+              td = user.games_won
+              td = win_percentage_for(user)
+              td = time_played_for(user)

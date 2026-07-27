@@ -39,7 +39,25 @@ class Game < ApplicationRecord
     self.ended_at = Time.current
   end
 
+  def finish!
+    return if ended_at.present?
+
+    self.end
+    record_winner
+    save!
+  end
+
+  def duration
+    return unless started_at && ended_at
+
+    ended_at - started_at
+  end
+
   private
+
+  def record_winner
+    players.find_by(user_id: game_state.winner.id)&.update!(winner: true)
+  end
 
   def broadcast_status
     broadcast_remove_to(
