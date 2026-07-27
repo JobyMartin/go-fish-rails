@@ -77,6 +77,29 @@ Stage through the helper rather than by hand. If you add a similar helper for an
 prune the deck the same way — and note that a spec which never draws from the deck will pass
 either way, so the bug hides until someone adds a draw.
 
+### Known flake: `spec/models/game_spec.rb:124` (Go Fish)
+
+**If the suite goes red here, it is almost certainly not your change.** `Game#play_go_fish …
+'plays a turn'` deals a real shuffled deck, asks for `'A'`, and asserts the hand is exactly
+`8` — which only holds when the opponent happens to hold **exactly one** Ace. Two Aces and
+they hand over both, so you get `9` and a failure. Measured at **2 of 30 seeds (~7%)**.
+
+Same root cause as the staged-hand trap above — an unpinned random deck — just from the
+other direction: nothing is staged, so the deal decides the assertion.
+
+Two things this costs you if you don't know it. First, a passing run proves nothing, so
+"green before, red after" reads as a regression when the deck simply rolled differently.
+Second, **re-running with the same `--seed` does not reproduce it across branches**: the seed
+shuffles the example *list*, so adding or removing any example anywhere changes the order and
+the deal. To pin blame, re-run the single example across a spread of seeds on both branch
+states:
+
+```sh
+for s in $(seq 1 30); do bundle exec rspec spec/models/game_spec.rb:124 --seed $s; done
+```
+
+The fix is to pin that spec's deck the way the Rummy helpers do; carded, not done.
+
 ## Drivers and the `:js` gotcha
 
 System specs default to `rack_test`. Tags switch the driver

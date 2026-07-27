@@ -96,4 +96,34 @@ pts)**; non-participant coverage via system specs. **Complete** — see
 
 ---
 
+## Open cards from the Rummy pre-PR review
+
+Found while auditing Rummy before the phase-2 PR. Deck exhaustion was the fourth finding and
+is **fixed** (see `docs/games/rummy.md`, "The stock refills …"); these are the rest, in the
+order they're worth doing.
+
+**1. Enforce turn sequencing on the server.** `Rummy::Game` tracks `drawn_this_turn` and
+serializes it, but **nothing ever validates it** — it is read only to set `disabled:` on
+buttons in `_rummy_game.html.slim`. A crafted POST can discard without drawing, or draw the
+deck dry in one turn (confirmed: 5 consecutive draws took a hand from 10 to 15 cards). Small:
+two `raise InvalidMove` guards in `#draw` and `#discard`, and the flash-toast path already
+exists. Note the trap in `docs/testing.md` about client-guard/server-spec coupling.
+
+**2. Check turn *ownership* in `GamesController#play`.** `require_participation` proves you're
+in the game but not that it's **your** turn, and `play_turn` always acts on
+`game_state.current_player` — so any participant can POST during someone else's turn. In
+Rummy that means melding or discarding **out of another player's hand**. Pre-existing and
+game-agnostic (Go Fish and Crazy Eights share it), so it wants its own card rather than
+riding along with a Rummy PR.
+
+**3. Pin the flaky Go Fish deck** at `spec/models/game_spec.rb:124` — ~7% of seeds. Full
+write-up in `docs/testing.md`, "Known flake".
+
+**Smaller Rummy warts, not carded:** `Game#layoff` appends to `meld.cards` regardless of rank,
+so laying 2♥ onto 3-4-5♥ *renders* as "3 4 5 2" (validation is correct — `Meld.valid?` sorts
+positions — only display is wrong); and every `RoundResult` serializes a full player snapshot
+including their whole hand, so `game_state` grows by a hand per logged move.
+
+---
+
 _Not selected this round (still in the reports for later): persist the game-over lifecycle via a `Game#record_turn` deep module — the architecture review's top recommendation and the audit's other High finding (revives "Finished" status and win stats). See `RAILS_AUDIT_REPORT.md` and the architecture HTML report._

@@ -1,5 +1,10 @@
 # BRAVE Breakdown: Add Rummy to the Game Platform (STI wiring, no logic)
 
+> **Status: complete, and this is a historical planning record — read
+> `docs/games/rummy.md` for current state.** Everything below describes Rummy as scoped *at
+> the time*, so several notes are deliberately no longer true: `Meld` validation is no longer
+> "a TODO", `game_over?` is no longer hardcoded `false`, and `play_turn` is no longer a stub.
+
 > Scope note from planning: **this is a platform/STI card, not a view card.** The show-page
 > fidelity — porting the `rummy_preview` design, curated demo melds/hand, feed drawer,
 > selection JS — is explicitly **out of scope** and belongs to a later card. This card proves

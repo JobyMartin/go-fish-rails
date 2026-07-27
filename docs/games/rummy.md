@@ -32,6 +32,30 @@ and Crazy Eights; real turn logic (draw/meld/lay off/discard) is implemented.
   only the discard pile is a deliberate, visible pick, so only that one is restricted.
 - A game is **one hand** — no play-to-target across multiple hands.
 
+## The stock refills from the discard pile — turned over, *not* shuffled
+
+When the deck runs dry, `Game#draw('deck')` rebuilds it from the discard pile, leaving the
+active card in place. **Per Bicycle, the pile is turned over without shuffling** — this is a
+rule, not an oversight, so don't "fix" it by adding a `deck.shuffle`.
+
+The array mechanics happen to make the turn-over physically faithful, which is worth knowing
+before anyone reorders them: `discard_pile.shift(n)` takes from the *front* of the array —
+the **bottom** of the pile — and `Deck#top_card` is `cards.shift`, so the old bottom card is
+the first one drawn. That is exactly what flipping a stack of cards does.
+
+Two guards keep `nil` out of a hand, both raising `InvalidMove` (see "Surfacing invalid
+moves"). They exist because `Deck#top_card` and `discard_pile.pop` both return `nil` when
+empty, and a `nil` in a hand **permanently corrupts the game** — `Player.load` then blows up
+on reload (`Card.load(nil)`), so every later page view 500s on an unloadable `game_state`:
+
+- drawing from an empty discard pile → `"The discard pile is empty."`
+- deck empty *and* the discard pile holds only the active card → `"There are no cards left to draw."`
+
+**Known gap:** that second case is a dead end. The player can't draw, and can't discard
+without drawing, so the turn is stuck behind a flash toast. Real Rummy ends the hand as a
+draw there — which needs game-over/scoring that doesn't exist yet (see
+`docs/improvement-cards.md`). Unlikely in practice: it needs a full cycle with no melding.
+
 ## `deal!` deals a real per-player-count hand
 
 `Rummy::Game#deal!` deals every player the same number of cards off the (real, shuffled)
