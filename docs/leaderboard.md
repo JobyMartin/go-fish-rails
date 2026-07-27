@@ -17,6 +17,26 @@ before the measurement happens destroys the before/after comparison the week exi
 There are currently **no indexes** on `players.winner` or `games.type` — also on purpose,
 for the same reason.
 
+## Baseline (2026-07-27)
+
+Measured with `bin/rails perf:measure` against `bin/rails "perf:seed[1000,5000]"`
+(1,000 users, 5,020 games, 15,036 players — see `lib/perf_seed.rb`):
+
+| | `GET /leaderboard` |
+|---|---|
+| Queries | **3,014** |
+| Median | **4,115 ms** (range 3,833–4,265) |
+
+Roughly three queries per user row, plus the request's own two.
+
+**Compare query counts, not milliseconds.** The count was identical across all five runs;
+the timing swung ~400ms. Query count is the reproducible claim — same seed, same count, any
+machine. Timing is the one that makes the point to a human.
+
+Re-run `perf:seed` before each measurement. It clears first precisely so the dataset is
+reproducible; an earlier additive version quietly doubled the player table between runs,
+which would have invalidated the comparison with nothing visibly wrong.
+
 ## What it ranks and why
 
 Four columns: games played, wins, win %, time played.
