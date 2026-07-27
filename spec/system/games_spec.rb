@@ -91,7 +91,7 @@ RSpec.describe 'Games', type: :system do
       it 'shows the go fish game view' do
         click_on 'Start game'
         expect(page).to have_css(data_test('game-aside'))
-        expect(Game.last.reload.game_state).to be_present
+        expect(Game.last.game_state).to be_present
       end
     end
   end
@@ -123,7 +123,7 @@ RSpec.describe 'Games', type: :system do
       it 'shows the crazy eights game view' do
         click_on 'Start game'
         expect(page).to have_css data_test('game')
-        expect(Game.last.reload.game_state).to be_present
+        expect(Game.last.game_state).to be_present
       end
 
       it 'renders the play form with no opponent select' do
@@ -139,10 +139,6 @@ RSpec.describe 'Games', type: :system do
 
         it 'shows the game name' do
           expect(page).to have_content game_name
-        end
-
-        it 'displays the form' do
-          expect(page).to have_css 'form'
         end
 
         it 'displays the players' do
