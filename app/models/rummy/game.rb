@@ -84,7 +84,7 @@ module Rummy
     def active_card = discard_pile.last
 
     def draw(source)
-      card = source == "discard" ? discard_pile.pop : deck.top_card
+      card = source == "discard" ? take_from_discard : take_from_deck
       current_player.add_cards([ card ])
       record_move(:took, [ card ]) if source == "discard"
       self.taken_from_discard = source == "discard" ? card : nil
@@ -124,6 +124,23 @@ module Rummy
     end
 
     private
+
+    def take_from_discard
+      raise InvalidMove, "The discard pile is empty." if discard_pile.empty?
+
+      discard_pile.pop
+    end
+
+    def take_from_deck
+      refill_deck_from_discard_pile if deck.empty?
+      deck.top_card
+    end
+
+    def refill_deck_from_discard_pile
+      raise InvalidMove, "There are no cards left to draw." if discard_pile.size <= 1
+
+      deck.cards.concat(discard_pile.shift(discard_pile.size - 1))
+    end
 
     def record_move(move, cards)
       round_results << RoundResult.new(

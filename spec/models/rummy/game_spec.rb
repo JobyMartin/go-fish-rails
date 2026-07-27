@@ -169,6 +169,54 @@ RSpec.describe Rummy::Game, type: :model do
 
       expect(game.taken_from_discard).to be_nil
     end
+
+    context 'when the deck has run out' do
+      before { game.deck.cards_left.times { game.deck.top_card } }
+
+      it 'never puts a nil card in the hand' do
+        game.discard_pile.concat([ Card.new('4', 'Spades'), Card.new('9', 'Clubs') ])
+
+        game.draw('deck')
+
+        expect(game.current_player.hand).to all(be_a(Card))
+      end
+
+      it 'refills the deck from the discard pile, leaving the active card' do
+        game.discard_pile.concat([ Card.new('4', 'Spades'), Card.new('9', 'Clubs') ])
+        active_card = game.active_card
+
+        game.draw('deck')
+
+        expect(game.discard_pile).to eq [ active_card ]
+      end
+
+      it 'leaves the unrefilled remainder in the deck' do
+        game.discard_pile.concat([ Card.new('4', 'Spades'), Card.new('9', 'Clubs') ])
+
+        game.draw('deck')
+
+        expect(game.deck.cards_left).to eq 1
+      end
+
+      it 'raises when the discard pile has nothing spare to refill with' do
+        expect { game.draw('deck') }.to raise_error(Rummy::InvalidMove, /no cards left/i)
+      end
+    end
+
+    context 'when the discard pile is empty' do
+      before { game.discard_pile.clear }
+
+      it 'raises instead of taking a nil card' do
+        expect { game.draw('discard') }.to raise_error(Rummy::InvalidMove, /discard pile is empty/i)
+      end
+
+      it 'leaves the hand untouched' do
+        hand_size = game.current_player.hand.size
+
+        expect { game.draw('discard') }.to raise_error(Rummy::InvalidMove)
+        expect(game.current_player.hand.size).to eq hand_size
+      end
+    end
   end
 
   describe '#meld' do
