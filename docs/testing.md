@@ -52,6 +52,31 @@ Setting up a started game trips people up because of the STI + serialization spl
 - Domain actions can mutate the current player mid-call (e.g. Go Fish's `fish_and_skip`
   switches turns), so capture the player/index you're asserting on *before* the call.
 
+### Staging a hand leaves duplicates in the deck
+
+**Forcing a hand does not remove those cards from the deck.** `deal!` has already dealt a
+shuffled 52-card deck, so `state.current_player.hand = [ Card.new('3', 'Hearts'), ... ]`
+*adds* a second 3 of Hearts to the game — the original is still sitting in the stock. Any
+later deck draw can hand it back, and an assertion like "the melded card left my hand" then
+fails because the duplicate is still there. It failed roughly **8% of runs** (4 staged cards
+out of ~48 remaining) — frequent enough to erode trust in the suite, rare enough that several
+clean runs prove nothing.
+
+Rummy system specs avoid this by staging through `start_rummy_game_with_state`
+(`spec/support/helpers/rummy_turn_helper.rb`), which yields the `game_state` and then prunes
+every staged card out of the deck:
+
+```ruby
+start_rummy_game_with_state do |state|
+  state.current_player.hand = [ Card.new('3', 'Hearts'), Card.new('4', 'Hearts') ]
+  state.drawn_this_turn = true
+end
+```
+
+Stage through the helper rather than by hand. If you add a similar helper for another game,
+prune the deck the same way — and note that a spec which never draws from the deck will pass
+either way, so the bug hides until someone adds a draw.
+
 ## Drivers and the `:js` gotcha
 
 System specs default to `rack_test`. Tags switch the driver

@@ -138,11 +138,11 @@ See `docs/architecture.md` for the full model map and serialization details.
   `draw_until_playable` loop — drawing from the deck until a card matches the active card's
   suit or rank. Both subclasses now share one polymorphic `play_turn(params)` signature but
   read different keys (Go Fish: `:player`/`:rank`; Crazy Eights: `:rank`/`:suit`).
-- **Game-over is computed but never persisted.** `Game#end` (sets `ended_at`) has no caller,
-  and the `players.winner` boolean is never written — only the in-memory domain `winner` is
-  computed, for the winner screen. So `Game#status` never returns `Finished` and
-  `StatsController` win % is permanently `0%`. Surfaced by the rails-audit; deferred out of the
-  current improvement round (see `docs/improvement-cards.md`).
+- **Game-over is computed but never persisted.** `Game#end` (sets `ended_at`) has no caller and
+  `players.winner` is never written — only the in-memory domain `winner`, for the winner screen.
+  So `Game#status` never returns `Finished` and `StatsController` win % is permanently `0%`.
+  Surfaced by the rails-audit, still deferred; the Rummy feed is now the de facto win report for
+  meld-outs, which *raises* the case for persisting (see `docs/improvement-cards.md`).
 - **Game actions are participant-gated; `join` is not.** `GamesController` runs `set_game` then
   `require_participation` (`before_action`, `only: %i[show start play winner]`) — a non-participant
   is redirected to the lobby with a flash instead of reading state or hitting the old `show`
@@ -195,7 +195,6 @@ See `docs/architecture.md` for the full model map and serialization details.
   reporting it). Rummy-only; `RoundFeed` and the partial are untouched. `record_move` **must**
   precede `end_turn` in `#discard` — `switch_turns` reassigns `current_player`. Deck draws stay
   deliberately unnarrated. See `docs/games/rummy.md` "Game feed" for the full vocabulary.
-- **Rummy system specs stage state through `start_rummy_game_with_state`** (block yielding the
-  `game_state`), which prunes staged cards from the deck — otherwise a forced hand leaves its
-  dealt twin in the deck and a later draw returns a duplicate, failing "the melded card left my
-  hand" ~8% of runs. Stage via the helper, never by hand.
+- **Staging a hand in a spec leaves duplicates in the deck** — a forced hand doesn't remove
+  those cards from the stock, so a later deck draw returns a twin and flakes ~8% of runs. Stage
+  through `start_rummy_game_with_state`; see `docs/testing.md` "Staging a hand …".
