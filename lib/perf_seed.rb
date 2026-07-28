@@ -8,16 +8,22 @@ class PerfSeed
   USERNAME_PREFIX = "perf_".freeze
   GAME_NAME_PREFIX = "Perf Game ".freeze
   FINISHED_RATIO = 0.7
+  COUNTRY_RATIO = 0.75
   PLAYERS_PER_GAME = 2..4
   DURATION_RANGE = 5.minutes..90.minutes
   BATCH_SIZE = 1_000
 
-  attr_reader :user_count, :game_count, :random, :now
+  attr_reader :user_count, :game_count, :random, :countries, :country_ids, :now
 
+  # `countries` is a second stream on purpose: drawing countries from `random` would
+  # shift every later draw and silently change the games and players a re-run produces,
+  # invalidating comparison with every measurement already recorded in docs/leaderboard.md.
   def initialize(user_count:, game_count:, seed: 20_260_727)
     @user_count = user_count
     @game_count = game_count
     @random = Random.new(seed)
+    @countries = Random.new(seed + 1)
+    @country_ids = Data::Country.all.map(&:id)
     @now = Time.current
   end
 
@@ -57,7 +63,13 @@ class PerfSeed
   def user_row(index, digest)
     { email_address: "#{USERNAME_PREFIX}#{index}@example.com",
       username: "#{USERNAME_PREFIX}#{index}", password_digest: digest,
-      created_at: now, updated_at: now }
+      country: country, created_at: now, updated_at: now }
+  end
+
+  # A quarter stay NULL: country is optional in the app, and the leaderboard's country
+  # filter has to be seen dropping them.
+  def country
+    country_ids.sample(random: countries) if countries.rand < COUNTRY_RATIO
   end
 
   def insert_games

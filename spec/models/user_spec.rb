@@ -62,4 +62,14 @@ RSpec.describe User, type: :model do
       expect(user).to be_invalid
     end
   end
+
+  describe '.ransackable_attributes' do
+    it 'exposes country to search and nothing else' do
+      expect(described_class.ransackable_attributes).to eq %w[country]
+    end
+
+    it 'never exposes the credentials' do
+      expect(described_class.ransackable_attributes).not_to include 'password_digest', 'email_address'
+    end
+  end
 end

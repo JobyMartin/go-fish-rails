@@ -20,7 +20,7 @@ Two tools support this, both in `lib/`:
 
 | | |
 |---|---|
-| `bin/rails "perf:seed[users,games]"` | bulk data; clears first so re-runs are identical |
+| `bin/rails "perf:seed[users,games]"` | bulk data; clears first so re-runs are identical. 75% of users get a country |
 | `bin/rails "perf:measure[path,runs]"` | query count + median timing over real requests |
 | `bin/rails perf:clear` | drop the seeded rows |
 
@@ -216,6 +216,158 @@ setting. Harmless on the non-nullable columns — `COUNT` never returns `NULL`.
 This is what unblocked `win_percentage` sorting. It had been left off pending a decision about
 where the below-the-floor rows go; the answer turned out to be a config line rather than a
 `COALESCE` ransacker, which would have had to encode a fake numeric value for "unranked."
+
+## Filtering with Ransack (2026-07-28)
+
+Three filters, chosen to cover three predicate shapes:
+
+| Filter | Predicate | Control |
+|---|---|---|
+| Player name | `username_i_cont` | text |
+| Games played | `games_played_gteq` + `games_played_lteq` | two numbers |
+| Country | `user_country_eq` | select |
+
+**Filtering was already live before any of this was built.** Ransack has no separate filter
+allowlist — `ransackable_attributes` governs sorting *and* predicates together. (`ransortable_attributes`
+exists to narrow sorting further, but there is no inverse.) So the moment the six columns were
+allowlisted for `sort_link`, `?q[username_i_cont]=ace` started working. This card is UI for an
+existing capability, which is why anything left out of the form is still reachable by URL.
+
+**`i_cont`, not `cont`.** Postgres `LIKE` is case-sensitive and usernames are not downcased —
+`normalizes` only strips them. `i_cont` lowercases both sides, which forfeits any index; irrelevant
+here, where indexes were measured and rejected.
+
+### Country goes through a `belongs_to`, deliberately
+
+`users.country` is a plain string column holding a country id like `"US"` — there is no `countries`
+table, and `Data::Country` is a PORO over a config YAML. So the column could simply have been added
+to the view in a `_v04.sql`. It was routed through an association instead, to exercise
+`ransackable_associations`:
+
+```ruby
+belongs_to :user, foreign_key: :id, inverse_of: false
+def self.ransackable_associations(_auth_object = nil) = %w[user]
+```
+
+The `foreign_key: :id` is what makes it legal — the view selects `users.id AS id`, so an entry's own
+primary key *is* the user's. Ransack then joins `users` back on for `q[user_country_eq]=US`.
+
+**Know the trade you are making:** it joins back to `users` for a column the view could have
+selected, and it slightly undercuts the idea that the view is the whole read model. The cheaper
+option is a `_v04.sql` column. Pick the association only when the association is real, or when
+exercising it is the point.
+
+**This is where the `column_names` warning stops being hypothetical.** Ransack requires the
+*associated* model to allowlist its own attributes, so the join forced `User.ransackable_attributes`
+to exist — on the model holding `password_digest` and `email_address`. It returns `%w[country]` and
+nothing else. Had it returned `column_names`, `q[user_password_digest_start]=$2a$` would binary-search
+a bcrypt hash one character at a time, through the leaderboard. Two specs in `spec/models/user_spec.rb`
+pin the allowlist, one of them asserting the credentials are absent by name.
+
+**The dropdown lists every country** — `collection: Data::Country.all`, the same source the
+profile-edit modal uses. An earlier version listed only countries already present on the board, on the
+theory that offering options which match nothing is noise. That was wrong twice over: `countries.yml`
+holds **40** entries, not the ~250 assumed, so the full list is an ordinary dropdown; and country is
+only settable from the profile modal and never at signup, so nearly every user has `NULL` and the
+"smart" version rendered **empty**. A filter with no options is worse than one with unproductive
+options. Dropping it also removed the `SELECT DISTINCT country` it cost, taking the page back to 3
+queries.
+
+**`perf:seed` assigns countries** (`COUNTRY_RATIO`, 75%) so the filter has something to bite on —
+773 of 1,004 users across all 40 countries on the standard `perf:seed[1000,5000]`. The other quarter
+stay `NULL` deliberately: country is optional in the app, and the filter needs to be seen dropping
+them.
+
+**Those draws come from a second `Random`, not `random`.** Seeding countries from the existing stream
+would shift every later draw and silently change which games and players a re-run produces —
+invalidating comparison with every measurement recorded above. `@countries = Random.new(seed + 1)`
+keeps the two independent. Verified rather than assumed: fingerprinting games and players by *shape*
+(names, types, durations, usernames, winners — not surrogate ids or `Time.current`-relative
+timestamps) gives byte-identical digests before and after the change.
+
+That fingerprinting detail is the reusable part. A first attempt compared raw `pluck` output and
+showed a spurious mismatch, because `started_at` hangs off `Time.current` and ids advance on every
+reseed. **Reproducibility here means the shape repeats, not the row contents.**
+
+### Numbers, not a slider
+
+A min/max slider was considered and rejected on three counts. The Ransack half would be identical —
+`gteq` + `lteq` either way — so this is purely about the control, and swapping it later touches
+nothing below the view layer.
+
+- **The distribution kills it.** Seeded `games_played` runs to 446 with a median near 15, so ~95% of
+  the track is empty and every useful choice happens in the first 3% of travel.
+- **A slider cannot express "no filter."** A range input always submits its position, so parked at
+  both ends it still sends `games_played_gteq=0&games_played_lteq=446` — permanently on, and pinned to
+  whatever the max happened to be at render time. Blank number inputs are ignored by Ransack for free.
+- **It would force `:js` on the filter specs.** There is no native dual-handle range input, so a real
+  one is two inputs plus a Stimulus controller to display the values (a range input with no visible
+  number is unusable). These specs run under `rack_test` today.
+
+### The filter panel lives in Optics' right sidebar
+
+`.op-page` is already a three-column grid — `"sidebar-left main sidebar-right"` — so the panel needed
+**no layout CSS at all**. An `aside.op-page__sidebar.op-page__sidebar--right` as a sibling of
+`.op-page__main` drops into the existing `sidebar-right` track, sticky and full-height, mirroring the
+nav on the left. Inside it, the form reuses the app's existing `panel` component
+(`.panel__header` / `.panel__content`), the same one the game screens use.
+
+**The panel matches the left sidebar's width by deriving it the same way**, not by hardcoding the
+216px it measures to:
+
+```css
+.panel--filters { inline-size: calc(var(--op-size-unit) * 54); }
+```
+
+`54` is the multiplier behind Optics' `--_op-sidebar-drawer-width`, which is what
+`sidebar--drawer` (the nav on the left) resolves to. That variable is private to `.sidebar`, so it
+cannot be referenced directly — but `--op-size-unit` is public, and reusing it keeps the two sides in
+step if the token ever moves.
+
+**Optics sets a 10px root font size**, so `rem` values are *not* what they look like: `--op-size-unit`
+is `0.4rem`, i.e. **4px**, which is why 54 of them is 216. The first attempt at this panel used
+`inline-size: 18rem` expecting 288px and got **180**, squeezing the select and pushing the page into
+horizontal overflow. Same fact behind the `--op-space-scale-unit` note in the pagination section: the
+app sets it to `2rem`, which is 20px, not 32px.
+
+**Check widths by measuring, not by eye.** `document.documentElement.scrollWidth` vs `clientWidth` is
+the test for whether a sidebar is overflowing — at `18rem` they were 1420 vs 1400.
+
+**A modifier in one component file loses a specificity tie to the base in another.** Narrowing the
+panel to 216px clipped the Country select's text, so `.panel__content`'s padding needed tightening —
+but `.panel--filters .panel__content` and panel.css's `.panel .panel__content` are *both* (0,2,0), and
+Propshaft links stylesheets alphabetically, so `panel.css` came later and won. The override is written
+`.panel.panel--filters .panel__content` to break the tie on specificity rather than on file order.
+
+### Details worth keeping
+
+- **`simple_form` does work with `search_form_for`** — pass `builder: SimpleForm::FormBuilder`. There
+  was no existing search form in the app to copy, so this was the open question when the card started.
+- **Screenshotting a `:js` spec races the navigation.** `click_on` followed straight by
+  `save_screenshot` captures the *old* page — it looked exactly like the filter had silently failed.
+  Assert on the expected content first (Capybara waits), then capture.
+- **Filtering preserves the sort; Clear resets everything.** `search_form_for` does not carry `q[s]`,
+  so the form emits a hidden field — but only `if requested_sort` (`params.dig(:q, :s)`). Unguarded it
+  would freeze `ranked_search`'s three-element `DEFAULT_SORT` into the URL on every submit. `Clear` is
+  a bare link to `leaderboard_path`, so it drops the sort too; "clear" means back to the default board.
+- **Filtering resets to page 1 because the form has no `page` field** — submitting drops the param and
+  Kaminari defaults to 1. That is a property of what the form *omits*, so it is easy to break later by
+  adding a hidden field; a spec filters from `?page=2` and asserts a full first page comes back.
+- **`entries.empty?` issues its own `SELECT` unless the relation is loaded**, the same shape of bug as
+  `.count` vs `.size`. Adding the empty state took the page from 3 queries to 5 — one for `.empty?`, one
+  for the country dropdown it then had. `paged_entries(@search).load` and a static country list removed
+  both.
+- **No win % filter, deliberately.** `NULL >= 0` is `NULL`, so *any* `win_percentage_gteq` — even zero —
+  silently drops every user below the 5-game floor. That is a different rule from `games_played_gteq`,
+  which keeps them, and nothing on the page would explain the discrepancy.
+
+| | Queries | Median |
+|---|---|---|
+| Before filters | 3 | 22 ms |
+| **With the filter form** | **3** | **25 ms** |
+
+The form is free in query terms — it adds no query of its own, and the sort/filter/paginate all ride
+the one board `SELECT`.
 
 ## Pagination with Kaminari (2026-07-28)
 

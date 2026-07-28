@@ -120,6 +120,92 @@ RSpec.describe 'Leaderboard', type: :system do
     end
   end
 
+  context 'when filtering' do
+    before do
+      create(:player, user: champion)
+      create_list(:player, 3, user: challenger)
+    end
+
+    def usernames = all('tbody tr td:nth-child(2)').map(&:text)
+
+    it 'narrows the board to a partial username match' do
+      visit leaderboard_path
+
+      fill_in 'Player name', with: 'roo'
+      click_on 'Filter'
+
+      expect(usernames).to eq [ challenger_name ]
+    end
+
+    it 'narrows the board to players with at least so many games' do
+      visit leaderboard_path
+
+      fill_in 'Fewest games', with: 2
+      click_on 'Filter'
+
+      expect(usernames).to eq [ challenger_name ]
+    end
+
+    it 'narrows the board to players with at most so many games' do
+      visit leaderboard_path
+
+      fill_in 'Most games', with: 1
+      click_on 'Filter'
+
+      expect(usernames).to eq [ champion_name ]
+    end
+
+    it 'says so when nothing matches' do
+      visit leaderboard_path
+
+      fill_in 'Player name', with: 'nobody'
+      click_on 'Filter'
+
+      expect(page).to have_content 'No players match those filters'
+    end
+
+    it 'restores the whole board when the filters are cleared' do
+      visit leaderboard_path
+
+      fill_in 'Player name', with: 'roo'
+      click_on 'Filter'
+      click_on 'Clear'
+
+      expect(usernames).to match_array [ champion_name, challenger_name ]
+    end
+
+    it 'keeps the chosen sort while filtering' do
+      visit leaderboard_path
+
+      click_on 'Games played'
+      fill_in 'Player name', with: 'e'
+      click_on 'Filter'
+
+      expect(usernames.first).to eq challenger_name
+    end
+  end
+
+  context 'when filtering by country' do
+    let(:champion) { create(:user, username: champion_name, country: 'US') }
+
+    before { create(:user, username: challenger_name, country: 'CA') }
+
+    it 'offers every country, not only those already on the board' do
+      visit leaderboard_path
+
+      expect(page).to have_select 'Country', options: [ 'Anywhere', *Data::Country.all.map(&:name) ]
+    end
+
+    it 'narrows the board to one country' do
+      visit leaderboard_path
+
+      select 'United States', from: 'Country'
+      click_on 'Filter'
+
+      expect(all('tbody tr td:nth-child(2)').map(&:text)).to eq [ champion_name ]
+    end
+  end
+
   context 'when there are more players than fit on one page' do
     let(:page_size) { 25 }
     let(:players_beyond_the_first_page) { 1 }
@@ -152,6 +238,15 @@ RSpec.describe 'Leaderboard', type: :system do
       click_on 'Next'
 
       expect(first_rank).to eq (page_size + 1).to_s
+    end
+
+    it 'returns to the first page when a filter is applied' do
+      visit leaderboard_path(page: 2)
+
+      fill_in 'Player name', with: 'person'
+      click_on 'Filter'
+
+      expect(rows.size).to eq page_size
     end
 
     it 'keeps the chosen sort while paging' do

@@ -1,6 +1,8 @@
 module LeaderboardHelper
   def paged_entries(search) = search.result.page(params[:page])
 
+  def requested_sort = params.dig(:q, :s)
+
   def rank_for(entry) = entry.rank || LeaderboardEntry::UNRANKED
 
   def win_percentage_for(entry)

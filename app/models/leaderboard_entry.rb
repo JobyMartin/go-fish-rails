@@ -1,6 +1,8 @@
 class LeaderboardEntry < ApplicationRecord
   UNRANKED = "—".freeze
 
+  belongs_to :user, foreign_key: :id, inverse_of: false
+
   scope :ranked, -> { order(games_won: :desc, games_played: :asc, username: :asc) }
 
   DEFAULT_SORT = [ "games_won desc", "games_played asc", "username asc" ].freeze
@@ -9,7 +11,7 @@ class LeaderboardEntry < ApplicationRecord
     %w[rank username games_played games_won win_percentage time_played]
   end
 
-  def self.ransackable_associations(_auth_object = nil) = []
+  def self.ransackable_associations(_auth_object = nil) = %w[user]
 
   def self.ranked_search(params)
     search = ransack(params)

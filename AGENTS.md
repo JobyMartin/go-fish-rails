@@ -100,6 +100,7 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **Reuse before building.** Reach for an existing Optics component or custom
   `simple_form` input before hand-writing markup or a new component.
 - **BEM** for CSS class naming; component styles live in `app/assets/stylesheets/components/`.
+- **Optics' root font size is 10px**, so an `18rem` panel renders 180px and `--op-space-scale-unit: 2rem` is 20px. Measure widths; don't eyeball.
 - **Motion is finite and gated.** The app has exactly one animation (the Rummy post-draw card
   pulse): finite iteration count, wrapped in `prefers-reduced-motion: no-preference`, with a
   non-motion cue carrying the same message. Hold new motion to that bar, and prefer a local
@@ -107,6 +108,7 @@ See `docs/architecture.md` for the full model map and serialization details.
   fit Propshaft's no-tree-shaking auto-linking, and its classes fight BEM).
 - **`.count` always issues SQL; `.size` reads a loaded association.** One such word cost the
   leaderboard 1,004 queries. Bullet flags it *Need Counter Cache*, not *USE eager loading*.
+  `.empty?` is the same trap: on an unloaded relation it fires its own `SELECT`. `.load` first.
 - Ruby's implicit block parameter `it` is used throughout (e.g. `players.find { it.id == x }`).
 - **Comments are a last resort, not a courtesy.** Before writing one, ask: can this be
   induced by reading the code? If yes, the comment is dead weight — delete it, or better,
@@ -168,11 +170,13 @@ See `docs/architecture.md` for the full model map and serialization details.
   them; its last High finding (game-over persistence) is **closed**.
 - `docs/leaderboard.md` — the `/leaderboard` page, winner persistence, and the **performance
   week**: 3,014 queries / 4,115 ms → 2 / 35 ms via a **Scenic database view**
-  (`db/views/leaderboard_entries_v01.sql` + read-only `LeaderboardEntry`), sorted by Ransack,
-  paginated by Kaminari (25/page; the added `COUNT` still nets **3 queries / 22 ms**). Aggregation
-  lives in the view, display rules in Ruby. **Never edit `_v01.sql` in place** — `rails g
-  scenic:view leaderboard_entries` versions it. Indexes were *measured and rejected*. Also holds
-  `perf:seed` / `perf:measure`, Bullet's cost model, the **`RANK()` rank column**, and `/games`.
+  (`db/views/leaderboard_entries_v01.sql` + read-only `LeaderboardEntry`), sorted **and filtered** by
+  Ransack, paginated by Kaminari — all three still net **3 queries / 25 ms**. Country filtering goes
+  through a `belongs_to :user`, which is why **`User` has a `ransackable_attributes` returning
+  `%w[country]` and nothing else**. Aggregation lives in the view, display rules in Ruby. **Never edit
+  `_v01.sql` in place** — `rails g scenic:view leaderboard_entries` versions it. Indexes were
+  *measured and rejected*. Also holds `perf:seed` / `perf:measure`, Bullet's cost model, the
+  **`RANK()` rank column**, the filter panel, and `/games`.
 - `docs/brave-card-1-round-feed-presenter.md` — **complete**. `RoundFeed` (+ `FeedLine`) at
   `app/models/round_feed.rb` is a namespace-neutral seam; every game partial iterates
   `result.feed_lines`. **Roles are positional** — first `action`, last `game_response`, middles between.
@@ -194,6 +198,8 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **Known spec flakes — a red suite here is often not your change.** Two are unpinned random decks:
   staging a hand leaves duplicates in the stock (~8%; stage through `start_rummy_game_with_state`),
   and Go Fish `spec/models/game_spec.rb:124` depends on the opponent holding exactly one Ace (~7%).
+  Crazy Eights `games_spec.rb:157` joins them — rare, seen once in ~6 full runs, green 5/5 alone and
+  3/3 for its file, and it is **not** `:js`, so it is the deck and not a browser race.
   Two `:js` intermittents are undiagnosed (`games_spec.rb:309`, `offlines_spec.rb:33`).
 - **N+1s fail the suite.** `test.rb` runs `Bullet.raise` with no safelist, so an N+1 a spec
   exercises raises rather than passing quietly — Bullet is off in dev, so specs are the guard.
