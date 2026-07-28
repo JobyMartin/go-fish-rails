@@ -8,14 +8,6 @@ Rails.application.configure do
     Bullet.enable        = true
     Bullet.bullet_logger = true
     Bullet.raise         = true # raise an error if n+1 query occurs
-
-    # The leaderboard is deliberately N+1 until the performance exercise measures it;
-    # see docs/leaderboard.md. Delete these once User's stats move to one aggregate
-    # query — they are the only thing keeping Bullet quiet about it.
-    Bullet.add_safelist type: :counter_cache, class_name: "User", association: :players
-    Bullet.add_safelist type: :n_plus_one_query, class_name: "User", association: :players
-    Bullet.add_safelist type: :n_plus_one_query, class_name: "User", association: :games
-    Bullet.add_safelist type: :n_plus_one_query, class_name: "Player", association: :game
   end
 
   # Settings specified here will take precedence over those in config/application.rb.
