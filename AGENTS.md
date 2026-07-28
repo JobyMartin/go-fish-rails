@@ -170,9 +170,18 @@ See `docs/architecture.md` for the full model map and serialization details.
   `RoundResult` feed presenter, the shared `Card`/`Deck` extraction, authorization on game
   actions. `RAILS_AUDIT_REPORT.md` (repo root) is the audit behind them; its last High finding
   (game-over persistence) is now **closed** — see `docs/leaderboard.md`.
-- `docs/leaderboard.md` — the `/leaderboard` page and winner persistence. **The page is
-  deliberately N+1 and unindexed** — the baseline for the performance week's
-  measure-then-optimize exercise. Don't "fix" it before the numbers are taken.
+- `docs/leaderboard.md` — the `/leaderboard` page, winner persistence, and the performance
+  week. Baseline taken and **Phase 1 done: 3,014 queries → 4** via `includes(:players, :games)`
+  plus `games_played` `.count` → `.size`. Still **unindexed** on `players.winner` / `games.type`
+  and still one AR object per row, so the index and `GROUP BY` comparisons are open — measure
+  with `perf:measure` before and after, don't optimize blind.
+- **`.count` always queries; `.size` uses a loaded association.** That one word was 1,004 of
+  the leaderboard's original queries. Bullet reports it as *Need Counter Cache*, not *USE
+  eager loading*, because eager loading alone cannot fix it.
+- **Bullet is opt-in in development** (`BULLET=1 bin/dev`) and its cost scales with *loaded
+  objects*, not queries — at `perf:seed` scale it makes a 0.55s page take ~72s and reports
+  its own overhead as slow SQL. `perf:measure` disables it. The suite still runs
+  `Bullet.raise`, so N+1 regressions fail specs regardless.
 - `docs/brave-card-1-round-feed-presenter.md` — Card 1 (feed presenter), **complete**. `RoundFeed`
   (+ `FeedLine`) at `app/models/round_feed.rb` is a namespace-neutral seam; every game partial
   iterates `result.feed_lines`. **Roles are positional** — first `action`, last `game_response`,

@@ -3,19 +3,28 @@
 A page at `/leaderboard` ranking every user by wins. Built during the
 performance-focused week, so **how** it's written matters as much as what it does.
 
-## It is deliberately unoptimized
+## The performance exercise
 
-`LeaderboardController#index` is `User.all.sort_by { -it.games_won }`, and each of
-`User#games_played` / `#games_won` / `#time_played` runs its own query per row. That
-is a textbook N+1 that degrades linearly with user count.
+The page was written deliberately unoptimized — `User.all.sort_by { -it.games_won }` with
+a query per row from each of `User#games_played` / `#games_won` / `#time_played` — so the
+week could measure it, optimize it, and measure again.
 
-**This is the exercise, not a defect.** The plan is: seed a large dataset, measure the
-naive version, then optimize (one `GROUP BY`, indexes on `players.winner` and
-`games.type`, possibly a counter cache) and measure again. Anyone who "fixes" the N+1
-before the measurement happens destroys the before/after comparison the week exists for.
+**The baseline has been taken and Phase 1 has landed** (below). The remaining work is
+indexes, and collapsing the whole thing into one `GROUP BY`. There are still **no indexes**
+on `players.winner` or `games.type`, so that comparison is still available.
 
-There are currently **no indexes** on `players.winner` or `games.type` — also on purpose,
-for the same reason.
+Two tools support this, both in `lib/`:
+
+| | |
+|---|---|
+| `bin/rails "perf:seed[users,games]"` | bulk data; clears first so re-runs are identical |
+| `bin/rails "perf:measure[path,runs]"` | query count + median timing over real requests |
+| `bin/rails perf:clear` | drop the seeded rows |
+
+`perf:measure` signs in as a seeded user and issues real requests through
+`ActionDispatch::Integration::Session`, so **view-level** queries are counted too — most of
+this page's N+1 lived in `LeaderboardHelper`, which a model-only benchmark would miss.
+Prefix with `BULLET=1` to measure with Bullet active.
 
 ## Baseline (2026-07-27)
 
@@ -36,6 +45,56 @@ machine. Timing is the one that makes the point to a human.
 Re-run `perf:seed` before each measurement. It clears first precisely so the dataset is
 reproducible; an earlier additive version quietly doubled the player table between runs,
 which would have invalidated the comparison with nothing visibly wrong.
+
+## Phase 1: eager loading (2026-07-27)
+
+| | Queries | Median |
+|---|---|---|
+| Baseline | 3,014 | 4,115 ms |
+| `includes(:players, :games)` | 1,008 | 1,767 ms |
+| `games_played` `.count` → `.size` | **4** | **580 ms** |
+
+Two changes, and the second is the one worth remembering.
+
+**`.count` always issues `SELECT COUNT(*)`, even on a preloaded association.** `.size`
+counts the loaded array and only queries when the association is not loaded. So `includes`
+did its job and `games_played` threw the result away 1,004 times. That is why Bullet
+reported this one as *Need Counter Cache* rather than *USE eager loading* — it knew eager
+loading alone could not help. `.size` gets the counter cache's benefit with no migration,
+which is why Phase 3 was dropped.
+
+**The two changes only work as a pair.** `includes` without `.size` leaves 1,004 queries;
+`.size` without `includes` leaves just as many.
+
+**Both associations must be named.** `games` is `has_many through: :players`, but
+preloading `:players` does not preload it, and `includes(players: :game)` does not either —
+`user.games` and `user.players.map(&:game)` are different associations to Rails even though
+they return the same rows. Measured: `:players` alone → 1,006 queries; `players: :game` →
+1,007; `:players, :games` → 3. Preload the association name the code actually calls.
+
+## Bullet is off by default in development
+
+`Bullet.enable = ENV["BULLET"].present?` in `config/environments/development.rb`, so
+`bin/dev` runs without it and `BULLET=1 bin/dev` turns it on.
+
+**Bullet's overhead is superlinear in loaded objects, not in queries.** Holding the page at
+a constant 4 queries and growing the dataset:
+
+| Users | Players | Bullet OFF | Bullet ON |
+|---|---|---|---|
+| 100 | 1,515 | 74 ms | 867 ms |
+| 200 | 2,989 | 153 ms | 2,556 ms |
+| 400 | 5,981 | 217 ms | 9,574 ms |
+
+The same series *before* the `.size` fix, at 108 queries, was 1,012 / 2,928 / 10,353 ms —
+essentially identical. Cutting queries by 96% moved Bullet's cost ~8%, because it registers
+every loaded object to decide what to warn about, and `includes` loads all 15,036 players
+either way. At 1,000 users this makes a ~0.55s page take ~72s, and the slow query Bullet
+reports is its own overhead.
+
+This is why `perf:measure` disables Bullet: with it on, every number in this doc would have
+been a Bullet benchmark. Turning it off in dev is safe because the test suite runs
+`Bullet.raise` — verified by reintroducing an N+1 and watching the spec fail.
 
 ## What it ranks and why
 
