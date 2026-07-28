@@ -19,11 +19,11 @@
             th Win %
             th Time played
         tbody
-          - @users.each_with_index do |user, index|
+          - @entries.each_with_index do |entry, index|
             tr
               td = index + 1
-              td = user.username
-              td = user.games_played
-              td = user.games_won
-              td = win_percentage_for(user)
-              td = time_played_for(user)
+              td = entry.username
+              td = entry.games_played
+              td = entry.games_won
+              td = win_percentage_for(entry)
+              td = time_played_for(entry)
