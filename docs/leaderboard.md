@@ -161,13 +161,69 @@ Postgres does the counting and Rails instantiates one object per displayed row.
 `_v01.sql` to `_v02.sql` and writes an update migration. Do not edit `_v01.sql` in place —
 it is the historical record of what the migration created.
 
+## Sorting with Ransack
+
+Four columns sort: **Player**, **Games played**, **Wins**, **Time played**. Numeric ones use
+`default_order: :desc` so the first click shows most-wins-first. The sort rides in the URL
+(`?q[s]=games_played+desc`), so a sorted board is shareable.
+
+`LeaderboardController#index` stays one instance variable — `@search =
+LeaderboardEntry.ranked_search(params[:q])` — and the view iterates `@search.result`. The
+default-sort logic sits on the model, not the controller.
+
+**Ransack authorizes nothing by default (v4+).** `ransackable_attributes` is mandatory; without
+it `sort_link` silently does nothing. **Never allowlist via `column_names`** — Ransack exposes
+predicates like `q[password_digest_start]=$2a$`, which lets an attacker binary-search a password
+hash one character at a time. On this view it would also expose nothing useful; on `User` or
+`games.game_state` it would leak credentials and every player's hand.
+
+**`win_percentage` is not sortable, deliberately.** It is a Ruby method carrying the
+`MINIMUM_RANKED_GAMES` floor, and Ransack only sorts real columns. `Game#status` has the same
+problem (derived from `started_at`/`ended_at`), which is why Ransack fits this view — every
+displayed column except Win % is real SQL — better than it fits the games lobby.
+
+**A refused sort still leaves a `Sort` node behind.** It resolves to no column and emits no
+`ORDER BY`, so `search.sorts.empty?` is false while the board is *unordered* — `?q[s]=id desc`
+rendered rows in arbitrary order. Hence `ranked_search` falls back on
+`unless search.sorts.any?(&:attr_name)`, not on `if empty?`. Also note `search.sorts =`
+**appends** rather than replaces, so the dud node survives harmlessly; specs assert on
+`filter_map(&:attr_name)` rather than `map(&:name)` for that reason.
+
+**The Rank column is now arguably wrong.** It is `index + 1`, so sorting by Time played shows
+the longest-playing user as "Rank 1". Left as-is; renaming it `#` or hiding it under non-default
+sorts is an open call.
+
+## Next: the games index is unbounded
+
+`/games` is **not** an N+1 — Bullet reports nothing on it, and `_game-card` walks no
+associations. It is a different failure: `@games = Game.all` with no limit. At 5,020 seeded
+games, measured with `perf:measure`:
+
+| | |
+|---|---|
+| Queries | 4 (16 ms of SQL) |
+| Views | 537–606 ms |
+| GC | 60–85 ms |
+| Cards rendered | 5,020 |
+
+**~95% of the request is rendering `game-card` 5,020 times** — each one a partial lookup, a
+`dom_id`, and a `button_to` that builds a CSRF-tokened form. Eager loading cannot help; there
+is nothing to preload. The fixes are bounding the query (pagination — Kaminari is the next
+assignment) or scoping it, since `Game.all` includes archived and long-finished games that are
+not joinable at all.
+
+**Pagination will collide with the Turbo broadcast.** `Game#broadcast_game_update` does
+`broadcast_append_later_to('games', target: 'all-games-list')`, so a new game appends a card to
+whatever page the user is looking at — wrong once the list is paginated and sorted newest-first.
+Decide that before adding page links, not after.
+
 ## Bullet is off by default in development
 
 `Bullet.enable = ENV["BULLET"].present?` in `config/environments/development.rb`, so
 `bin/dev` runs without it and `BULLET=1 bin/dev` turns it on.
 
-**Bullet's overhead is superlinear in loaded objects, not in queries.** Holding the page at
-a constant 4 queries and growing the dataset:
+**Bullet's overhead tracks association bookkeeping, not query count and not object count.**
+Holding this page at a constant 4 queries and growing the dataset:
 
 | Users | Players | Bullet OFF | Bullet ON |
 |---|---|---|---|
@@ -176,10 +232,14 @@ a constant 4 queries and growing the dataset:
 | 400 | 5,981 | 217 ms | 9,574 ms |
 
 The same series *before* the `.size` fix, at 108 queries, was 1,012 / 2,928 / 10,353 ms —
-essentially identical. Cutting queries by 96% moved Bullet's cost ~8%, because it registers
-every loaded object to decide what to warn about, and `includes` loads all 15,036 players
-either way. At 1,000 users this makes a ~0.55s page take ~72s, and the slow query Bullet
-reports is its own overhead.
+essentially identical. **Cutting queries by 96% moved Bullet's cost ~8%.** At 1,000 users it
+turns a ~0.55s page into ~72s, and the slow query it reports is its own overhead.
+
+Object count is not the driver either, though it looks like it from this page alone: `/games`
+loads 5,466 objects and pays only **+7%** with Bullet on. The difference is that the
+leaderboard reaches its objects *through* `includes(:players, :games)`, giving Bullet ~21,000
+object→association pairs to register and re-examine, while `/games` loads flat collections
+whose card partial walks no associations at all. **Preloading is what makes Bullet expensive.**
 
 This is why `perf:measure` disables Bullet: with it on, every number in this doc would have
 been a Bullet benchmark. Turning it off in dev is safe because the test suite runs
@@ -201,8 +261,9 @@ Four columns: games played, wins, win %, time played.
 - **Games with no `ended_at` contribute nothing** to win % or time played, so abandoned
   games are invisible here.
 
-**Ties rank arbitrarily.** The sort key is only `-games_won`, so two users with equal wins
-order by whatever `User.all` returns. Needs a tiebreaker whenever sorting gets real work.
+**Ties no longer rank arbitrarily.** `LeaderboardEntry.ranked` orders by wins desc, then *fewer*
+games played, then username — so equal-wins users resolve to the tighter record and identical
+requests return an identical board.
 
 ## Ranking depends on winners being persisted
 

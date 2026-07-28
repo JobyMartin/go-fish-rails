@@ -28,6 +28,7 @@ prefer following them over "better" alternatives.
 ```sh
 bin/setup    # install deps, prepare DB, boot the dev server
 bin/dev      # foreman: rails server + `yarn build --watch` + good_job worker
+BULLET=1 bin/dev   # ...with Bullet's N+1 warnings; off by default, and very slow on perf-seeded data
 ```
 
 ## Testing
@@ -104,6 +105,8 @@ See `docs/architecture.md` for the full model map and serialization details.
   non-motion cue carrying the same message. Hold new motion to that bar, and prefer a local
   `@keyframes` over an animation library — `animate.css` was weighed and rejected (it doesn't
   fit Propshaft's no-tree-shaking auto-linking, and its classes fight BEM).
+- **`.count` always issues SQL; `.size` reads a loaded association.** One such word cost the
+  leaderboard 1,004 queries. Bullet flags it *Need Counter Cache*, not *USE eager loading*.
 - Ruby's implicit block parameter `it` is used throughout (e.g. `players.find { it.id == x }`).
 - **Comments are a last resort, not a courtesy.** Before writing one, ask: can this be
   induced by reading the code? If yes, the comment is dead weight — delete it, or better,
@@ -117,13 +120,12 @@ See `docs/architecture.md` for the full model map and serialization details.
 
 - **`William` is the discard pile, not an AI.** In Crazy Eights, `CrazyEights::William` is simply
   the collection of placed cards; `william.active_card` is the top of the pile. Inside joke.
-- **Game state is one jsonb blob.** History/replay lives entirely inside the serialized
-  `game_state` column, not in normalized tables — adding a field means updating the
-  domain object's `as_json`/`from_json`/`load`/`dump`.
+- **Game state is one jsonb blob.** History/replay lives inside the serialized `game_state`
+  column, not normalized tables — a new field means updating `as_json`/`from_json`/`load`/`dump`.
 - **Deal counts depend on player count** in all three games (see the game docs).
-- `ArchiveGameJob` auto-archives any game untouched for 2+ days, on a GoodJob schedule.
-- **Routes are inconsistent** — they grew through the apprenticeship's learning phases (e.g.
-  `users/show` as a GET path, repeated `member` blocks). Don't treat them as the convention.
+- `ArchiveGameJob` auto-archives any game untouched for 2+ days (GoodJob schedule) — but the
+  lobby never filters on `archived_at`, so `/games` shows every game ever. See `docs/leaderboard.md`.
+- **Routes are inconsistent** (e.g. `users/show` as a GET path, repeated `member` blocks) — they grew through the apprenticeship's phases; not the convention.
 - **`GamesController#play` checks `game_over?` *before* playing the turn**, so the turn that
   *ends* a game redirects to the game page, not the winner screen — the winner screen is only
   reached on a later request against an already-over game. It re-checks *after* the turn to call
@@ -131,14 +133,12 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **`GoFishGame#play_turn` truncates the rank** via `params[:rank].chars.first`, so a `'10'`
   ask silently becomes `'1'` — invalid. Latent bug, still open; single-char ranks are fine.
 - **`CrazyEightsGame#play_turn` computes its own `active_card`** (always `william.active_card`)
-  and reads `params[:rank]` as the placed card; a **blank `:rank`** triggers the
-  `draw_until_playable` loop — drawing from the deck until a card matches the active card's
-  suit or rank. Both subclasses now share one polymorphic `play_turn(params)` signature but
-  read different keys (Go Fish: `:player`/`:rank`; Crazy Eights: `:rank`/`:suit`).
-- **Game-over *is* persisted now.** `Game#finish!` sets `ended_at` and writes `players.winner`,
-  called from `GamesController#play` once `game_state.game_over?`. So `Game#status` reaches
-  `Finished` and win % is real — but only for games finished *after* this landed; older rows have
-  a `nil` `ended_at`. See `docs/leaderboard.md`.
+  and reads `params[:rank]` as the placed card; a **blank `:rank`** triggers `draw_until_playable`,
+  drawing until a card matches the active card's suit or rank. Both subclasses share one
+  `play_turn(params)` signature but read different keys (Go Fish `:player`/`:rank`; CE `:rank`/`:suit`).
+- **Game-over is persisted.** `Game#finish!` sets `ended_at` and writes `players.winner`, from
+  `GamesController#play` once `game_state.game_over?`. Only games finished *after* this landed
+  count — older rows have a `nil` `ended_at`. See `docs/leaderboard.md`.
 - **`Player`'s `not_started` validation is `on: :create` deliberately.** Unscoped it runs on every
   save, so `player.update!(winner: true)` failed with "This game has started" — it made recording
   a winner impossible. Don't tidy the scope away.
@@ -149,12 +149,9 @@ See `docs/architecture.md` for the full model map and serialization details.
   serialized but never validated — it only sets `disabled:` on buttons — and no controller
   checks that the submitter is `current_player`. A crafted POST can discard before drawing, or
   act on **another player's hand**. Both open cards in `docs/improvement-cards.md`.
-- **Game actions are participant-gated; `join` is not.** `GamesController` runs `set_game` then
-  `require_participation` (`before_action`, `only: %i[show start play winner]`) — a non-participant
-  is redirected to the lobby with a flash instead of reading state or hitting the old `show`
-  `NoMethodError` (`find_player` → `nil` → `current_player.hand`). `PlayersController#create` (join)
-  is **deliberately left open** — joining is a non-participant action by nature. Card 3 of
-  `docs/improvement-cards.md`, **complete** (see `docs/brave-card-3-authorize-game-actions.md`).
+- **Game actions are participant-gated; `join` is deliberately not.** `require_participation`
+  (`before_action, only: %i[show start play winner]`) redirects non-participants to the lobby;
+  joining is a non-participant action by nature. `docs/brave-card-3-authorize-game-actions.md`.
 
 ## Key context
 
@@ -162,37 +159,23 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/testing.md` — TDD workflow and spec organization
 - `docs/games/go-fish.md` — Go Fish rules and implementation notes
 - `docs/games/crazy-eights.md` — Crazy Eights rules, William, and implementation notes
-- `docs/improvement-plan.md` + `docs/improvement-1-breakdown.md` +
-  `docs/improvement-2-breakdown.md` — foundation work for a third game, **all complete**: 1 locked
-  the shared "game contract" with tests (incl. the `"a persisted card game"` shared example); 2
-  replaced type-branching with polymorphic dispatch + `Game::PLAYABLE_TYPES`. **No `type ==` remains.**
-- `docs/improvement-cards.md` — post-Improvement-2 scoped round, **all three done**: the
-  `RoundResult` feed presenter, the shared `Card`/`Deck` extraction, authorization on game
-  actions. `RAILS_AUDIT_REPORT.md` (repo root) is the audit behind them; its last High finding
-  (game-over persistence) is now **closed** — see `docs/leaderboard.md`.
-- `docs/leaderboard.md` — the `/leaderboard` page, winner persistence, and the performance
-  week, **complete: 3,014 queries / 4,115 ms → 2 / 36 ms**. Phase 1 eager loading, Phase 2
-  measured indexes and *rejected* them (SQL was 0.4% of the request; AR hydration was 92%),
-  Phase 3 replaced it all with a Scenic view. Measure with `perf:measure` before and after;
-  don't optimize blind. Still **unindexed** on `players.winner` / `games.type` — now finally
-  worth benchmarking, since the view's `COUNT(*) FILTER (WHERE players.winner)` reads it.
-- **The leaderboard is a Scenic database view.** `db/views/leaderboard_entries_v01.sql` holds
-  the aggregation; `LeaderboardEntry` is a normal read-only AR model over it, so app code is
-  plain Ruby (`LeaderboardEntry.ranked`, `.where`, `.find_by`). **Aggregation in the view,
-  display rules in Ruby** (`.ranked`, `#win_percentage`) — a versioned view costs a new
-  `_v02.sql` plus a migration to change. **Never edit `_v01.sql` in place**; run
-  `rails g scenic:view leaderboard_entries` to version it.
-- **`.count` always queries; `.size` uses a loaded association.** That one word was 1,004 of
-  the leaderboard's original queries. Bullet reports it as *Need Counter Cache*, not *USE
-  eager loading*, because eager loading alone cannot fix it.
-- **Bullet is opt-in in development** (`BULLET=1 bin/dev`) and its cost scales with *loaded
-  objects*, not queries — at `perf:seed` scale it makes a 0.55s page take ~72s and reports
-  its own overhead as slow SQL. `perf:measure` disables it. The suite still runs
-  `Bullet.raise`, so N+1 regressions fail specs regardless.
-- `docs/brave-card-1-round-feed-presenter.md` — Card 1 (feed presenter), **complete**. `RoundFeed`
-  (+ `FeedLine`) at `app/models/round_feed.rb` is a namespace-neutral seam; every game partial
-  iterates `result.feed_lines`. **Roles are positional** — first `action`, last `game_response`,
-  middles `player_response`.
+- `docs/improvement-plan.md` + `improvement-1-breakdown.md` + `improvement-2-breakdown.md` —
+  third-game foundations, **all complete**: the shared "game contract" (incl. the
+  `"a persisted card game"` shared example), then polymorphic dispatch + `Game::PLAYABLE_TYPES`.
+  **No `type ==` remains.**
+- `docs/improvement-cards.md` — post-Improvement-2 round, **all three done** (feed presenter,
+  shared `Card`/`Deck`, game-action authorization). `RAILS_AUDIT_REPORT.md` is the audit behind
+  them; its last High finding (game-over persistence) is **closed**.
+- `docs/leaderboard.md` — the `/leaderboard` page, winner persistence, and the **performance
+  week**: 3,014 queries / 4,115 ms → 2 / 35 ms via a **Scenic database view**
+  (`db/views/leaderboard_entries_v01.sql` + read-only `LeaderboardEntry`), sorted by Ransack.
+  Aggregation lives in the view, display rules in Ruby. **Never edit `_v01.sql` in place** —
+  `rails g scenic:view leaderboard_entries` versions it. Indexes were *measured and rejected*.
+  Also holds the `perf:seed` / `perf:measure` toolkit, Bullet's real cost model, and the
+  unbounded `/games` index that is next.
+- `docs/brave-card-1-round-feed-presenter.md` — **complete**. `RoundFeed` (+ `FeedLine`) at
+  `app/models/round_feed.rb` is a namespace-neutral seam; every game partial iterates
+  `result.feed_lines`. **Roles are positional** — first `action`, last `game_response`, middles between.
 - `docs/brave-card-2-shared-card-deck.md` — Card 2 (shared `Card`/`Deck`), **complete**. Both live
   at top level; bare refs inside `module GoFish` / `module CrazyEights` resolve via constant lookup.
 - `docs/brave-card-3-authorize-game-actions.md` — Card 3 (authorize game actions), **complete**;
@@ -206,11 +189,12 @@ See `docs/architecture.md` for the full model map and serialization details.
   deliberately *unshuffled*** (Bicycle). The doc covers all of it; `mockup-html/rummy.html`
   is the visual reference.
 - `docs/brave-rummy-feed-completeness.md` — **complete**. `Rummy::RoundResult` carries a `move`
-  discriminator (`:took`/`:melded`/`:laid_off`/`:discarded`); one private `Game#record_move` sets
-  `going_out` for **every** logged action, so all three Bicycle going-out routes announce
-  themselves. **`record_move` must precede `end_turn` in `#discard`** — `switch_turns` reassigns
-  `current_player`.
+  discriminator; one private `Game#record_move` sets `going_out` for **every** logged action.
+  **`record_move` must precede `end_turn` in `#discard`** — `switch_turns` reassigns `current_player`.
 - **Known spec flakes — a red suite here is often not your change.** Two are unpinned random decks:
   staging a hand leaves duplicates in the stock (~8%; stage through `start_rummy_game_with_state`),
   and Go Fish `spec/models/game_spec.rb:124` depends on the opponent holding exactly one Ace (~7%).
-  A third `:js` intermittent is undiagnosed — see `docs/testing.md`.
+  Two `:js` intermittents are undiagnosed (`games_spec.rb:309`, `offlines_spec.rb:33`).
+- **N+1s fail the suite.** `test.rb` runs `Bullet.raise` with no safelist, so an N+1 a spec
+  exercises raises rather than passing quietly — Bullet is off in dev, so specs are the guard.
+  Both notes: `docs/testing.md`.

@@ -111,6 +111,30 @@ Playwright timing under full-suite load, but that is inference, not a diagnosis.
 If you hit it, **capture the whole failure message** — the first sighting was lost to a
 `| tail -6` on the suite output, which is why there's nothing better written here.
 
+This session added a **second** `:js` sighting of the same shape, at `spec/system/offlines_spec.rb:33`
+("renders an offline alert"), failing on `click_on 'Start game'`. It passed 2 of 3 isolated runs
+and has not recurred. Same inference — Playwright timing, not a diagnosis.
+
+## N+1 queries fail the suite
+
+`config/environments/test.rb` sets `Bullet.raise = true` with **no safelist**, so any N+1,
+unused eager load, or missing counter cache that a spec exercises raises
+`Bullet::Notification::UnoptimizedQueryError` and fails that example. This is the project's
+only automated guard against N+1s: Bullet is **off by default in development**
+(`BULLET=1 bin/dev` opts in), so the suite is where you find out.
+
+Two consequences worth knowing:
+
+- **A red spec pointing into a view is often a Bullet finding, not a broken expectation.** The
+  message names the model and association and suggests the `includes`.
+- **Bullet needs two or more records to see a pattern.** A spec with a single record cannot
+  trigger it, so passing specs are not proof a page is N+1-free at scale — that is what
+  `perf:measure` is for (`docs/leaderboard.md`).
+
+A safelist existed briefly while the leaderboard was deliberately N+1. It is gone, and it
+should stay gone: safelists are scoped by association, not by request path, so they silence
+every page at once.
+
 ## Arranging a *finished* game in a spec
 
 Leaderboard/stats specs need games with `started_at` **and** `ended_at`, which the `:player`
