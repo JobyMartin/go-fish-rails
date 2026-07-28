@@ -171,10 +171,17 @@ See `docs/architecture.md` for the full model map and serialization details.
   actions. `RAILS_AUDIT_REPORT.md` (repo root) is the audit behind them; its last High finding
   (game-over persistence) is now **closed** — see `docs/leaderboard.md`.
 - `docs/leaderboard.md` — the `/leaderboard` page, winner persistence, and the performance
-  week. Baseline taken and **Phase 1 done: 3,014 queries → 4** via `includes(:players, :games)`
-  plus `games_played` `.count` → `.size`. Still **unindexed** on `players.winner` / `games.type`
-  and still one AR object per row, so the index and `GROUP BY` comparisons are open — measure
-  with `perf:measure` before and after, don't optimize blind.
+  week, **complete: 3,014 queries / 4,115 ms → 2 / 36 ms**. Phase 1 eager loading, Phase 2
+  measured indexes and *rejected* them (SQL was 0.4% of the request; AR hydration was 92%),
+  Phase 3 replaced it all with a Scenic view. Measure with `perf:measure` before and after;
+  don't optimize blind. Still **unindexed** on `players.winner` / `games.type` — now finally
+  worth benchmarking, since the view's `COUNT(*) FILTER (WHERE players.winner)` reads it.
+- **The leaderboard is a Scenic database view.** `db/views/leaderboard_entries_v01.sql` holds
+  the aggregation; `LeaderboardEntry` is a normal read-only AR model over it, so app code is
+  plain Ruby (`LeaderboardEntry.ranked`, `.where`, `.find_by`). **Aggregation in the view,
+  display rules in Ruby** (`.ranked`, `#win_percentage`) — a versioned view costs a new
+  `_v02.sql` plus a migration to change. **Never edit `_v01.sql` in place**; run
+  `rails g scenic:view leaderboard_entries` to version it.
 - **`.count` always queries; `.size` uses a loaded association.** That one word was 1,004 of
   the leaderboard's original queries. Bullet reports it as *Need Counter Cache*, not *USE
   eager loading*, because eager loading alone cannot fix it.
