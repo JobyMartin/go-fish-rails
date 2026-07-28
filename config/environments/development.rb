@@ -2,7 +2,12 @@ require "active_support/core_ext/integer/time"
 
 Rails.application.configure do
   config.after_initialize do
-    Bullet.enable        = true
+    # Opt-in: `BULLET=1 bin/dev`. Off by default because Bullet's bookkeeping is
+    # superlinear in loaded objects -- at perf:seed scale it costs ~130x the request
+    # it is measuring, and the slow query it reports is its own overhead. The test
+    # suite runs Bullet.raise, so regressions are still caught without it on here.
+    # See docs/leaderboard.md.
+    Bullet.enable        = ENV["BULLET"].present?
     Bullet.alert         = true
     Bullet.bullet_logger = true
     Bullet.console       = true
