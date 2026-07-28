@@ -12,12 +12,13 @@ class PerfMeasure
 
   Run = Struct.new(:queries, :seconds)
 
-  attr_reader :path, :runs, :user
+  attr_reader :path, :runs, :user, :bullet
 
-  def initialize(path:, runs: DEFAULT_RUNS, user: nil)
+  def initialize(path:, runs: DEFAULT_RUNS, user: nil, bullet: false)
     @path = path
     @runs = runs
     @user = user || seeded_user
+    @bullet = bullet
   end
 
   def call
@@ -102,7 +103,7 @@ class PerfMeasure
   # Bullet's own instrumentation is measurable overhead, and it is not part of what
   # production would spend on this page.
   def without_bullet
-    return yield unless defined?(Bullet) && Bullet.enable?
+    return yield if bullet || !defined?(Bullet) || !Bullet.enable?
 
     Bullet.enable = false
     begin yield ensure Bullet.enable = true end

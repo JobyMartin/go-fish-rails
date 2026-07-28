@@ -17,7 +17,8 @@ namespace :perf do
     require Rails.root.join("lib/perf_measure")
 
     measure = PerfMeasure.new(path: args[:path] || "/leaderboard",
-                              runs: (args[:runs] || PerfMeasure::DEFAULT_RUNS).to_i)
+                              runs: (args[:runs] || PerfMeasure::DEFAULT_RUNS).to_i,
+                              bullet: ENV["BULLET"].present?)
     measure.report(measure.call)
   end
 
