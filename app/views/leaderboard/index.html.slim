@@ -9,6 +9,8 @@
           h1.content-header__title
             | Leaderboard
 
+      - entries = paged_entries(@search)
+
       table.table.table--container.table--odd-striped
         thead
           tr
@@ -19,11 +21,13 @@
             th Win %
             th = sort_link @search, :time_played, 'Time played', default_order: :desc
         tbody
-          - @search.result.each_with_index do |entry, index|
+          - entries.each_with_index do |entry, index|
             tr
-              td = index + 1
+              td = rank_for(entries, index)
               td = entry.username
               td = entry.games_played
               td = entry.games_won
               td = win_percentage_for(entry)
               td = time_played_for(entry)
+
+      = paginate entries

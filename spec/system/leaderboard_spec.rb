@@ -88,7 +88,48 @@ RSpec.describe 'Leaderboard', type: :system do
 
       click_on 'Games played'
 
-      expect(page).to have_current_path(/q%5Bs%5D=games_played/)
+      expect(page).to have_current_path leaderboard_path(q: { s: 'games_played desc' })
+    end
+  end
+
+  context 'when there are more players than fit on one page' do
+    let(:page_size) { 25 }
+    let(:players_beyond_the_first_page) { 1 }
+
+    before { create_list(:user, page_size) }
+
+    def rows = all('tbody tr')
+    def first_rank = all('tbody tr td:first-child').first.text
+
+    it 'shows only one page of players' do
+      visit leaderboard_path
+
+      expect(rows.size).to eq page_size
+    end
+
+    it 'shows the remaining players on the next page' do
+      visit leaderboard_path
+
+      click_on 'Next'
+
+      expect(rows.size).to eq players_beyond_the_first_page
+    end
+
+    it 'continues the rank numbering onto the next page' do
+      visit leaderboard_path
+
+      click_on 'Next'
+
+      expect(first_rank).to eq (page_size + 1).to_s
+    end
+
+    it 'keeps the chosen sort while paging' do
+      visit leaderboard_path
+
+      click_on 'Games played'
+      click_on 'Next'
+
+      expect(page).to have_current_path leaderboard_path(q: { s: 'games_played desc' }, page: 2)
     end
   end
 

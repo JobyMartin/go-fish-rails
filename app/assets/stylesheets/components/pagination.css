@@ -1,0 +1,26 @@
+.pagination {
+  gap: var(--op-space-3x-small);
+  justify-content: center;
+  margin-block-start: var(--op-space-x-small);
+
+  a {
+    text-decoration: none;
+  }
+}
+
+.pagination__page,
+.pagination__step,
+.pagination__gap {
+  border-radius: var(--op-radius-small);
+  padding-block: var(--op-space-3x-small);
+  padding-inline: var(--op-space-2x-small);
+}
+
+.pagination__page--current {
+  background-color: var(--op-color-primary-base);
+  color: var(--op-color-primary-on-base);
+}
+
+.pagination__gap {
+  color: var(--op-color-neutral-on-plus-max);
+}
