@@ -32,10 +32,14 @@ class PerfSeed
     self
   end
 
+  # Sessions go first: perf:measure signs a seeded user in, and the resulting row
+  # holds a foreign key that blocks deleting the user.
   def self.clear
+    users = User.where("username LIKE ?", "#{USERNAME_PREFIX}%")
     Player.where(game: perf_games).delete_all
     perf_games.delete_all
-    User.where("username LIKE ?", "#{USERNAME_PREFIX}%").delete_all
+    Session.where(user: users).delete_all
+    users.delete_all
   end
 
   def self.perf_games
