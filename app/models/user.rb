@@ -17,7 +17,7 @@ class User < ApplicationRecord
   normalizes :email_address, with: ->(e) { e.strip.downcase }
   normalizes :username, with: ->(u) { u.strip }
 
-  def games_played = players.count
+  def games_played = players.size
 
   def games_won = players.count { it.winner }
 
