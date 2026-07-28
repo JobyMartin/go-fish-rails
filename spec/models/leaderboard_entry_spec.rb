@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe LeaderboardEntry do
-  let(:ranked_games) { User::MINIMUM_RANKED_GAMES }
+  let(:ranked_games) { described_class::MINIMUM_RANKED_GAMES }
 
   def entry_for(username) = described_class.find_by(username:)
 

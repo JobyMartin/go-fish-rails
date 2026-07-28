@@ -7,7 +7,8 @@ performance-focused week, so **how** it's written matters as much as what it doe
 
 The page was written deliberately unoptimized — `User.all.sort_by { -it.games_won }` with
 a query per row from each of `User#games_played` / `#games_won` / `#time_played` — so the
-week could measure it, optimize it, and measure again.
+week could measure it, optimize it, and measure again. **Those four `User` methods are gone**;
+`LeaderboardEntry` replaced them, and it is the only place the stats are computed now.
 
 **Complete: 3,014 queries / 4,115 ms -> 2 queries / 36 ms.** Phase 1 was eager loading,
 Phase 2 measured indexes and rejected them, Phase 3 replaced the whole thing with a Scenic
@@ -188,8 +189,9 @@ been a Bullet benchmark. Turning it off in dev is safe because the test suite ru
 
 Four columns: games played, wins, win %, time played.
 
-- **Win % has a floor.** `User::MINIMUM_RANKED_GAMES` (5) — below it, `win_percentage`
-  returns `nil` and the view renders `User::UNRANKED` (`—`). Without a floor, one lucky
+- **Win % has a floor.** `LeaderboardEntry::MINIMUM_RANKED_GAMES` (5) — below it,
+  `win_percentage` returns `nil` and the page renders `LeaderboardEntry::UNRANKED` (`—`).
+  Both constants moved off `User` with the stat methods. Without a floor, one lucky
   win reads as 100% and outranks a 400-of-600 record.
 - **Time played is wall-clock, not attention.** `SUM(ended_at - started_at)` over the
   user's finished games. Nothing tracks per-turn timing, so a game where someone walked

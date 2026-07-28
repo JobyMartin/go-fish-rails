@@ -1,7 +1,7 @@
 module LeaderboardHelper
   def win_percentage_for(entry)
     percentage = entry.win_percentage
-    percentage.nil? ? User::UNRANKED : "#{percentage}%"
+    percentage.nil? ? LeaderboardEntry::UNRANKED : "#{percentage}%"
   end
 
   def time_played_for(entry)

@@ -6,7 +6,7 @@ RSpec.describe 'Leaderboard', type: :system do
   let(:champion) { create(:user, username: champion_name) }
   let(:challenger) { create(:user, username: challenger_name) }
 
-  let(:ranked_games) { User::MINIMUM_RANKED_GAMES }
+  let(:ranked_games) { LeaderboardEntry::MINIMUM_RANKED_GAMES }
   let(:every_game_won) { '100%' }
   let(:no_games_won) { '0%' }
   let(:hours_per_game) { FinishedGame::DURATION / 1.hour }
@@ -58,7 +58,7 @@ RSpec.describe 'Leaderboard', type: :system do
     it 'withholds their win percentage' do
       visit leaderboard_path
 
-      cell_in_row champion_name, User::UNRANKED
+      cell_in_row champion_name, LeaderboardEntry::UNRANKED
     end
   end
 
