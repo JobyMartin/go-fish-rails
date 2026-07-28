@@ -77,9 +77,12 @@ class PerfSeed
 
   def duration = random.rand(DURATION_RANGE)
 
+  # Both reads are explicitly ordered: without ORDER BY, Postgres may return rows in any
+  # order, which pairs the seeded random draws with different games on each run and makes
+  # the dataset -- and every measurement taken against it -- non-reproducible.
   def insert_players
-    user_ids = User.where("username LIKE ?", "#{USERNAME_PREFIX}%").pluck(:id)
-    rows = self.class.perf_games.pluck(:id, :ended_at)
+    user_ids = User.where("username LIKE ?", "#{USERNAME_PREFIX}%").order(:id).pluck(:id)
+    rows = self.class.perf_games.order(:id).pluck(:id, :ended_at)
                  .flat_map { player_rows(it.first, it.last, user_ids) }
     insert_in_batches(Player, rows)
   end
