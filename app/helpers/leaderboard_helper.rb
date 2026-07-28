@@ -1,7 +1,7 @@
 module LeaderboardHelper
   def paged_entries(search) = search.result.page(params[:page])
 
-  def rank_for(entries, index) = entries.offset_value + index + 1
+  def rank_for(entry) = entry.rank || LeaderboardEntry::UNRANKED
 
   def win_percentage_for(entry)
     percentage = entry.win_percentage

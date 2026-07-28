@@ -14,16 +14,16 @@
       table.table.table--container.table--odd-striped
         thead
           tr
-            th Rank
+            th = sort_link @search, :rank, 'Rank'
             th = sort_link @search, :username, 'Player'
             th = sort_link @search, :games_played, 'Games played', default_order: :desc
             th = sort_link @search, :games_won, 'Wins', default_order: :desc
             th Win %
             th = sort_link @search, :time_played, 'Time played', default_order: :desc
         tbody
-          - entries.each_with_index do |entry, index|
+          - entries.each do |entry|
             tr
-              td = rank_for(entries, index)
+              td = rank_for(entry)
               td = entry.username
               td = entry.games_played
               td = entry.games_won

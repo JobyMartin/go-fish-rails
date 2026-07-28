@@ -172,7 +172,7 @@ See `docs/architecture.md` for the full model map and serialization details.
   paginated by Kaminari (25/page; the added `COUNT` still nets **3 queries / 22 ms**). Aggregation
   lives in the view, display rules in Ruby. **Never edit `_v01.sql` in place** — `rails g
   scenic:view leaderboard_entries` versions it. Indexes were *measured and rejected*. Also holds
-  `perf:seed` / `perf:measure`, Bullet's cost model, the **positional Rank card**, and `/games`.
+  `perf:seed` / `perf:measure`, Bullet's cost model, the **`RANK()` rank column**, and `/games`.
 - `docs/brave-card-1-round-feed-presenter.md` — **complete**. `RoundFeed` (+ `FeedLine`) at
   `app/models/round_feed.rb` is a namespace-neutral seam; every game partial iterates
   `result.feed_lines`. **Roles are positional** — first `action`, last `game_response`, middles between.

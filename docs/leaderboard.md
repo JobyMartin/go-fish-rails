@@ -193,8 +193,10 @@ hash one character at a time. On this view it would also expose nothing useful; 
 
 **`win_percentage` is still not sortable — but that is now a choice, not a limit.** It was a
 Ruby method (Ransack only sorts real columns); since `_v02.sql` it is a real column and could
-be added to `ransackable_attributes`. It is left off because sorting on it needs a decision
-about where the `NULL` unranked rows belong. `Game#status` is the genuinely unsortable case
+be added to `ransackable_attributes`. It is left off pending a decision about where the `NULL`
+below-the-floor rows belong — though `rank` has since answered the same question for itself by
+simply taking Postgres' default (`NULLS LAST` on `ASC`), which is the obvious precedent to follow.
+`Game#status` is the genuinely unsortable case
 (derived from `started_at`/`ended_at`), which is why Ransack fits this view — every displayed
 column is real SQL — better than it fits the games lobby.
 
@@ -205,10 +207,9 @@ rendered rows in arbitrary order. Hence `ranked_search` falls back on
 **appends** rather than replaces, so the dud node survives harmlessly; specs assert on
 `filter_map(&:attr_name)` rather than `map(&:name)` for that reason.
 
-**The Rank column is positional, not a real rank.** It counts rows in the current result set, so
-sorting by Time played still shows the longest-playing user as "Rank 1". See "Card: a real rank
-column" — that card should land *before* Ransack filtering, which is what makes the positional
-number actively misleading.
+**Rank sorts too, and it is a real column** — see "A real rank column". `?q[s]=rank asc` is the
+board's natural order; Postgres puts the `NULL` unranked rows last on `ASC` (and first on `DESC`,
+which is the one mildly odd case).
 
 ## Pagination with Kaminari (2026-07-28)
 
@@ -242,9 +243,9 @@ one-ivar-per-action convention. "Which page am I on" is presentation, same as `w
 `entries` must be a **local** in the template: calling `paged_entries` twice (rows, then
 `paginate`) would build a second relation and re-issue the SELECT.
 
-**Rank is `entries.offset_value + index + 1`** (`rank_for`), so page 3 starts at 51 instead of
-restarting at 1. `offset_value` is the relation's `OFFSET`, i.e. `(page - 1) * per_page`. An
-out-of-range `?page=999` has `offset_value` 24950 but zero rows, so no bogus rank renders.
+**Rank used to be `entries.offset_value + index + 1`.** It no longer is — the view computes it, so
+page 3 starts at 51 because those users *are* ranks 51–75, not because the template did arithmetic.
+See "A real rank column".
 
 ### The Kaminari templates are ours now
 
@@ -283,39 +284,57 @@ out-of-range `?page=999` has `offset_value` 24950 but zero rows, so no bogus ran
   `--op-space-scale-unit` to `2rem` against Optics' `1rem`, so every token is 2× its Optics value —
   `--op-space-medium` would have been a 3.2rem gap.
 
-## Card: a real rank column (`RANK()` in `_v03.sql`)
+## A real rank column (`_v03.sql`, 2026-07-28)
 
-Replace the positional `rank_for` with a window function in the view:
+Rank is a window function in the view, not a row counter in the template:
 
 ```sql
-RANK() OVER (ORDER BY games_won DESC) AS rank
+CASE WHEN COUNT(players.id) > 0 THEN
+  RANK() OVER (ORDER BY COUNT(players.id) FILTER (WHERE players.winner) DESC)
+END AS rank
 ```
 
-**Do this before adding Ransack filtering.** Sorting alone only preserves the existing flaw;
-filtering breaks the number's *meaning*. `rank_for` counts rows in the result set, so with
-`?q[games_won_gteq]=10` position 1 becomes "best of the matches" rather than rank 1 on the board —
-and nothing on the page signals that it changed. A view-computed rank is immune: the view computes
-it before a request's `WHERE` or `ORDER BY` touches it, so it survives sorting, filtering, and
-pagination, and `rank_for` / `offset_value` both disappear.
+**Landed before Ransack filtering, deliberately.** Sorting alone only preserved the old flaw;
+filtering would have broken the number's *meaning*. The old `rank_for(entries, index)` counted rows
+in the result set, so under `?q[games_won_gteq]=10` position 1 would read "best of the matches"
+rather than rank 1 on the board — with nothing on the page signalling the change. The view computes
+rank before a request's `WHERE`, `ORDER BY`, or `OFFSET` touches it, so the number survives all
+three. `rank_for` is now `entry.rank || UNRANKED` and `offset_value` is gone from the app.
+
+**Rank means wins, and only wins.** The window's `ORDER BY` is the win count alone — *not* the full
+`.ranked` chain. That separation is the point: had it included `username`, the tiebreaks would make
+every row unique and `RANK()` would collapse into `ROW_NUMBER()`, which is the row counter again in
+SQL. Instead ties are visible (two users on 12 wins are both rank 8, the next is 10 — `RANK()`, not
+`DENSE_RANK()`, as boards conventionally use), while `.ranked`'s wins → fewer games → username chain
+stays what it always was: **display order**, keeping the board deterministic.
+
+**Never-played users are `NULL`, rendered as the existing `UNRANKED` (`—`).** The rule is "you're
+ranked once you've played"; a user who has played 40 and won none is still ranked, just last. The
+floor is one game, not `win_percentage`'s five — five exists because *percentages* are noisy on small
+samples, which says nothing about whether someone belongs on the board.
+
+**The `CASE` cannot distort anyone else's rank**, which is worth seeing rather than trusting: the
+window still runs over every row including the never-played, and only the output is nulled. But a
+never-played user has zero wins, the minimum, so no row ever strictly precedes another because of
+them — and `RANK()` gives tied rows the same number rather than consuming extras. They are always
+tied with the played-but-winless group. A `PARTITION BY (COUNT(players.id) > 0)` would express the
+intent more loudly and compute the identical numbers.
 
 **Filtering on a window-function column works, which is not obvious.** A window function is
 illegal in a `WHERE` at its own query level, but a view is a separate level and Postgres will not
-push the predicate down through it — `LeaderboardEntry.where("rank <= 10")` is fine. Verified
-against the seeded data.
+push the predicate down through it — `LeaderboardEntry.where(rank: ..10)` is fine.
 
-Then `rank` is allowlistable in `ransackable_attributes` like any real column, which buys
-`?q[rank_lteq]=10` as a "top 10" filter. Safe to expose — an integer aggregate on a view with no
-sensitive columns. Still by hand; the `column_names` warning above stands.
+`rank` is in `ransackable_attributes`, so `?q[rank_lteq]=10` is a "top 10" filter for free. Safe to
+expose — an integer aggregate on a view with no sensitive columns. Added by hand; the `column_names`
+warning above stands.
 
-**Open decisions:**
+**`rank` is not a reserved word in Postgres** despite being a function name, so `AS rank` needs no
+quoting and Active Record exposes `entry.rank` normally.
 
-- **`RANK()` vs `DENSE_RANK()`.** `RANK()` ties then skips (8, 8, 10); `DENSE_RANK()` ties without
-  skipping (8, 8, 9). Boards conventionally want `RANK()`.
-- **Where the zero-game users go.** They all tie at the bottom on one rank, and `RANK()` leaves a
-  large gap after them. This is the same unresolved question that keeps `win_percentage` out of
-  `ransackable_attributes`.
-- **Cost is small but unindexable.** 1 ms for 5 runs at 1,004 rows, but `RANK()` sorts every row
-  on every request and no index removes that. It scales with user count, not query count.
+**Cost is small but unindexable.** `RANK()` sorts every row on every request and no index removes
+that — it scales with user count, not query count. At the seeded 1,004 users it does not show:
+`perf:measure[/leaderboard,5]` reports **3 queries / 19 ms** against the paginated page's 3 / 22 ms,
+i.e. inside the run-to-run noise.
 
 ## Next: the games index is unbounded
 

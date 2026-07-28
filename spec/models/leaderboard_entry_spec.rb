@@ -76,8 +76,67 @@ RSpec.describe LeaderboardEntry do
     end
   end
 
+  describe 'the rank' do
+    let(:champion_name) { 'ace' }
+    let(:challenger_name) { 'rookie' }
+    let(:champion) { create(:user, username: champion_name) }
+    let(:challenger) { create(:user, username: challenger_name) }
+
+    def rank_for(username) = entry_for(username).rank
+
+    it 'ranks the most wins first' do
+      create(:player, :winner, user: champion)
+      create(:player, user: challenger)
+
+      expect(rank_for(champion_name)).to eq 1
+    end
+
+    it 'gives equal wins the same rank' do
+      create(:player, :winner, user: champion)
+      create(:player, :winner, user: challenger)
+
+      expect(rank_for(challenger_name)).to eq 1
+    end
+
+    it 'skips the ranks a tie consumed' do
+      tied_winners = 2
+      create_list(:user, tied_winners).each { create(:player, :winner, user: it) }
+      create(:player, user: challenger)
+
+      expect(rank_for(challenger_name)).to eq tied_winners + 1
+    end
+
+    it 'ignores games played when the wins are equal' do
+      extra_losses = 4
+      create(:player, :winner, user: champion)
+      create(:player, :winner, user: challenger)
+      create_list(:player, extra_losses, user: challenger)
+
+      expect(rank_for(challenger_name)).to eq rank_for(champion_name)
+    end
+
+    it 'ranks a user who has played but never won' do
+      create(:player, user: champion)
+
+      expect(rank_for(champion_name)).to eq 1
+    end
+
+    it 'leaves the rank null for a user who has never played' do
+      champion
+
+      expect(rank_for(champion_name)).to be_nil
+    end
+
+    it 'does not let a user who has never played consume a rank' do
+      challenger
+      create(:player, user: champion)
+
+      expect(rank_for(champion_name)).to eq 1
+    end
+  end
+
   describe '.ranked_search' do
-    let(:sortable) { %w[username games_played games_won time_played] }
+    let(:sortable) { %w[rank username games_played games_won time_played] }
 
     it 'allows sorting by every displayed column' do
       expect(described_class.ransackable_attributes).to eq sortable

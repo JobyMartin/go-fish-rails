@@ -6,7 +6,7 @@ class LeaderboardEntry < ApplicationRecord
   DEFAULT_SORT = [ "games_won desc", "games_played asc", "username asc" ].freeze
 
   def self.ransackable_attributes(_auth_object = nil)
-    %w[username games_played games_won time_played]
+    %w[rank username games_played games_won time_played]
   end
 
   def self.ransackable_associations(_auth_object = nil) = []

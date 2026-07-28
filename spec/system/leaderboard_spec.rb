@@ -61,6 +61,16 @@ RSpec.describe 'Leaderboard', type: :system do
     end
   end
 
+  context 'when a player has never joined a game' do
+    before { challenger }
+
+    it 'withholds their rank' do
+      visit leaderboard_path
+
+      cell_in_row challenger_name, LeaderboardEntry::UNRANKED
+    end
+  end
+
   context 'when sorting by a column' do
     before do
       create_list(:player, 2, :winner, :in_finished_game, user: champion)
@@ -68,6 +78,7 @@ RSpec.describe 'Leaderboard', type: :system do
     end
 
     def first_username = all('tbody tr td:nth-child(2)').first.text
+    def first_rank = all('tbody tr td:first-child').first.text
 
     it 'ranks the most wins first by default' do
       visit leaderboard_path
@@ -90,13 +101,25 @@ RSpec.describe 'Leaderboard', type: :system do
 
       expect(page).to have_current_path leaderboard_path(q: { s: 'games_played desc' })
     end
+
+    it 'keeps each board rank when sorted by another column' do
+      runner_up = '2'
+      visit leaderboard_path
+
+      click_on 'Games played'
+
+      expect(first_rank).to eq runner_up
+    end
   end
 
   context 'when there are more players than fit on one page' do
     let(:page_size) { 25 }
     let(:players_beyond_the_first_page) { 1 }
 
-    before { create_list(:user, page_size) }
+    before do
+      create_list(:user, page_size).each { create(:player, :winner, user: it) }
+      create(:player, user: champion)
+    end
 
     def rows = all('tbody tr')
     def first_rank = all('tbody tr td:first-child').first.text
@@ -115,7 +138,7 @@ RSpec.describe 'Leaderboard', type: :system do
       expect(rows.size).to eq players_beyond_the_first_page
     end
 
-    it 'continues the rank numbering onto the next page' do
+    it 'shows the board rank rather than the position on the page' do
       visit leaderboard_path
 
       click_on 'Next'

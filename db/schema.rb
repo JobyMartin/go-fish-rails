@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_28_160223) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_184003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -166,6 +166,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_28_160223) do
       users.username,
       count(players.id) AS games_played,
       count(players.id) FILTER (WHERE players.winner) AS games_won,
+          CASE
+              WHEN (count(players.id) > 0) THEN rank() OVER (ORDER BY (count(players.id) FILTER (WHERE players.winner)) DESC)
+              ELSE NULL::bigint
+          END AS rank,
           CASE
               WHEN (count(players.id) >= 5) THEN (round((((count(players.id) FILTER (WHERE players.winner))::numeric / (count(players.id))::numeric) * (100)::numeric)))::integer
               ELSE NULL::integer
