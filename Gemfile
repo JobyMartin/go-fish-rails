@@ -8,6 +8,8 @@ gem "propshaft"
 gem "pg", "~> 1.1"
 # Versioned database views, managed from db/views [https://github.com/scenic-views/scenic]
 gem "scenic"
+# Sortable/searchable columns from query params [https://github.com/activerecord-hackery/ransack]
+gem "ransack"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
