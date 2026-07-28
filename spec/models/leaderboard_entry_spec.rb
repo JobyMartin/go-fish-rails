@@ -1,7 +1,7 @@
 require 'rails_helper'
 
 RSpec.describe LeaderboardEntry do
-  let(:ranked_games) { described_class::MINIMUM_RANKED_GAMES }
+  let(:ranked_games) { 5 }
 
   def entry_for(username) = described_class.find_by(username:)
 
@@ -50,20 +50,15 @@ RSpec.describe LeaderboardEntry do
       expect { entry_for(username).update!(username: 'renamed') }
         .to raise_error ActiveRecord::ReadOnlyRecord
     end
-  end
 
-  describe '#win_percentage' do
-    let(:username) { 'solo' }
-    let(:user) { create(:user, username:) }
-
-    it 'is nil below the ranked minimum' do
+    it 'leaves the win percentage null below the ranked minimum' do
       below_minimum = ranked_games - 1
       create_list(:player, below_minimum, :winner, user:)
 
       expect(entry_for(username).win_percentage).to be_nil
     end
 
-    it 'is wins over games played once ranked' do
+    it 'computes the win percentage as wins over games played once ranked' do
       even_split = 50
       create_list(:player, ranked_games, :winner, user:)
       create_list(:player, ranked_games, user:)

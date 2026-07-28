@@ -96,7 +96,7 @@ class PerfSeed
   end
 
   # Squaring a uniform draw skews picks toward the front of the list, so some users
-  # accumulate hundreds of games and others land under User::MINIMUM_RANKED_GAMES.
+  # accumulate hundreds of games and others land under the leaderboard's ranking floor.
   # A flat distribution would put every user well past the ranking floor.
   def pick_users(user_ids, count)
     picked = Set.new

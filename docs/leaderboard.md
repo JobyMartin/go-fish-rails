@@ -132,9 +132,21 @@ LeaderboardEntry.find_by(username: "ace")      # `users.id AS id` gives it a pri
 ```
 
 **What lives where.** The view holds the aggregation — counts, the winner filter, the
-duration sum. Ruby holds the *display rules*: `.ranked` for ordering and `#win_percentage`
-for the `MINIMUM_RANKED_GAMES` floor. A versioned view is awkward to change (each edit is a
-new `_v02.sql` plus a migration), so rules likely to be tweaked stay in Ruby.
+duration sum, and (as of `_v02.sql`) `win_percentage` including its ranked floor. Ruby holds
+only the *presentation*: `.ranked` for ordering and `win_percentage_for` in
+`LeaderboardHelper`, which renders `UNRANKED` (`—`) when the column is `NULL`.
+
+`win_percentage` is a `CASE WHEN COUNT(players.id) >= 5` in SQL, so **the SQL literal is the
+floor** — a view can't read a Ruby constant. `MINIMUM_RANKED_GAMES` was deleted along with the
+Ruby method: once nothing but the specs read it, a Ruby constant is a *second*, unenforced copy
+of the number, and a spec deriving its expectation from it would pass while the view disagreed.
+The specs name `5` literally instead. Changing the floor means a new `_v03.sql` plus a
+migration, and updating those specs.
+
+Two casts matter in that expression: `::numeric` before the division (integer division would
+floor every percentage to 0 or 100, and `double precision` would round halves to even instead
+of matching Ruby's `Float#round`), then `::integer` on the result so the attribute arrives as
+an `Integer` rather than a `BigDecimal` that would interpolate as `"50.0%"`.
 
 **Why it is fast.** Phase 1 left 21,060 Active Record objects being hydrated to print four
 numbers per row — 92% of the request. The view returns 1,004 already-aggregated rows, so
@@ -177,10 +189,12 @@ predicates like `q[password_digest_start]=$2a$`, which lets an attacker binary-s
 hash one character at a time. On this view it would also expose nothing useful; on `User` or
 `games.game_state` it would leak credentials and every player's hand.
 
-**`win_percentage` is not sortable, deliberately.** It is a Ruby method carrying the
-`MINIMUM_RANKED_GAMES` floor, and Ransack only sorts real columns. `Game#status` has the same
-problem (derived from `started_at`/`ended_at`), which is why Ransack fits this view — every
-displayed column except Win % is real SQL — better than it fits the games lobby.
+**`win_percentage` is still not sortable — but that is now a choice, not a limit.** It was a
+Ruby method (Ransack only sorts real columns); since `_v02.sql` it is a real column and could
+be added to `ransackable_attributes`. It is left off because sorting on it needs a decision
+about where the `NULL` unranked rows belong. `Game#status` is the genuinely unsortable case
+(derived from `started_at`/`ended_at`), which is why Ransack fits this view — every displayed
+column is real SQL — better than it fits the games lobby.
 
 **A refused sort still leaves a `Sort` node behind.** It resolves to no column and emits no
 `ORDER BY`, so `search.sorts.empty?` is false while the board is *unordered* — `?q[s]=id desc`
@@ -249,9 +263,9 @@ been a Bullet benchmark. Turning it off in dev is safe because the test suite ru
 
 Four columns: games played, wins, win %, time played.
 
-- **Win % has a floor.** `LeaderboardEntry::MINIMUM_RANKED_GAMES` (5) — below it,
-  `win_percentage` returns `nil` and the page renders `LeaderboardEntry::UNRANKED` (`—`).
-  Both constants moved off `User` with the stat methods. Without a floor, one lucky
+- **Win % has a floor** of 5 games, in the view's `CASE WHEN` — below it the view selects
+  `NULL` and the page renders `LeaderboardEntry::UNRANKED` (`—`).
+  `UNRANKED` moved off `User` with the stat methods. Without a floor, one lucky
   win reads as 100% and outranks a 400-of-600 record.
 - **Time played is wall-clock, not attention.** `SUM(ended_at - started_at)` over the
   user's finished games. Nothing tracks per-turn timing, so a game where someone walked

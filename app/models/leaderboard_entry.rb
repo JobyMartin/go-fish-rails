@@ -1,5 +1,4 @@
 class LeaderboardEntry < ApplicationRecord
-  MINIMUM_RANKED_GAMES = 5
   UNRANKED = "—".freeze
 
   scope :ranked, -> { order(games_won: :desc, games_played: :asc, username: :asc) }
@@ -19,10 +18,4 @@ class LeaderboardEntry < ApplicationRecord
   end
 
   def readonly? = true
-
-  def win_percentage
-    return if games_played < MINIMUM_RANKED_GAMES
-
-    (games_won.to_f / games_played * 100).round
-  end
 end
