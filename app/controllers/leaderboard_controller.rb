@@ -1,5 +1,5 @@
 class LeaderboardController < ApplicationController
   def index
-    @entries = LeaderboardEntry.ranked
+    @search = LeaderboardEntry.ranked_search(params[:q])
   end
 end

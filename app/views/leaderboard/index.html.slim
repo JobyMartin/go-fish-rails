@@ -13,13 +13,13 @@
         thead
           tr
             th Rank
-            th Player
-            th Games played
-            th Wins
+            th = sort_link @search, :username, 'Player'
+            th = sort_link @search, :games_played, 'Games played', default_order: :desc
+            th = sort_link @search, :games_won, 'Wins', default_order: :desc
             th Win %
-            th Time played
+            th = sort_link @search, :time_played, 'Time played', default_order: :desc
         tbody
-          - @entries.each_with_index do |entry, index|
+          - @search.result.each_with_index do |entry, index|
             tr
               td = index + 1
               td = entry.username

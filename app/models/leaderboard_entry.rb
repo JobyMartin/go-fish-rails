@@ -1,13 +1,22 @@
-# Backed by the `leaderboard_entries` database view (db/views/leaderboard_entries_v01.sql),
-# so this reads like any other table. See docs/leaderboard.md.
 class LeaderboardEntry < ApplicationRecord
-  # Without a floor, one lucky win reads as 100% and outranks a 400-of-600 record.
   MINIMUM_RANKED_GAMES = 5
   UNRANKED = "—".freeze
 
-  # Ties fall back to the tighter record, then username, so identical requests return an
-  # identical board. Ordering lives here rather than in the view: it is a display rule.
   scope :ranked, -> { order(games_won: :desc, games_played: :asc, username: :asc) }
+
+  DEFAULT_SORT = [ "games_won desc", "games_played asc", "username asc" ].freeze
+
+  def self.ransackable_attributes(_auth_object = nil)
+    %w[username games_played games_won time_played]
+  end
+
+  def self.ransackable_associations(_auth_object = nil) = []
+
+  def self.ranked_search(params)
+    search = ransack(params)
+    search.sorts = DEFAULT_SORT unless search.sorts.any?(&:attr_name)
+    search
+  end
 
   def readonly? = true
 

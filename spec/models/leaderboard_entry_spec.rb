@@ -81,6 +81,38 @@ RSpec.describe LeaderboardEntry do
     end
   end
 
+  describe '.ranked_search' do
+    let(:sortable) { %w[username games_played games_won time_played] }
+
+    it 'allows sorting by every displayed column' do
+      expect(described_class.ransackable_attributes).to eq sortable
+    end
+
+    it 'emits no ordering for a column it does not allowlist' do
+      search = described_class.ranked_search('s' => 'id desc')
+
+      expect(search.result.to_sql).not_to match(/ORDER BY.*\bid\b/)
+    end
+
+    it 'falls back to the ranked order when the requested sort is refused' do
+      search = described_class.ranked_search('s' => 'id desc')
+
+      expect(search.sorts.filter_map(&:attr_name)).to eq %w[games_won games_played username]
+    end
+
+    it 'falls back to the ranked order when no sort is given' do
+      search = described_class.ranked_search(nil)
+
+      expect(search.sorts.filter_map(&:attr_name)).to eq %w[games_won games_played username]
+    end
+
+    it 'honours a sort the caller asked for' do
+      search = described_class.ranked_search('s' => 'games_played desc')
+
+      expect(search.sorts.filter_map(&:attr_name)).to eq %w[games_played]
+    end
+  end
+
   describe '.ranked' do
     let(:champion_name) { 'ace' }
     let(:challenger_name) { 'rookie' }
