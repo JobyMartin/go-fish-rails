@@ -102,6 +102,14 @@ RSpec.describe 'Leaderboard', type: :system do
       expect(page).to have_current_path leaderboard_path(q: { s: 'games_played desc' })
     end
 
+    it 'reorders by win percentage when that header is clicked' do
+      visit leaderboard_path
+
+      click_on 'Win %'
+
+      expect(first_username).to eq challenger_name
+    end
+
     it 'keeps each board rank when sorted by another column' do
       runner_up = '2'
       visit leaderboard_path

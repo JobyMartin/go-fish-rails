@@ -177,8 +177,9 @@ it is the historical record of what the migration created.
 
 ## Sorting with Ransack
 
-Four columns sort: **Player**, **Games played**, **Wins**, **Time played**. Numeric ones use
-`default_order: :desc` so the first click shows most-wins-first. The sort rides in the URL
+Every displayed column sorts: **Rank**, **Player**, **Games played**, **Wins**, **Win %**, **Time
+played**. Numeric ones use `default_order: :desc` so the first click shows most-wins-first (Rank is
+the exception — ascending is its natural order). The sort rides in the URL
 (`?q[s]=games_played+desc`), so a sorted board is shareable.
 
 `LeaderboardController#index` stays one instance variable — `@search =
@@ -191,12 +192,9 @@ predicates like `q[password_digest_start]=$2a$`, which lets an attacker binary-s
 hash one character at a time. On this view it would also expose nothing useful; on `User` or
 `games.game_state` it would leak credentials and every player's hand.
 
-**`win_percentage` is still not sortable — but that is now a choice, not a limit.** It was a
-Ruby method (Ransack only sorts real columns); since `_v02.sql` it is a real column and could
-be added to `ransackable_attributes`. It is left off pending a decision about where the `NULL`
-below-the-floor rows belong — though `rank` has since answered the same question for itself by
-simply taking Postgres' default (`NULLS LAST` on `ASC`), which is the obvious precedent to follow.
-`Game#status` is the genuinely unsortable case
+**`win_percentage` sorts only because it is a real column.** While it was a Ruby method it could
+not — Ransack sorts SQL, not Ruby — and it became sortable the moment `_v02.sql` moved the `CASE`
+into the view. `Game#status` is the genuinely unsortable case
 (derived from `started_at`/`ended_at`), which is why Ransack fits this view — every displayed
 column is real SQL — better than it fits the games lobby.
 
@@ -207,9 +205,17 @@ rendered rows in arbitrary order. Hence `ranked_search` falls back on
 **appends** rather than replaces, so the dud node survives harmlessly; specs assert on
 `filter_map(&:attr_name)` rather than `map(&:name)` for that reason.
 
-**Rank sorts too, and it is a real column** — see "A real rank column". `?q[s]=rank asc` is the
-board's natural order; Postgres puts the `NULL` unranked rows last on `ASC` (and first on `DESC`,
-which is the one mildly odd case).
+**The two nullable columns — `rank` and `win_percentage` — always sort last, both directions.**
+`config/initializers/ransack.rb` sets `postgres_fields_sort_option = :nulls_always_last`. Postgres'
+own default treats `NULL` as the largest value, so `win_percentage desc` would have opened with a
+block of `—` above the best players. The `always` matters: plain `:nulls_last` means "last on `ASC`",
+which flips to first on `DESC` and reintroduces exactly that. It is global rather than per-column
+because "unranked belongs at the bottom" is a board-wide rule, and Ransack has no per-attribute
+setting. Harmless on the non-nullable columns — `COUNT` never returns `NULL`.
+
+This is what unblocked `win_percentage` sorting. It had been left off pending a decision about
+where the below-the-floor rows go; the answer turned out to be a config line rather than a
+`COALESCE` ransacker, which would have had to encode a fake numeric value for "unranked."
 
 ## Pagination with Kaminari (2026-07-28)
 

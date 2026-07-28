@@ -136,7 +136,7 @@ RSpec.describe LeaderboardEntry do
   end
 
   describe '.ranked_search' do
-    let(:sortable) { %w[rank username games_played games_won time_played] }
+    let(:sortable) { %w[rank username games_played games_won win_percentage time_played] }
 
     it 'allows sorting by every displayed column' do
       expect(described_class.ransackable_attributes).to eq sortable
@@ -164,6 +164,13 @@ RSpec.describe LeaderboardEntry do
       search = described_class.ranked_search('s' => 'games_played desc')
 
       expect(search.sorts.filter_map(&:attr_name)).to eq %w[games_played]
+    end
+
+    it 'sends the unranked rows last whichever way a nullable column is sorted' do
+      descending = described_class.ranked_search('s' => 'win_percentage desc').result.to_sql
+      ascending = described_class.ranked_search('s' => 'win_percentage asc').result.to_sql
+
+      expect([ descending, ascending ]).to all match(/win_percentage.*NULLS LAST/)
     end
   end
 
