@@ -264,8 +264,16 @@ out-of-range `?page=999` has `offset_value` 24950 but zero rows, so no bogus ran
   `role="navigation" aria-label="pager"` and the `unless current_page.out_of_range?` guard that
   suppresses `Next` on `?page=999`. Both were restored by hand.
 - **`Last »` was deliberately removed** — `last_page_tag` is gone from `_paginator`, and
-  `_last_page.html.slim` deleted with it rather than left as a partial nothing renders. `« First`
-  stays.
+  `_last_page.html.slim` deleted with it rather than left as a partial nothing renders. First
+  stays, as a bare `«`.
+- **The link labels are i18n, not template strings.** Kaminari reads
+  `t('views.pagination.first')` etc. from its *own* locale file; `config/locales/en.yml` overrides
+  `views.pagination.first` to `&laquo;` because app locales load ahead of gem ones. That is the
+  place to change a label — the partials stay generic. The `aria-label="First page"` on that link
+  is **not** decoration: with the word gone, the link's entire accessible name would be `«`, which
+  a screen reader announces as "left double angle quotation mark." Icon-only visually, named for
+  assistive tech. (It is hardcoded in the partial while the visible label lives in the locale file;
+  if this app ever gets translated, those two need to move together.)
 - **Converted the gem's `==` to `=`.** In Slim `==` prints raw and `=` prints escaped, but under
   Rails `=` respects `html_safe`, so both render identically here — the gem uses `==` only because
   Slim outside Rails escapes regardless. This repo uses `==` nowhere else. That makes the
@@ -326,8 +334,8 @@ games, measured with `perf:measure`:
 `dom_id`, and a `button_to` that builds a CSRF-tokened form. Eager loading cannot help; there
 is nothing to preload. The fixes are bounding the query (pagination — **Kaminari is already
 installed and configured app-wide**, so this is `.page(params[:page])` plus a `paginate` call
-away) or scoping it, since `Game.all` includes archived and long-finished games that are not
-joinable at all.
+away, and `app/views/kaminari/` means the BEM markup and styling come with it) or scoping it,
+since `Game.all` includes archived and long-finished games that are not joinable at all.
 
 **Pagination will collide with the Turbo broadcast.** `Game#broadcast_game_update` does
 `broadcast_append_later_to('games', target: 'all-games-list')`, so a new game appends a card to

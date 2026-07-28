@@ -215,6 +215,23 @@ Strip the hash instead of hand-rolling a regex inline in the spec: see
 `RummyTurnHelper#hand_card_prefixes`/`#card_filename_prefix`
 (`spec/support/helpers/rummy_turn_helper.rb`) for the pattern.
 
+## Assert URLs with route helpers, not percent-encoded regexes
+
+Query-param assertions read as encoding noise when written literally —
+`have_current_path(/q%5Bs%5D=games_played/)` is Ransack's `q[s]` with escaped brackets, and a
+reader has to decode it before they know what the spec claims. Pass the params to the route
+helper and let Rails encode:
+
+```ruby
+expect(page).to have_current_path leaderboard_path(q: { s: 'games_played desc' }, page: 2)
+```
+
+Besides reading as intent, it asserts *more*: the substring regex above silently ignored the sort
+direction. The tradeoff is that the route-helper form compares the **whole** path, so it pins
+param order too — fine where the app builds the URL (Ransack's `sort_link`, Kaminari's page
+links), but a filter that appends params in a different order will fail on ordering alone. Fall
+back to comparing a decoded query string there, not to re-encoding brackets by hand.
+
 ## Assert persisted state, not just the DOM, for actions that write to the database
 
 A passing `have_css` after a `click_button`/`click_on` only proves the page re-rendered — it
