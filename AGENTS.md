@@ -31,6 +31,8 @@ bin/dev      # foreman: rails server + `yarn build --watch` + good_job worker
 BULLET=1 bin/dev   # ...with Bullet's N+1 warnings; off by default, and very slow on perf-seeded data
 ```
 
+**Deploying (Fly.io): `docs/deployment.md`** — env vars, the two that silently break broadcasting, Dockerfile fixes.
+
 ## Testing
 
 ```sh
@@ -45,10 +47,10 @@ bundle exec rspec path/to/spec.rb:42    # a single example by line
 - System specs run under `rack_test` by default. Tag `:js` (Playwright) or `:chrome` only
   when a spec genuinely needs a real browser — a spec that relies on JS but isn't tagged
   will fail.
-- **Prefer system specs for behavior coverage; request specs are almost never used.**
-  System specs (from the user's perspective) plus comprehensive model specs do the
-  coverage. Reach for a request spec only in the rare case where a system spec would have
-  to reach across too many layers to exercise the behavior.
+- **Prefer system specs for behavior coverage; request specs are almost never used.** System
+  specs plus comprehensive model specs do the coverage. Exactly one request spec exists
+  (`spec/requests/games_spec.rb`) — the bar is a server-side rule with no GET and no clickable
+  path to it. `docs/testing.md`.
 - **CI does not run the specs.** `.github/workflows/ci.yml` runs only RuboCop and security
   scans, so green CI does not mean the tests pass — run RSpec locally.
 
@@ -101,22 +103,19 @@ See `docs/architecture.md` for the full model map and serialization details.
   `simple_form` input before hand-writing markup or a new component.
 - **BEM** for CSS class naming; component styles live in `app/assets/stylesheets/components/`.
 - **Optics' root font size is 10px**, so an `18rem` panel renders 180px and `--op-space-scale-unit: 2rem` is 20px. Measure widths; don't eyeball.
-- **Motion is finite and gated.** The app has exactly one animation (the Rummy post-draw card
-  pulse): finite iteration count, wrapped in `prefers-reduced-motion: no-preference`, with a
-  non-motion cue carrying the same message. Hold new motion to that bar, and prefer a local
-  `@keyframes` over an animation library — `animate.css` was weighed and rejected (it doesn't
-  fit Propshaft's no-tree-shaking auto-linking, and its classes fight BEM).
+- **Motion is finite and gated.** One animation exists (the Rummy post-draw pulse): finite
+  iterations, `prefers-reduced-motion` gated, with a non-motion cue saying the same thing. Hold
+  new motion to that bar; prefer local `@keyframes` — animation libraries were rejected, see
+  `docs/architecture.md`.
 - **`.count` always issues SQL; `.size` reads a loaded association.** One such word cost the
   leaderboard 1,004 queries. Bullet flags it *Need Counter Cache*, not *USE eager loading*.
   `.empty?` is the same trap: on an unloaded relation it fires its own `SELECT`. `.load` first.
 - Ruby's implicit block parameter `it` is used throughout (e.g. `players.find { it.id == x }`).
-- **Comments are a last resort, not a courtesy.** Before writing one, ask: can this be
-  induced by reading the code? If yes, the comment is dead weight — delete it, or better,
-  rename/restructure so the code says it. If no — the reason genuinely can't be derived from
-  the code, tests, or a linked doc (a business rule, a bug workaround, "why this exists at
-  all") — that's the only case a comment earns its place. When in doubt, put the explanation
-  in the relevant `docs/*.md` file instead of the source; code comments rot in place, docs get
-  read and updated.
+- **Comments are a last resort, not a courtesy.** If a reader could induce it from the code,
+  the comment is dead weight — delete it, or rename/restructure so the code says it. A comment
+  earns its place only when the reason genuinely *can't* be derived from code, tests, or a linked
+  doc (a business rule, a bug workaround, "why this exists at all"). When in doubt put it in the
+  relevant `docs/*.md`: code comments rot in place, docs get read and updated.
 
 ## Gotchas
 
@@ -150,31 +149,36 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **Whose turn it is, and turn *order*, are enforced only in the view.** `drawn_this_turn` is
   serialized but never validated — it only sets `disabled:` on buttons — and no controller
   checks that the submitter is `current_player`. A crafted POST can discard before drawing, or
-  act on **another player's hand**. Both open cards in `docs/improvement-cards.md`.
+  act on **another player's hand**. Both open cards in `docs/improvement-cards.md`. **Starting
+  is the exception**: `Game#start` itself refuses below `Game::MINIMUM_PLAYERS` (2).
+- **`Game#start` returns `false` instead of raising** below the minimum — the app's one silent
+  failure (contrast `Rummy::InvalidMove`). Ignore the return value and you get a `nil`
+  `game_state`, so specs must seat two players. **Seat order is join order only because of
+  `has_many :players, -> { order(:id) }`** — dropping that scope re-randomizes `current_player`.
+  Both: `docs/architecture.md`, `docs/testing.md`.
 - **Game actions are participant-gated; `join` is deliberately not.** `require_participation`
   (`before_action, only: %i[show start play winner]`) redirects non-participants to the lobby;
   joining is a non-participant action by nature. `docs/brave-card-3-authorize-game-actions.md`.
 
 ## Key context
 
-- `docs/architecture.md` — model relationships, STI, and the serialization pattern
+- `docs/architecture.md` — model relationships, STI, the serialization pattern, seat order, and
+  who broadcasts what (incl. the waiting room's live player list)
 - `docs/testing.md` — TDD workflow and spec organization
 - `docs/games/go-fish.md` — Go Fish rules and implementation notes
 - `docs/games/crazy-eights.md` — Crazy Eights rules, William, and implementation notes
 - `docs/improvement-plan.md` + `improvement-1-breakdown.md` + `improvement-2-breakdown.md` —
-  third-game foundations, **all complete**: the shared "game contract" (incl. the
-  `"a persisted card game"` shared example), then polymorphic dispatch + `Game::PLAYABLE_TYPES`.
-  **No `type ==` remains.**
+  third-game foundations, **all complete**: the shared "game contract" (incl. the `"a persisted
+  card game"` shared example), then polymorphic dispatch + `Game::PLAYABLE_TYPES`. **No `type ==`.**
 - `docs/improvement-cards.md` — post-Improvement-2 round, **all three done** (feed presenter,
   shared `Card`/`Deck`, game-action authorization). `RAILS_AUDIT_REPORT.md` is the audit behind
   them; its last High finding (game-over persistence) is **closed**.
 - `docs/leaderboard.md` — the `/leaderboard` page, winner persistence, and the **performance week**:
   3,014 queries / 4,115 ms → **3 / 25 ms** via a **Scenic database view** (read-only
-  `LeaderboardEntry`); Ransack sorting and filtering plus Kaminari pagination ride along for free.
-  Aggregation in the view, display rules in Ruby. **Never edit `_v01.sql` in place** — `rails g
-  scenic:view leaderboard_entries` versions it. Country filtering joins `belongs_to :user`, so
-  **`User.ransackable_attributes` must stay `%w[country]`** or it becomes a password-digest oracle.
-  Also holds `perf:seed`/`perf:measure`, Bullet's cost model, indexes *measured and rejected*, the **`RANK()` column**, the filter panel, and `/games`.
+  `LeaderboardEntry`), with Ransack and Kaminari riding along free. Aggregation in the view,
+  display rules in Ruby. **Never edit `_v01.sql` in place** (`rails g scenic:view` versions it),
+  and **`User.ransackable_attributes` must stay `%w[country]`** or it becomes a password-digest
+  oracle. Also: `perf:seed`/`perf:measure`, rejected indexes, `RANK()`, the filter panel, `/games`.
 - `docs/brave-card-1-round-feed-presenter.md` — **complete**. `RoundFeed` (+ `FeedLine`) at
   `app/models/round_feed.rb` is a namespace-neutral seam; every game partial iterates
   `result.feed_lines`. **Roles are positional** — first `action`, last `game_response`, middles between.
@@ -183,13 +187,9 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/brave-card-3-authorize-game-actions.md` — Card 3 (authorize game actions), **complete**;
   the gotcha above is the short version. The doc holds the decisions (include `winner`, leave
   `join` open, redirect-with-flash over 404) and why coverage is system-spec-on-the-GETs only.
-- `docs/games/rummy.md` — **Rummy, the third game: wired in, with real turn logic.** Registered
-  in `Game::PLAYABLE_TYPES`, real `Rummy::*` domain objects, draw/meld/lay-off/discard all
-  implemented, click-to-select hand UI via a Stimulus controller, per-player-count `deal!`.
-  **Invalid moves raise `Rummy::InvalidMove`** — the app's one turn-validation exception,
-  surfaced as a flash toast. **The stock refills from the discard pile, turned over and
-  deliberately *unshuffled*** (Bicycle). The doc covers all of it; `mockup-html/rummy.html`
-  is the visual reference.
+- `docs/games/rummy.md` — **Rummy, the third game.** **Invalid moves raise `Rummy::InvalidMove`**
+  — the app's one turn-validation exception, surfaced as a flash toast. **The stock refills from
+  the discard pile, turned over and deliberately *unshuffled*** (Bicycle). `mockup-html/rummy.html`.
 - `docs/brave-rummy-feed-completeness.md` — **complete**. `Rummy::RoundResult` carries a `move`
   discriminator; one private `Game#record_move` sets `going_out` for **every** logged action.
   **`record_move` must precede `end_turn` in `#discard`** — `switch_turns` reassigns `current_player`.
