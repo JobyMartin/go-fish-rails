@@ -38,3 +38,6 @@ spec/examples.txt
 !/app/assets/builds/.keep
 
 /node_modules
+
+# Per-machine IntelliJ module file; churns on every IDE open.
+/.idea/game_platform.iml
