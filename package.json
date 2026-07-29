@@ -13,6 +13,7 @@
     "esbuild": "^0.28.1",
     "esbuild-loader": "^4.5.0",
     "mini-css-extract-plugin": "^2.10.2",
+    "playwright": "1.60.0",
     "postcss": "^8.5.19",
     "postcss-loader": "^8.2.1",
     "postcss-preset-env": "^11.3.2",

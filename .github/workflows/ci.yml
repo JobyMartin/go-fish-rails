@@ -74,7 +74,7 @@ jobs:
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libvips postgresql-client libpq-dev
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -82,11 +82,32 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: yarn
+
+      - name: Install JavaScript dependencies
+        run: yarn install --frozen-lockfile
+
+      # app/assets/builds is gitignored, so the bundle does not exist in a fresh
+      # checkout. Propshaft raises MissingAssetError on every rendered page
+      # without it — this is not optional even for non-JS specs.
+      - name: Build JavaScript
+        run: yarn build
+
+      # The :js specs drive Playwright's own Chromium (see
+      # spec/support/capybara_drivers.rb), which google-chrome-stable does not
+      # provide. Version is pinned in package.json to match playwright-ruby-client.
+      - name: Install Playwright browsers
+        run: yarn playwright install --with-deps chromium
+
       - name: Run tests
         env:
           RAILS_ENV: test
-          DATABASE_URL: postgres://postgres:postgres@localhost:5432
-        run: bin/rails db:setup spec
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/game_platform_test
+        run: bin/rails db:test:prepare && bundle exec rspec
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
