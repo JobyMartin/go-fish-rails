@@ -168,15 +168,13 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/improvement-cards.md` — post-Improvement-2 round, **all three done** (feed presenter,
   shared `Card`/`Deck`, game-action authorization). `RAILS_AUDIT_REPORT.md` is the audit behind
   them; its last High finding (game-over persistence) is **closed**.
-- `docs/leaderboard.md` — the `/leaderboard` page, winner persistence, and the **performance
-  week**: 3,014 queries / 4,115 ms → 2 / 35 ms via a **Scenic database view**
-  (`db/views/leaderboard_entries_v01.sql` + read-only `LeaderboardEntry`), sorted **and filtered** by
-  Ransack, paginated by Kaminari — all three still net **3 queries / 25 ms**. Country filtering goes
-  through a `belongs_to :user`, which is why **`User` has a `ransackable_attributes` returning
-  `%w[country]` and nothing else**. Aggregation lives in the view, display rules in Ruby. **Never edit
-  `_v01.sql` in place** — `rails g scenic:view leaderboard_entries` versions it. Indexes were
-  *measured and rejected*. Also holds `perf:seed` / `perf:measure`, Bullet's cost model, the
-  **`RANK()` rank column**, the filter panel, and `/games`.
+- `docs/leaderboard.md` — the `/leaderboard` page, winner persistence, and the **performance week**:
+  3,014 queries / 4,115 ms → **3 / 25 ms** via a **Scenic database view** (read-only
+  `LeaderboardEntry`); Ransack sorting and filtering plus Kaminari pagination ride along for free.
+  Aggregation in the view, display rules in Ruby. **Never edit `_v01.sql` in place** — `rails g
+  scenic:view leaderboard_entries` versions it. Country filtering joins `belongs_to :user`, so
+  **`User.ransackable_attributes` must stay `%w[country]`** or it becomes a password-digest oracle.
+  Also holds `perf:seed`/`perf:measure`, Bullet's cost model, indexes *measured and rejected*, the **`RANK()` column**, the filter panel, and `/games`.
 - `docs/brave-card-1-round-feed-presenter.md` — **complete**. `RoundFeed` (+ `FeedLine`) at
   `app/models/round_feed.rb` is a namespace-neutral seam; every game partial iterates
   `result.feed_lines`. **Roles are positional** — first `action`, last `game_response`, middles between.
@@ -195,12 +193,8 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/brave-rummy-feed-completeness.md` — **complete**. `Rummy::RoundResult` carries a `move`
   discriminator; one private `Game#record_move` sets `going_out` for **every** logged action.
   **`record_move` must precede `end_turn` in `#discard`** — `switch_turns` reassigns `current_player`.
-- **Known spec flakes — a red suite here is often not your change.** Two are unpinned random decks:
-  staging a hand leaves duplicates in the stock (~8%; stage through `start_rummy_game_with_state`),
-  and Go Fish `spec/models/game_spec.rb:124` depends on the opponent holding exactly one Ace (~7%).
-  Crazy Eights `games_spec.rb:157` joins them — rare, seen once in ~6 full runs, green 5/5 alone and
-  3/3 for its file, and it is **not** `:js`, so it is the deck and not a browser race.
-  Two `:js` intermittents are undiagnosed (`games_spec.rb:309`, `offlines_spec.rb:33`).
-- **N+1s fail the suite.** `test.rb` runs `Bullet.raise` with no safelist, so an N+1 a spec
-  exercises raises rather than passing quietly — Bullet is off in dev, so specs are the guard.
-  Both notes: `docs/testing.md`.
+- **Known spec flakes — a red suite here is often not your change.** Three unpinned random decks,
+  two undiagnosed `:js` intermittents; reproduce before blaming your diff, and **capture the full
+  failure message** — two sightings have died in a filtered pipe.
+- **N+1s fail the suite.** `test.rb` runs `Bullet.raise` with no safelist, and Bullet is off in dev,
+  so specs are the only guard. Both notes: `docs/testing.md`.

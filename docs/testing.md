@@ -100,6 +100,21 @@ for s in $(seq 1 30); do bundle exec rspec spec/models/game_spec.rb:124 --seed $
 
 The fix is to pin that spec's deck the way the Rummy helpers do; carded, not done.
 
+### Known flake: `spec/system/games_spec.rb:157` (Crazy Eights)
+
+"shows the turn in the turn results" — clicks `Place card` and asserts the hand shrinks by one
+and the discard pile grows by one. Seen **once in roughly six full-suite runs**; green 5/5 run
+alone and 3/3 across its own file.
+
+**It is not a browser race**, which is the useful part: the Crazy Eights context carries no `:js`
+tag, so it runs under `rack_test`. That rules out the Playwright-timing explanation that covers
+the two `:js` intermittents below and points back at the unpinned deck — whether the card the
+form places is legal against `william.active_card` depends on the deal.
+
+That last step is inference, not a diagnosis, because **the failure message was lost again** —
+this time to a `grep` on the suite output rather than the `tail -6` described below. Two sightings,
+two filtered pipes. Pipe the full output to a file and grep the *file*.
+
 ### Undiagnosed: a `:js` intermittent in `spec/system/games_spec.rb`
 
 `games_spec.rb:309` (Rummy, "taking from the discard pile shows the move in the game feed")

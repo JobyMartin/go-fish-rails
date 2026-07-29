@@ -10,11 +10,15 @@ a query per row from each of `User#games_played` / `#games_won` / `#time_played`
 week could measure it, optimize it, and measure again. **Those four `User` methods are gone**;
 `LeaderboardEntry` replaced them, and it is the only place the stats are computed now.
 
-**Complete: 3,014 queries / 4,115 ms -> 2 queries / 36 ms** (3 / 22 ms once paginated — see
-"Pagination with Kaminari"). Phase 1 was eager loading,
+**Complete: 3,014 queries / 4,115 ms -> 2 queries / 36 ms.** Phase 1 was eager loading,
 Phase 2 measured indexes and rejected them, Phase 3 replaced the whole thing with a Scenic
 database view. There are still **no indexes** on `players.winner` or `games.type` --
 see Phase 2 for why, and revisit them against the view's aggregation.
+
+Everything since — a real `RANK()` column, Ransack sorting and filtering, Kaminari pagination, and
+the filter panel — has been built **on top of that one query**, and the page still measures
+**3 queries / 25 ms**. The extra query is Kaminari's `COUNT`; sorting, filtering, and the form add
+none. That is the point of putting the aggregation in a view: features ride along for free.
 
 Two tools support this, both in `lib/`:
 
