@@ -62,9 +62,28 @@ RSpec.describe Game, type: :model do
     end
   end
 
+  describe '#startable?' do
+    let!(:game) { create(:game) }
+
+    it 'is false with an empty table' do
+      expect(game).not_to be_startable
+    end
+
+    it 'is false with one fewer than the minimum players' do
+      create_list(:player, Game::MINIMUM_PLAYERS - 1, game:)
+      expect(game).not_to be_startable
+    end
+
+    it 'is true at the minimum player count' do
+      create_list(:player, Game::MINIMUM_PLAYERS, game:)
+      expect(game).to be_startable
+    end
+  end
+
   describe '#start' do
   let!(:game) { create(:game) }
   let!(:player) { create(:player, user:, game:) }
+  let!(:player2) { create(:player, user: user2, game:) }
 
     it 'adds the start time' do
       game.start
@@ -91,6 +110,26 @@ RSpec.describe Game, type: :model do
     it 'saves it to the database' do
       game.start
       expect(game.reload.game_state).to be_present
+    end
+  end
+
+  describe '#start when the table is below the minimum player count' do
+    let!(:game) { create(:game) }
+
+    before { create_list(:player, Game::MINIMUM_PLAYERS - 1, game:) }
+
+    it 'refuses to start' do
+      expect(game.start).to eq false
+    end
+
+    it 'leaves the game unstarted' do
+      game.start
+      expect(game.reload.started_at).to be_nil
+    end
+
+    it 'deals nothing' do
+      game.start
+      expect(game.game_state).to be_nil
     end
   end
 

@@ -2,7 +2,7 @@ module RummyTurnHelper
   def start_rummy_game
     select 'Rummy', from: 'Type'
     click_on 'Create Game'
-    click_on 'Start game'
+    start_game_with_opponent
   end
 
   def start_rummy_game_with_state

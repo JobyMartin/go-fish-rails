@@ -1,0 +1,31 @@
+.panel--waiting-room {
+  width: min(40rem, 100%);
+  border: var(--op-border-width) solid var(--op-color-border);
+  border-radius: var(--op-radius-medium);
+
+  .panel__header {
+    font-size: var(--op-font-large);
+    align-items: center;
+
+    .btn {
+      padding-inline: var(--op-space-x-small);
+    }
+  }
+
+  .panel__content > .op-stack {
+    gap: var(--op-space-small);
+  }
+
+  .player-row {
+    border-block-end: var(--op-border-width) solid var(--op-color-border);
+  }
+
+  .btn--primary {
+    width: 100%;
+  }
+}
+
+.waiting-room__hint {
+  color: var(--op-color-neutral-on-plus-max-alt);
+  font-size: var(--op-font-small);
+}

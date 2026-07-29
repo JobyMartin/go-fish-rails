@@ -1,0 +1,24 @@
+-# locals: (game:)
+
+.simple-page
+  .panel.panel--waiting-room data-testid="waiting-room"
+    .panel__header
+      span.flex.items-center.gap-xs
+        = link_to games_path, class: 'btn btn--medium' do
+          i.ph.ph-arrow-left.icon
+        | #{game.name}
+
+    .panel__content
+      .op-stack
+        span Players
+        - game.users.each do |user|
+          .player-row data-testid="waiting-room-player"
+            span.flex.items-center.gap-xs
+              i.ph.ph-user-circle.icon
+              = user.username
+
+        - unless game.startable?
+          .waiting-room__hint data-testid="waiting-room-hint"
+            = Game::WAITING_FOR_PLAYERS_MESSAGE
+
+        = button_to 'Start game', start_game_path(game), method: :post, class: 'btn btn--primary', disabled: !game.startable?

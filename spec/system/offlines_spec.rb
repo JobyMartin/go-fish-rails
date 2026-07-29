@@ -28,7 +28,7 @@ RSpec.describe 'Games', type: :system do
       sign_up
       sleep 0.1
       create_game
-      click_on 'Start game'
+      start_game_with_opponent
     end
     it 'renders an offline alert', :chrome do
       wait_for_service_worker_control
