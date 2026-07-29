@@ -4,8 +4,7 @@
 - current_player = implementation.find_player(Current.session.user.id) if game.game_state.present?
 
 - unless game.started_at.present?
-  .simple-page
-    = button_to 'Start game', start_game_path(game), method: :post, class: 'btn btn--primary'
+  = render 'games/waiting_room', game: game
 - else
   div id=dom_id(game)
     .game data-testid="game"

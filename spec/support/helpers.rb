@@ -14,4 +14,5 @@ RSpec.configure do |c|
   c.include CreateGameHelper, type: :system
   c.include RummyTurnHelper, type: :system
   c.include PlayTurnHelper, type: :model
+  c.include TurboBroadcastHelper, type: :model
 end

@@ -4,7 +4,7 @@ RSpec.describe RummyGame, type: :model do
   describe '#build_game' do
     it 'builds a Rummy::Game domain object with a player per user' do
       game = create(:game, type: 'RummyGame')
-      create(:player, game:)
+      create_list(:player, Game::MINIMUM_PLAYERS, game:)
 
       game.start
 
@@ -17,7 +17,7 @@ RSpec.describe RummyGame, type: :model do
     let(:game) { create(:game, type: 'RummyGame') }
 
     before do
-      create(:player, game:)
+      create_list(:player, Game::MINIMUM_PLAYERS, game:)
       game.start
     end
 

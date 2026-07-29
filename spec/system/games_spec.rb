@@ -89,7 +89,7 @@ RSpec.describe 'Games', type: :system do
       end
 
       it 'shows the go fish game view' do
-        click_on 'Start game'
+        start_game_with_opponent
         expect(page).to have_css(data_test('game-aside'))
         expect(Game.last.game_state).to be_present
       end
@@ -121,20 +121,20 @@ RSpec.describe 'Games', type: :system do
       end
 
       it 'shows the crazy eights game view' do
-        click_on 'Start game'
+        start_game_with_opponent
         expect(page).to have_css data_test('game')
         expect(Game.last.game_state).to be_present
       end
 
       it 'renders the play form with no opponent select' do
-        click_on 'Start game'
+        start_game_with_opponent
         expect(page).to have_button 'Place card'
         expect(page).to have_no_select 'Player'
       end
 
       context 'when the user starts the game' do
         before do
-          click_on 'Start game'
+          start_game_with_opponent
         end
 
         it 'shows the game name' do
@@ -143,7 +143,7 @@ RSpec.describe 'Games', type: :system do
 
         it 'displays the players' do
           within(data_test('game-board')) do
-            expect(page).to have_css(data_test('accordion'), count: 1)
+            expect(page).to have_css(data_test('accordion'), count: Game::MINIMUM_PLAYERS)
           end
         end
 
@@ -156,7 +156,7 @@ RSpec.describe 'Games', type: :system do
         context 'when the user plays a turn' do
           it 'shows the turn in the turn results' do
             game = Game.last
-            hand_before = game.game_state.current_player.hand.size
+            hand_before = game.game_state.find_player(user.id).hand.size
             discard_before = game.game_state.william.cards.size
 
             expect { click_on 'Place card' }
@@ -167,7 +167,7 @@ RSpec.describe 'Games', type: :system do
             end
 
             state = game.game_state
-            expect(state.current_player.hand.size).to eq hand_before - 1
+            expect(state.find_player(user.id).hand.size).to eq hand_before - 1
             expect(state.william.cards.size).to eq discard_before + 1
           end
         end
@@ -290,7 +290,7 @@ RSpec.describe 'Games', type: :system do
         end
 
         state = Game.last.game_state
-        expect(state.current_player.hand).not_to include(Card.new('2', 'Clubs'))
+        expect(state.find_player(user.id).hand).not_to include(Card.new('2', 'Clubs'))
         expect(state.discard_pile.last).to eq Card.new('2', 'Clubs')
         expect(state.drawn_this_turn).to eq false
       end
@@ -669,9 +669,82 @@ RSpec.describe 'Games', type: :system do
     end
   end
 
+  context 'when a game has not started' do
+    let!(:game) { create :game }
+    let!(:player) { create(:player, user:, game:) }
+
+    it 'lists the users already at the table' do
+      visit game_path(game)
+      within data_test('waiting-room') do
+        expect(page).to have_content user.username
+      end
+    end
+
+    it 'leaves out users who have not joined' do
+      visit game_path(game)
+      expect(page).to have_no_content user2.username
+    end
+
+    it 'lists every player once a second one joins' do
+      create(:player, user: user2, game:)
+      visit game_path(game)
+      expect(page).to have_css(data_test('waiting-room-player'), count: 2)
+    end
+
+    it 'disables the start button below the minimum player count' do
+      visit game_path(game)
+      expect(page).to have_button 'Start game', disabled: true
+    end
+
+    it 'says what the game is waiting on' do
+      visit game_path(game)
+      expect(page).to have_content Game::WAITING_FOR_PLAYERS_MESSAGE
+    end
+
+    it 'enables the start button at the minimum player count' do
+      create(:player, user: user2, game:)
+      visit game_path(game)
+      expect(page).to have_button 'Start game', disabled: false
+    end
+
+    Game.playable_types.each_key do |type|
+      it "shows the waiting room for a #{type}" do
+        typed_game = create(:game, type:)
+        create(:player, user:, game: typed_game)
+        visit game_path(typed_game)
+        expect(page).to have_css data_test('waiting-room')
+      end
+    end
+  end
+
+  context 'when another player joins while the waiting room is open', :js do
+    let!(:game) { create :game }
+    let!(:player) { create(:player, user:, game:) }
+
+    it 'lists the new player without a reload' do
+      visit game_path(game)
+      wait_for_stream_connection
+
+      create(:player, user: user2, game:)
+
+      expect(page).to have_content user2.username
+    end
+
+    it 'enables the start button without a reload' do
+      visit game_path(game)
+      wait_for_stream_connection
+      expect(page).to have_button 'Start game', disabled: true
+
+      create(:player, user: user2, game:)
+
+      expect(page).to have_button 'Start game', disabled: false
+    end
+  end
+
   context 'when the user clicks to start a game' do
     let!(:game) { create :game }
     let!(:player) { create(:player, user:, game:) }
+    let!(:player2) { create(:player, user: user2, game:) }
 
     it 'starts a game' do
       visit game_path(game)

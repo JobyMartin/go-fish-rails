@@ -13,8 +13,21 @@ RSpec.describe Player, type: :model do
     expect(invalid_player.errors.full_messages.to_sentence).to include(Player::JOINED_ERROR_MESSAGE)
   end
 
+  describe 'joining broadcasts' do
+    it 'refreshes the game stream so the waiting room updates without a reload' do
+      expect { create(:player, game:, user:) }
+        .to change { turbo_stream_broadcasts_for(game).size }.by(1)
+    end
+
+    it 'sends a refresh action' do
+      create(:player, game:, user:)
+      expect(turbo_stream_broadcasts_for(game).last).to include 'action="refresh"'
+    end
+  end
+
   context 'when the game has started' do
     before do
+      create_list(:player, Game::MINIMUM_PLAYERS, game:)
       game.start
     end
 

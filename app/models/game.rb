@@ -1,12 +1,17 @@
 class Game < ApplicationRecord
   include ActionView::RecordIdentifier
-  has_many :players
+  # Seat order is join order: unordered, Postgres is free to hand back rows in any order, which
+  # makes both the waiting room list and whoever ends up as the first current_player random.
+  has_many :players, -> { order(:id) }, inverse_of: :game
   has_many :users, through: :players
 
   after_update_commit { broadcast_refresh_later_to self }
   after_create_commit :broadcast_game_update
   after_update_commit :broadcast_status
 
+  MINIMUM_PLAYERS = 2
+  WAITING_FOR_PLAYERS_MESSAGE = "Waiting for at least #{MINIMUM_PLAYERS} players to join..."
+  NOT_ENOUGH_PLAYERS_MESSAGE = "You need at least #{MINIMUM_PLAYERS} players to start a game."
   WAITING_MESSAGE = 'Waiting...'
   IN_PROGRESS_MESSAGE = 'In progress'
   FINISHED_MESSAGE = 'Finished'
@@ -28,7 +33,13 @@ class Game < ApplicationRecord
     return FINISHED_MESSAGE unless ended_at.nil?
   end
 
+  def startable?
+    users.size >= MINIMUM_PLAYERS
+  end
+
   def start
+    return false unless startable?
+
     self.started_at = Time.current
     self.game_state = build_game
     game_state.deal!

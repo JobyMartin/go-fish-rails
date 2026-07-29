@@ -43,7 +43,7 @@ RSpec.describe GoFishGame, type: :model do
   describe '#build_game' do
     it 'builds a GoFish::Game domain object' do
       game = create(:game, type: 'GoFishGame')
-      create(:player, game:)
+      create_list(:player, Game::MINIMUM_PLAYERS, game:)
       game.start
       expect(game.game_state).to be_a GoFish::Game
     end

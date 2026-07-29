@@ -34,7 +34,7 @@ class GamesController < ApplicationController
   end
 
   def start
-    @game.start
+    flash[:alert] = Game::NOT_ENOUGH_PLAYERS_MESSAGE unless @game.start
     redirect_to game_path(@game)
   end
 

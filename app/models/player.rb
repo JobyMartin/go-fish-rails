@@ -5,6 +5,8 @@ class Player < ApplicationRecord
   belongs_to :game
   belongs_to :user
 
+  after_create_commit { broadcast_refresh_to game }
+
   validates :game_id, uniqueness: { scope: :user_id, message: JOINED_ERROR_MESSAGE }
   validate :not_started, on: :create
 
