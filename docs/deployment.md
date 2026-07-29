@@ -56,6 +56,22 @@ a networking problem rather than a permissions one. This is why Fly's default is
 
 `HTTP_PORT` and `http_service.internal_port` must match. Change one, change both.
 
+**`fly scale` can resurrect this bug.** `fly scale count 1` re-applied an *older stored
+config* — `internal_port: 80`, no `HTTP_PORT`, and `auto_stop_machines` in its legacy boolean
+form — reverting a working deploy to the crash-loop above. The platform keeps its own copy of
+the config per release, and scale commands don't read local `fly.toml`.
+
+So after **any** `fly scale`, `fly machine update`, or change made through the web dashboard,
+confirm the platform still agrees with the repo:
+
+```sh
+fly config show -a academy-game-platform | grep -E 'HTTP_PORT|internal_port'
+```
+
+The fix is always the same: run `fly deploy` again, which pushes local `fly.toml` as a new
+release. Prefer editing `fly.toml` + `fly deploy` over any command that mutates config
+server-side.
+
 ## Provisioning
 
 ```sh
@@ -115,11 +131,12 @@ Fly has **no free allowance** since 2024-10-07; new orgs are pay-as-you-go. Roug
 `fly mpg` (Managed Postgres) is the option behind the launch form's "Managed Postgres"
 checkbox. It starts at **$38/mo** with no free tier. Don't check it for a learning deploy.
 
-`fly scale count 1` drops to a single machine and halves the machine cost — but then read
-"Why Redis and not `async`" before assuming anything about cable adapters can be simplified.
+**Now scaled to 1 machine** (`fly scale count 1`), which halves the machine cost. Redis still
+matters — see "Why Redis and not `async`"; scaling back up must not become a reason to
+revisit the cable adapter. Note that scaling reverted the app config; see "Port 8080, not 80".
 
-**Auto-stop is why cold starts are slow.** Measured: **12.5s cold, 0.7s warm.** Both the app
-machine and (with `--autostart`) the Postgres machine have to wake.
+**Auto-stop is why cold starts are slow.** Measured: **~12–23s cold, ~0.3s warm.** Both the
+app machine and (with `--autostart`) the Postgres machine have to wake.
 
 An earlier draft of this doc recommended Neon's free tier instead. That works, but
 `GOOD_JOB_EXECUTION_MODE=async` polls the database every few seconds forever, which prevents
