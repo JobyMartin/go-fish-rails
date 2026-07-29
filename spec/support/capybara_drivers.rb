@@ -43,7 +43,7 @@ RSpec.configure do |config|
       headless: true,
       viewport: { width: 1400, height: 1400 },
       browser_options: {
-        args: ['--disable-backgrounding-occluded-windows']
+        args: [ '--disable-backgrounding-occluded-windows' ]
       }
     }
 

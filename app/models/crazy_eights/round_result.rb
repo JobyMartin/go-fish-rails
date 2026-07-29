@@ -10,7 +10,7 @@ module CrazyEights
 
     def for_other_players
       message = []
-      message << "#{current_player.name} placed a #{card_placed.to_s}"
+      message << "#{current_player.name} placed a #{card_placed}"
 
       message << "They chose the suit of #{suit_choice}" if wild
 
@@ -23,12 +23,11 @@ module CrazyEights
 
     def self.load(hash)
       self.new(
-          current_player: Player.load(hash['current_player']),
-          card_placed: Card.load(hash['card_placed']),
-          wild: hash['wild'],
-          suit_choice: hash['suit_choice']
+          current_player: Player.load(hash["current_player"]),
+          card_placed: Card.load(hash["card_placed"]),
+          wild: hash["wild"],
+          suit_choice: hash["suit_choice"]
         )
     end
   end
 end
-

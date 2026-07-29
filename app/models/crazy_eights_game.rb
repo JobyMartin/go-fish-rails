@@ -14,7 +14,7 @@ class CrazyEightsGame < Game
   private
 
   def draw_until_playable(active_card)
-    drawn_cards = [game_state.deck.top_card]
+    drawn_cards = [ game_state.deck.top_card ]
     until drawn_cards.any? { it.suit == active_card.suit || it.rank == active_card.rank }
       drawn_cards << game_state.deck.top_card
     end

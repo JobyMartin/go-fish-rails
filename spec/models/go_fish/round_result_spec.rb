@@ -1,8 +1,8 @@
 require 'rails_helper'
 
-RSpec.describe GoFish::RoundResult, type: :model, pending: "change variables to reflect new stucture" do 
+RSpec.describe GoFish::RoundResult, type: :model, pending: "change variables to reflect new stucture" do
   let(:game) { GoFish::Game.new }
-  
+
   before do
     game.add_player('Joby')
     game.add_player('William')

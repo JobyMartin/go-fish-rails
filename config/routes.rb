@@ -20,14 +20,14 @@ Rails.application.routes.draw do
   # Defines the root path route ("/")
   root "games#index"
   get "games/history", to: "games#history"
-  
+
   resources :games do
-    resources :players, only: [:create]
-    member do 
+    resources :players, only: [ :create ]
+    member do
       post :start
     end
 
-    member do 
+    member do
       post :play
     end
 
@@ -37,17 +37,17 @@ Rails.application.routes.draw do
   end
 
   get "pages/rules", to: "pages#rules"
-  resources :pages, only: [:index]
+  resources :pages, only: [ :index ]
 
-  resources :offlines, only: [:index]
+  resources :offlines, only: [ :index ]
 
   get "leaderboard", to: "leaderboard#index"
 
   get "stats", to: "stats#index"
-  resources :stats, only: [:index]
+  resources :stats, only: [ :index ]
 
   get "users/show", to: "users#show"
   resources :users, only: %i[new create edit update], concerns: %i[turbo_fetch]
 
-  mount GoodJob::Engine => 'good_job'
+  mount GoodJob::Engine => "good_job"
 end

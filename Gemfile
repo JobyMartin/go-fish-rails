@@ -57,9 +57,9 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 
-  gem 'selenium-devtools'
+  gem "selenium-devtools"
 
-  gem 'bullet'
+  gem "bullet"
 end
 
 group :development do

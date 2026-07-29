@@ -67,4 +67,3 @@ RSpec.describe CrazyEightsGame, type: :model do
     it_behaves_like 'a persisted card game'
   end
 end
-

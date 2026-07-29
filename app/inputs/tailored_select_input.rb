@@ -39,7 +39,7 @@ module ActionView
           if placeholder_required?(html_options)
             if options[:include_blank] == false
               raise ArgumentError,
-                    'include_blank cannot be false for a required field.'
+                    "include_blank cannot be false for a required field."
             end
 
             options[:include_blank] ||= true unless options[:prompt]
@@ -47,11 +47,11 @@ module ActionView
 
           value = options.fetch(:selected) { value() }
           # For real, this is the only line that changed from CollectionSelect, just changed the tag name
-          select = content_tag('tailored-select', add_options(option_tags, options, value), html_options)
+          select = content_tag("tailored-select", add_options(option_tags, options, value), html_options)
 
-          if html_options['multiple'] && options.fetch(:include_hidden, true)
-            tag('input', disabled: html_options['disabled'], name: html_options['name'], type: 'hidden', value: '',
-                         autocomplete: 'off') + select
+          if html_options["multiple"] && options.fetch(:include_hidden, true)
+            tag("input", disabled: html_options["disabled"], name: html_options["name"], type: "hidden", value: "",
+                         autocomplete: "off") + select
           else
             select
           end

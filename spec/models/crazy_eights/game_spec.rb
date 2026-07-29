@@ -58,7 +58,7 @@ RSpec.describe CrazyEights::Game, type: :model do
     end
 
     it 'preserves the round-trip round results state' do
-      crazy_eights_game.round_results = [create_crazy_eights_round_result]
+      crazy_eights_game.round_results = [ create_crazy_eights_round_result ]
       json = described_class.dump(crazy_eights_game)
       game = described_class.load(json.as_json)
       new_round_results = game.round_results
@@ -71,7 +71,7 @@ RSpec.describe CrazyEights::Game, type: :model do
     end
 
     it 'preserves round-trip william state' do
-      crazy_eights_game.william = CrazyEights::William.new([Card.new])
+      crazy_eights_game.william = CrazyEights::William.new([ Card.new ])
       json = described_class.dump(crazy_eights_game)
       game = described_class.load(json.as_json)
       new_william = game.william
@@ -172,7 +172,7 @@ RSpec.describe CrazyEights::Game, type: :model do
     let!(:placed_card) { Card.new('2', 'Hearts') }
     it 'removes the placed card from the players hand' do
       active_player = crazy_eights_game.current_player
-      active_player.hand = [placed_card]
+      active_player.hand = [ placed_card ]
 
       crazy_eights_game.play_turn(
         Card.new('A', 'Hearts'),
@@ -221,13 +221,13 @@ RSpec.describe CrazyEights::Game, type: :model do
         Card.new('2', 'Hearts'),
         Card.new('8', 'Diamonds'),
         Card.new('3', 'Spades'),
-        Card.new('5', 'Diamonds'),
+        Card.new('5', 'Diamonds')
       ]
     end
 
     it 'returns the cards in the players hand that match the active card' do
-      valid_ranks = %w(A 8)
-      valid_suits = %w(Hearts)
+      valid_ranks = %w[A 8]
+      valid_suits = %w[Hearts]
 
       crazy_eights_game.valid_player_cards(crazy_eights_game.current_player).each do |card|
         if valid_ranks.include?(card.rank)

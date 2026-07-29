@@ -93,7 +93,7 @@ RSpec.describe 'Users', type: :system do
 
       it 'the correct states are added to the dropdown', :js do
         select 'United States', from: 'Country'
-        expect(page).to have_select('State', with_options: ['North Carolina', 'Pennsylvania'])
+        expect(page).to have_select('State', with_options: [ 'North Carolina', 'Pennsylvania' ])
       end
 
       context 'when the user clicks save', :js do

@@ -13,13 +13,13 @@ RSpec.describe CrazyEights::Player, type: :model do
 
   describe '#add_cards' do
     it 'adds cards to the bottom of the deck' do
-      player.add_cards([card1, card2])
-      expect(player.hand).to eq [card1, card2]
+      player.add_cards([ card1, card2 ])
+      expect(player.hand).to eq [ card1, card2 ]
     end
 
     xcontext 'when the fourth card is added' do
       before do
-        player.add_cards([card6, card7, card8, card2])
+        player.add_cards([ card6, card7, card8, card2 ])
       end
 
       it 'makes a book' do

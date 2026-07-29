@@ -1,6 +1,6 @@
 
 class StatsController < ApplicationController
-  NO_STATS = '0%'
+  NO_STATS = "0%"
 
   def index
     @user = Current.session.user

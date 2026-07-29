@@ -13,7 +13,7 @@ module GoFish
     end
 
     def for_current_player
-      went_fishing || made_a_catch ? message = [] : message = ["You asked #{user_taken_from.name} for any #{rank_in_question}s"]
+      went_fishing || made_a_catch ? message = [] : message = [ "You asked #{user_taken_from.name} for any #{rank_in_question}s" ]
 
       message << "\nGo fish!" if went_fishing
       message << "\nYou made a catch!" if made_a_catch
@@ -24,7 +24,7 @@ module GoFish
     end
 
     def for_other_players
-      went_fishing || made_a_catch ? message = [] : message = ["#{user_given_to.name} asked #{user_taken_from.name} for any #{rank_in_question}s"]
+      went_fishing || made_a_catch ? message = [] : message = [ "#{user_given_to.name} asked #{user_taken_from.name} for any #{rank_in_question}s" ]
 
       message << "\n#{user_given_to.name} went fishing!" if went_fishing
       message << "\n#{user_given_to.name} made a catch!" if made_a_catch
@@ -40,12 +40,12 @@ module GoFish
 
     def self.load(hash)
       self.new(
-        current_user: Player.load(hash['user_given_to']),
-        cards_exchanged: hash['cards_exchanged'].map { |card| Card.load(card) },
-        user_in_question: Player.load(hash['user_taken_from']),
-        rank_in_question: hash['rank_in_question'],
-        went_fishing: hash['went_fishing'],
-        made_a_catch: hash['made_a_catch'],
+        current_user: Player.load(hash["user_given_to"]),
+        cards_exchanged: hash["cards_exchanged"].map { |card| Card.load(card) },
+        user_in_question: Player.load(hash["user_taken_from"]),
+        rank_in_question: hash["rank_in_question"],
+        went_fishing: hash["went_fishing"],
+        made_a_catch: hash["made_a_catch"],
       )
     end
   end

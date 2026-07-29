@@ -23,10 +23,10 @@ module GoFish
     end
 
     def self.from_json(json)
-      players = json['players'].map { |player_hash| Player.load(player_hash) }
-      deck = Deck.load(json['deck'])
-      round_results = json['round_results'].map { |round_hash| RoundResult.load(round_hash) }
-      self.new(players, deck, json['current_player_index'], round_results)
+      players = json["players"].map { |player_hash| Player.load(player_hash) }
+      deck = Deck.load(json["deck"])
+      round_results = json["round_results"].map { |round_hash| RoundResult.load(round_hash) }
+      self.new(players, deck, json["current_player_index"], round_results)
     end
 
     def self.load(json)
@@ -42,7 +42,7 @@ module GoFish
     def deal!
       number_of_cards.times do
         players.each do
-          it.add_cards([deck.top_card])
+          it.add_cards([ deck.top_card ])
         end
       end
     end
@@ -56,7 +56,7 @@ module GoFish
     def play_turn(inquired_player_id, inquired_rank)
       inquired_player = find_player(inquired_player_id)
       cards_exchanged = inquired_player.get_cards_by_rank(inquired_rank)
-      
+
       handle_cards_and_end_turn(cards_exchanged, inquired_player_id, inquired_rank)
     end
 
@@ -71,7 +71,7 @@ module GoFish
     end
 
     def fish_and_skip
-      fish_message = 'No rank in question'
+      fish_message = "No rank in question"
       go_fish
       end_turn([], nil, true, fish_message)
     end
@@ -113,7 +113,7 @@ module GoFish
 
     def go_fish
       fished_card = deck.top_card
-      current_player.add_cards([fished_card])
+      current_player.add_cards([ fished_card ])
 
       current_player.make_book_if_possible(fished_card.rank) unless current_player.hand.empty?
 

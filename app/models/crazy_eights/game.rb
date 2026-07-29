@@ -6,7 +6,7 @@ module CrazyEights
 
     attr_accessor :players, :deck, :current_player_index, :round_results, :william
 
-    def initialize(players, deck = Deck.new, current_player_index = 0, round_results = [], william = William.new([deck.top_card]))
+    def initialize(players, deck = Deck.new, current_player_index = 0, round_results = [], william = William.new([ deck.top_card ]))
       @players = players
       @deck = deck
       @current_player_index = current_player_index
@@ -34,17 +34,17 @@ module CrazyEights
     end
 
     def self.from_json(json)
-      players = json['players'].map { |player_hash| Player.load(player_hash) }
-      deck = Deck.load(json['deck'])
-      round_results = json['round_results'].map { |round_hash| RoundResult.load(round_hash) }
-      william = William.load(json['william'])
-      self.new(players, deck, json['current_player_index'], round_results, william)
+      players = json["players"].map { |player_hash| Player.load(player_hash) }
+      deck = Deck.load(json["deck"])
+      round_results = json["round_results"].map { |round_hash| RoundResult.load(round_hash) }
+      william = William.load(json["william"])
+      self.new(players, deck, json["current_player_index"], round_results, william)
     end
 
     def deal!
       number_of_cards.times do
         players.each do
-          it.add_cards([deck.top_card])
+          it.add_cards([ deck.top_card ])
         end
       end
     end
@@ -72,14 +72,14 @@ module CrazyEights
 
     def valid_player_cards(player)
       player.hand.map do |card|
-        card if card.rank == william.active_card.rank || card.suit == william.active_card.suit || card.rank == '8'
+        card if card.rank == william.active_card.rank || card.suit == william.active_card.suit || card.rank == "8"
       end.compact
     end
 
     private
 
     def create_round_result(card_placed)
-      if card_placed.rank == '8'
+      if card_placed.rank == "8"
         round_results << RoundResult.new(current_player:, card_placed: card_placed, wild: true, suit_choice: card_placed.suit)
       else
         round_results << RoundResult.new(current_player:, card_placed: card_placed)

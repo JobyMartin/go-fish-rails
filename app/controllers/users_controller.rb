@@ -8,7 +8,7 @@ class UsersController < ApplicationController
   def edit
     @user = User.find(params[:id])
 
-    render layout: 'modal'
+    render layout: "modal"
   end
 
   def update
@@ -16,7 +16,7 @@ class UsersController < ApplicationController
     if @user.update(update_params)
       redirect_to users_show_path(@user)
     else
-      render :edit, status: :unprocessable_content, layout: 'modal'
+      render :edit, status: :unprocessable_content, layout: "modal"
     end
   end
 
@@ -30,7 +30,7 @@ class UsersController < ApplicationController
       start_new_session_for(@user)
       redirect_to root_path
     else
-      flash.now[:alert] = 'Invalid signup'
+      flash.now[:alert] = "Invalid signup"
       render :new
     end
   end
