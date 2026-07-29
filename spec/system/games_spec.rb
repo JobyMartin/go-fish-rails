@@ -16,7 +16,7 @@ RSpec.describe 'Games', type: :system do
 
   it 'shows the history' do
     visit games_history_path
-    expect(page).to have_content 'Your Go Fish History'
+    expect(page).to have_content 'Your History'
   end
 
   it 'allows user to go to game creation form' do
