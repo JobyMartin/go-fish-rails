@@ -1,6 +1,6 @@
 class Player < ApplicationRecord
-  JOINED_ERROR_MESSAGE = 'You already joined the game'.freeze
-  NOT_STARTED_ERROR_MESSAGE = 'This game has started'
+  JOINED_ERROR_MESSAGE = "You already joined the game".freeze
+  NOT_STARTED_ERROR_MESSAGE = "This game has started"
 
   belongs_to :game
   belongs_to :user

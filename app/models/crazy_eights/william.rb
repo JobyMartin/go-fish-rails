@@ -8,7 +8,7 @@ module CrazyEights
     def active_card = cards.last
 
     def self.load(hash)
-      cards = hash['cards'].map { |card_hash| Card.load(card_hash) }
+      cards = hash["cards"].map { |card_hash| Card.load(card_hash) }
       self.new(cards)
     end
   end

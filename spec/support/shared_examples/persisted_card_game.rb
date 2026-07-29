@@ -18,7 +18,7 @@ RSpec.shared_examples 'a persisted card game' do
   end
 
   it 'answers game_over?' do
-    expect(game.game_state.game_over?).to be_in [true, false]
+    expect(game.game_state.game_over?).to be_in [ true, false ]
   end
 
   it 'round-trips game_state through the DB with fidelity' do

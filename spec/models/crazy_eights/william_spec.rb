@@ -6,7 +6,7 @@ RSpec.describe CrazyEights::William, type: :model do
 
   describe '#active_card' do
     before do
-      william.cards = [Card.new('K', 'Hearts'), last_card]
+      william.cards = [ Card.new('K', 'Hearts'), last_card ]
     end
 
     it 'returns the top card' do

@@ -5,8 +5,8 @@
 class PhosphorIconBuilder < IconBuilder
   def self.flash_icons
     {
-      notice: 'check-circle',
-      alert: 'x-circle'
+      notice: "check-circle",
+      alert: "x-circle"
     }
   end
 
@@ -18,10 +18,10 @@ class PhosphorIconBuilder < IconBuilder
 
   def tag_classes
     [
-      duotone ? 'ph-duotone' : 'ph',
+      duotone ? "ph-duotone" : "ph",
       "ph-#{name}",
-      filled ? 'icon--filled' : '',
-      weight == DEFAULT_WEIGHT ? '' : "icon--weight-#{weight}"
+      filled ? "icon--filled" : "",
+      weight == DEFAULT_WEIGHT ? "" : "icon--weight-#{weight}"
     ].concat(super)
   end
 end

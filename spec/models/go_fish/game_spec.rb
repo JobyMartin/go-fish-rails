@@ -24,7 +24,7 @@ RSpec.describe GoFish::Game, type: :model do
   describe "#load" do
     before do
       go_fish_game.deal!
-      go_fish_game.players.first.books << GoFish::Book.new([Card.new])
+      go_fish_game.players.first.books << GoFish::Book.new([ Card.new ])
     end
 
     let!(:original_first_hand) { go_fish_game.players.first.hand }
@@ -61,7 +61,7 @@ RSpec.describe GoFish::Game, type: :model do
     end
 
     it 'preserves the round-trip round results state' do
-      go_fish_game.round_results = [create_go_fish_round_result(go_fish_game)]
+      go_fish_game.round_results = [ create_go_fish_round_result(go_fish_game) ]
       json = described_class.dump(go_fish_game)
       game = described_class.load(json.as_json)
       new_round_results = game.round_results
@@ -130,9 +130,9 @@ RSpec.describe GoFish::Game, type: :model do
     let(:full_deck_size) { 52 }
 
     context 'when the player in question has a matching card' do
-      before do 
-        player_in_question.add_cards([card])
-        go_fish_game.current_player.add_cards([card])
+      before do
+        player_in_question.add_cards([ card ])
+        go_fish_game.current_player.add_cards([ card ])
       end
 
       it 'gives that card to the player asking' do
@@ -156,8 +156,8 @@ RSpec.describe GoFish::Game, type: :model do
       let!(:current_player) { go_fish_game.current_player }
 
       before do
-        player_in_question.add_cards([card, card])
-        current_player.add_cards([card, card])
+        player_in_question.add_cards([ card, card ])
+        current_player.add_cards([ card, card ])
         go_fish_game.play_turn(inquired_player_id, unmatched_rank)
       end
 
@@ -172,7 +172,7 @@ RSpec.describe GoFish::Game, type: :model do
       # let!(:current_user) { go_fish_game.current_user }
 
       before do
-        go_fish_game.deck.cards = [Card.new('A', 'Spades')]
+        go_fish_game.deck.cards = [ Card.new('A', 'Spades') ]
         go_fish_game.play_turn(inquired_player_index, unmatched_rank)
       end
 
@@ -186,7 +186,7 @@ RSpec.describe GoFish::Game, type: :model do
       # let!(:current_user) { go_fish_game.current_user }
 
       before do
-        go_fish_game.deck.cards = [Card.new('A', 'Spades')]
+        go_fish_game.deck.cards = [ Card.new('A', 'Spades') ]
         go_fish_game.play_turn(inquired_player_index, matched_rank)
       end
 
@@ -203,7 +203,7 @@ RSpec.describe GoFish::Game, type: :model do
     context 'when one player has more books than the others' do
       before do
         game.players.last.books = []
-        game.current_player.books = [GoFish::Book.new([Card.new('A', 'Spades')])]
+        game.current_player.books = [ GoFish::Book.new([ Card.new('A', 'Spades') ]) ]
       end
 
       it 'returns the winner' do
@@ -213,8 +213,8 @@ RSpec.describe GoFish::Game, type: :model do
 
     context 'when all players have the same amount of books' do
       before do
-        game.players.last.books = [GoFish::Book.new([Card.new('K', 'Spades')])]
-        game.current_player.books = [GoFish::Book.new([Card.new('A', 'Spades')])]
+        game.players.last.books = [ GoFish::Book.new([ Card.new('K', 'Spades') ]) ]
+        game.current_player.books = [ GoFish::Book.new([ Card.new('A', 'Spades') ]) ]
       end
 
       it 'displays the winner' do

@@ -13,33 +13,33 @@
 # <%= f.input :my_field, as: :segmented_control, collection: collection_options, full_width: true %>
 class SegmentedControlInput < SimpleForm::Inputs::CollectionRadioButtonsInput
   def input_type
-    'radio_buttons'
+    "radio_buttons"
   end
 
   def input_options
     options = super
     options[:item_wrapper_tag] = false
-    options[:collection_wrapper_tag] = 'div'
+    options[:collection_wrapper_tag] = "div"
     options[:collection_wrapper_class] = collection_wrapper_classes
-    options[:item_label_class] = 'segmented-control__label'
+    options[:item_label_class] = "segmented-control__label"
     options
   end
 
   def input_html_options
     super.tap do |options|
-      options[:class].delete('form-control')
+      options[:class].delete("form-control")
     end
   end
 
   def input_html_classes
-    super.push('segmented-control__input')
+    super.push("segmented-control__input")
   end
 
   private
 
   def collection_wrapper_classes
     class_names(
-      'segmented-control',
+      "segmented-control",
       options[:class],
       "segmented-control--#{options[:size]}": options[:size].present?,
       'segmented-control--full-width': options[:full_width].present?

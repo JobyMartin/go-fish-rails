@@ -1,4 +1,4 @@
-app = "game-platform"
+app = "academy-game-platform"
 primary_region = "dfw"
 console_command = "/rails/bin/rails console"
 
@@ -14,16 +14,23 @@ swap_size_mb = 512
 [env]
   GOOD_JOB_EXECUTION_MODE = "async"
   GOOD_JOB_ENABLE_CRON = "true"
+  # Thruster defaults to port 80, but the Dockerfile runs as USER 1000 and
+  # non-root can't bind privileged ports — it dies with EACCES. Must match
+  # http_service.internal_port below.
+  HTTP_PORT = "8080"
 
 # Runs once per deploy. A failed migration aborts the deploy instead of
 # crash-looping the machine, which is much easier to read in `fly logs`.
+#
+# `db:migrate`, not `db:prepare`: on an empty database `db:prepare` also runs
+# `db:seed`, and `db/seeds.rb` uses FactoryBot — a dev/test gem absent from the
+# production image.
 [deploy]
-  release_command = "bin/rails db:prepare"
+  release_command = "bin/rails db:migrate"
 
 [http_service]
-  # 80, not Fly's 8080 default: the Dockerfile's CMD is `./bin/thrust`, and
-  # Thruster listens on 80.
-  internal_port = 80
+  # Must match HTTP_PORT above.
+  internal_port = 8080
   force_https = true
   auto_start_machines = true
   # Stop the machine when idle. This is what keeps the bill near zero, and it

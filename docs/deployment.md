@@ -1,9 +1,12 @@
 # Deployment (Fly.io)
 
+**Live at https://academy-game-platform.fly.dev** (app `academy-game-platform`, region `dfw`).
+
 Deployed as a Docker image built from the repo's `Dockerfile` — Fly builds it, so **the
-Dockerfile is the deploy config**. `fly.toml` is committed; point the launch form's "Config
-path" at it (or leave it blank, since it's at the repo root) so Fly uses it instead of
-generating its own.
+Dockerfile is the deploy config**. `fly.toml` is committed and holds everything non-secret.
+
+Deploy with `fly deploy`. Don't use `fly launch` — it regenerates `fly.toml`. To create the
+app without deploying, `fly apps create <name>`, which explicitly leaves `fly.toml` alone.
 
 ## Required environment
 
@@ -14,10 +17,11 @@ public. Same for the launch form's env-var table: it writes to `fly.toml`.
 | Variable | Where it's set | What breaks without it |
 |---|---|---|
 | `RAILS_MASTER_KEY` | `fly secrets set` ← `cat config/master.key` | Won't boot. The key is in both `.gitignore` and `.dockerignore`, so an env var is the *only* way it reaches the container |
-| `DATABASE_URL` | `fly secrets set` ← Neon/Supabase | Won't boot |
-| `REDIS_URL` | `fly secrets set` ← `fly redis status <name>` | Nothing, visibly — see "The silent ones" below |
+| `DATABASE_URL` | **set for you** by `fly postgres attach` | Won't boot |
+| `REDIS_URL` | `fly secrets set` ← printed by `fly redis create` | Nothing, visibly — see "The silent ones" below |
 | `GOOD_JOB_EXECUTION_MODE` | `fly.toml` `[env]`, `async` | Nothing, visibly — see below |
 | `GOOD_JOB_ENABLE_CRON` | `fly.toml` `[env]`, `true` | `ArchiveGameJob` never runs |
+| `HTTP_PORT` | `fly.toml` `[env]`, `8080` | **Won't serve** — see "Port 8080, not 80" |
 
 `GAME_PLATFORM_DATABASE_PASSWORD` (referenced in `config/database.yml`) is **not needed**.
 Rails merges `DATABASE_URL` on top of `database.yml`, overriding the hardcoded `username`
@@ -35,70 +39,110 @@ Action Cable initializes without complaint and then fails to broadcast to anyone
 jobs only run if a separate worker process exists. Fly runs one web machine and no worker.
 `Game` uses `broadcast_refresh_later_to` and `broadcast_append_later_to` — the `_later_`
 variants *enqueue jobs* — so every live update lands in the queue and stays there. `async`
-runs the executor inside the web process, which is correct for a single machine.
+runs the executor inside the web process.
+
+## Port 8080, not 80
+
+Thruster defaults to port 80, but the `Dockerfile` runs as `USER 1000:1000` and **non-root
+cannot bind privileged ports**. On port 80 Thruster dies immediately with:
+
+```
+{"level":"ERROR","msg":"Failed to start HTTP listener","error":"listen tcp :80: bind: permission denied"}
+```
+
+Fly's proxy then reports `instance refused connection. is your app listening on 0.0.0.0:80?`
+and the machines crash-loop while still showing `started` in `fly status` — which reads like
+a networking problem rather than a permissions one. This is why Fly's default is 8080.
+
+`HTTP_PORT` and `http_service.internal_port` must match. Change one, change both.
+
+**`fly scale` can resurrect this bug.** `fly scale count 1` re-applied an *older stored
+config* — `internal_port: 80`, no `HTTP_PORT`, and `auto_stop_machines` in its legacy boolean
+form — reverting a working deploy to the crash-loop above. The platform keeps its own copy of
+the config per release, and scale commands don't read local `fly.toml`.
+
+So after **any** `fly scale`, `fly machine update`, or change made through the web dashboard,
+confirm the platform still agrees with the repo:
+
+```sh
+fly config show -a academy-game-platform | grep -E 'HTTP_PORT|internal_port'
+```
+
+The fix is always the same: run `fly deploy` again, which pushes local `fly.toml` as a new
+release. Prefer editing `fly.toml` + `fly deploy` over any command that mutates config
+server-side.
 
 ## Provisioning
 
-Create the Neon project in the browser first (pick a region near `dfw`) and copy its
-connection string. Then:
-
 ```sh
-fly redis create           # match the app's region (dfw)
-fly redis status <name>    # prints the connection URL
+fly apps create academy-game-platform
+
+# Unmanaged Fly Postgres: ~$2/mo, vs $38/mo minimum for `fly mpg` (Managed).
+# Unsupported by Fly and you own backups/recovery — fine for a learning deploy.
+fly postgres create --name academy-game-platform-db --region dfw \
+  --initial-cluster-size 1 --vm-size shared-cpu-1x --volume-size 1 --autostart
+
+# Creates a database + user and sets DATABASE_URL on the app for you.
+fly postgres attach academy-game-platform-db --app academy-game-platform
+
+# `--enable-prodpack=false` is required: without it the command prompts about a
+# $200/mo add-on and fails outright when run non-interactively.
+fly redis create --name academy-game-platform-redis --region dfw \
+  --no-replicas --enable-eviction --enable-prodpack=false
+
 fly secrets set RAILS_MASTER_KEY="$(cat config/master.key)" \
-                REDIS_URL="redis://default:...@fly-<name>.upstash.io:6379" \
-                DATABASE_URL="postgresql://...@ep-xxx.neon.tech/neondb?sslmode=require"
+                REDIS_URL='redis://default:...@fly-....upstash.io:6379'
+fly deploy
 ```
 
-Redis is Upstash-backed but provisioned inside the Fly org, so the connection stays private.
-If the URL Fly returns uses the `rediss://` scheme (TLS), **keep it** — the `redis` gem
-handles both, but rewriting the scheme breaks the connection. Same for Neon's
-`?sslmode=require` — dropping it breaks the connection.
+`attach` sets `DATABASE_URL` with `?sslmode=disable`. That's correct — the connection uses
+Fly's private WireGuard network over `.flycast`, which is already encrypted.
+
+Single-quote the Redis URL. These passwords contain characters zsh would expand.
+
+Upstash's own output warns that frequent pollers get expensive. **It doesn't apply here**:
+Action Cable holds one long-lived blocking `SUBSCRIBE`. GoodJob polls the *database*, not Redis.
 
 ## Why Redis and not `async`
 
-`config/cable.yml` production uses `adapter: redis`. Action Cable's `async` adapter would
-work fine on a single Fly machine and needs no infrastructure at all — but **configuring a
-real Redis server is part of the apprenticeship exercise** (instructor's call, 2026-07-29).
-Don't "simplify" it away. Same reasoning as everything else in AGENTS.md: the deliberately
-chosen pattern beats the technically-lighter alternative here.
+`config/cable.yml` production uses `adapter: redis`. Action Cable's `async` adapter needs no
+infrastructure at all, and **configuring a real Redis server is part of the apprenticeship
+exercise** (instructor's call, 2026-07-29) — reason enough on its own.
+
+But it also turned out to be load-bearing, immediately: **Fly's first deploy creates two
+machines** for high availability, even with `min_machines_running = 0`. `async` is in-process
+pub/sub, so with two machines a broadcast would reach only whichever one served the request
+— and fail silently for everyone connected to the other. Redis is what makes this deployment
+correct, not just pedagogically tidy.
 
 The `redis` gem ships commented out in a fresh Rails app. It's uncommented in the `Gemfile`
 for exactly this reason.
 
-## Keeping it free
+## Cost
 
-This is a learning deploy, so cost matters more than resilience. **Don't check "Managed
-Postgres"** in the launch form — Fly MPG has no free tier and starts at $38/mo. Fly itself
-has no free allowance either since 2024-10-07; new orgs are pay-as-you-go.
+Fly has **no free allowance** since 2024-10-07; new orgs are pay-as-you-go. Roughly:
 
-| Piece | Choice | Free tier |
+| Piece | Choice | Cost |
 |---|---|---|
-| Postgres | Neon | permanent, no card, 0.5GB, 100 compute-hours/mo, scales to zero after 5 min idle |
-| Redis | Upstash (via `fly redis create`) | 256MB, 500K commands/mo |
-| App machine | Fly, `auto_stop_machines = "stop"` | not free, but you only pay for machine time |
+| Postgres | unmanaged `fly postgres` | ~$2/mo (shared-cpu-1x/256MB + 1GB volume), `--autostart` sleeps it |
+| Redis | Upstash via `fly redis create` | free tier: 256MB, 500K commands/mo |
+| App machines | Fly, `auto_stop_machines = "stop"` | pay only for running time; **two machines by default** |
 
-**The trap this creates.** `GOOD_JOB_EXECUTION_MODE=async` makes GoodJob poll the database
-every few seconds forever. On a free scale-to-zero database that means compute *never*
-sleeps — 730 hours/month against a 100 compute-hour quota, so the database suspends itself
-partway through the month and the app breaks with no deploy having happened.
+`fly mpg` (Managed Postgres) is the option behind the launch form's "Managed Postgres"
+checkbox. It starts at **$38/mo** with no free tier. Don't check it for a learning deploy.
 
-`fly.toml` solves it with `auto_stop_machines = "stop"` and `min_machines_running = 0`:
-machine sleeps when idle → GoodJob stops polling → the database sleeps too. The cost is a
-few seconds of cold start on the first request after an idle period. **If you ever set
-`min_machines_running = 1`, budget for an always-on database.**
+**Now scaled to 1 machine** (`fly scale count 1`), which halves the machine cost. Redis still
+matters — see "Why Redis and not `async`"; scaling back up must not become a reason to
+revisit the cable adapter. Note that scaling reverted the app config; see "Port 8080, not 80".
 
-Supabase is the lower-thought alternative — it doesn't meter compute-hours, it just pauses
-the project after ~7 days idle, which you un-pause with a click.
+**Auto-stop is why cold starts are slow.** Measured: **~12–23s cold, ~0.3s warm.** Both the
+app machine and (with `--autostart`) the Postgres machine have to wake.
 
-## Launch form settings
-
-`fly.toml` already sets the internal port (80), memory (512MB), and the `GOOD_JOB_*` vars,
-so the form's equivalents are redundant — but the form may not read the file before the
-first deploy. If you're filling it in by hand: **internal port `80`**, not the default
-`8080` (`Dockerfile`'s `CMD` is `./bin/thrust`, and Thruster listens on 80; keeping 8080
-means also setting `HTTP_PORT=8080`), and **512MB memory** — 256MB is not enough for
-Rails 8 + Puma. Leave working directory and config path empty.
+An earlier draft of this doc recommended Neon's free tier instead. That works, but
+`GOOD_JOB_EXECUTION_MODE=async` polls the database every few seconds forever, which prevents
+a scale-to-zero database from ever sleeping — 730 hours/month against Neon's 100
+compute-hour free quota, so it suspends itself mid-month. Fly Postgres has no such metering,
+which is why it's the simpler choice here.
 
 ## Dockerfile notes
 
@@ -131,3 +175,43 @@ docker run --rm -e SECRET_KEY_BASE_DUMMY=1 -e REDIS_URL="redis://fake:6379/1" \
 
 `SECRET_KEY_BASE_DUMMY=1` stands in for `RAILS_MASTER_KEY` — the same trick the Dockerfile
 uses to precompile assets without the real secret.
+
+## `release_command` is `db:migrate`, not `db:prepare`
+
+On an **empty** database `db:prepare` loads the schema and then runs `db:seed`, and
+`db/seeds.rb` opens with `include FactoryBot::Syntax::Methods`. FactoryBot is a dev/test gem,
+absent from the production image, so the first deploy died with:
+
+```
+NameError: uninitialized constant FactoryBot
+/rails/db/seeds.rb:11
+Tasks: TOP => db:prepare
+```
+
+`db:migrate` never seeds, which is what production wants anyway.
+
+`bin/docker-entrypoint` *also* runs `db:prepare` on every machine start, and that's fine —
+once migrations have run, `db:prepare` sees an initialized database and skips both the schema
+load and the seed. **It would bite again on a genuinely empty database**, so if this app is
+ever redeployed against a fresh one, expect it from the entrypoint rather than the release
+command.
+
+Keeping the migration in `[deploy] release_command` is deliberate: a failed migration aborts
+the deploy cleanly instead of crash-looping machines.
+
+## Verifying production
+
+A 200 on the homepage does not prove the database or Redis work — a missing `REDIS_URL`
+fails silently. Check all of it at once:
+
+```sh
+fly ssh console -a academy-game-platform -C "bin/rails runner '
+  puts ActiveRecord::Base.connection.tables.size;
+  puts ActionCable.server.pubsub.class;
+  require %q{redis}; puts Redis.new(url: ENV[%q{REDIS_URL}]).ping;
+  puts GoodJob.configuration.execution_mode.inspect'"
+```
+
+Expected: a table count (11 at time of writing),
+`ActionCable::SubscriptionAdapter::Redis`, `PONG`, `:async`. Anything else — particularly
+`ActionCable::SubscriptionAdapter::Async` — means a secret didn't land.

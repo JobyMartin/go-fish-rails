@@ -5,9 +5,9 @@ class IconBuilder
 
   attr_reader :name, :filled, :size, :weight, :emphasis, :duotone, :additional_classes, :color, :hover_text
 
-  DEFAULT_SIZE = 'medium'
-  DEFAULT_WEIGHT = 'normal'
-  DEFAULT_EMPHASIS = 'normal'
+  DEFAULT_SIZE = "medium"
+  DEFAULT_WEIGHT = "normal"
+  DEFAULT_EMPHASIS = "normal"
 
   def initialize( # rubocop:disable Metrics/ParameterLists
     name,
@@ -16,8 +16,8 @@ class IconBuilder
     weight: DEFAULT_WEIGHT,
     emphasis: DEFAULT_EMPHASIS,
     duotone: false,
-    additional_classes: '',
-    color: '',
+    additional_classes: "",
+    color: "",
     hover_text: name
   )
     @name = name
@@ -41,7 +41,7 @@ class IconBuilder
 
   def build
     options = {
-      class: tag_classes.compact_blank.join(' '),
+      class: tag_classes.compact_blank.join(" "),
       title: hover_text
     }
 
@@ -60,14 +60,14 @@ class IconBuilder
   end
 
   def tag_contents
-    ''
+    ""
   end
 
   def tag_classes
-    ['icon', size == DEFAULT_SIZE ? '' : "icon--#{size}", additional_classes]
+    [ "icon", size == DEFAULT_SIZE ? "" : "icon--#{size}", additional_classes ]
   end
 
   def color_attribute
-    'color'
+    "color"
   end
 end

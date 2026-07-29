@@ -5,7 +5,7 @@ module GoFish
     attr_reader :name, :id
     attr_accessor :hand, :books
 
-    def initialize(id = 0, name = 'Fisher', hand = [], books = [])
+    def initialize(id = 0, name = "Fisher", hand = [], books = [])
       @id = id
       @name = name
       @hand = hand
@@ -13,9 +13,9 @@ module GoFish
     end
 
     def self.load(hash)
-      hand_cards = hash['hand'].map { |card| Card.load(card) } unless hash.nil?
-      books = hash['books'].map { |book| Book.load(book) } unless hash.nil?
-      self.new(hash['id'], hash['name'], hand_cards, books) unless hash.nil?
+      hand_cards = hash["hand"].map { |card| Card.load(card) } unless hash.nil?
+      books = hash["books"].map { |book| Book.load(book) } unless hash.nil?
+      self.new(hash["id"], hash["name"], hand_cards, books) unless hash.nil?
     end
 
     def add_cards(cards)
@@ -31,7 +31,7 @@ module GoFish
 
       cards_of_rank = hand.select(&find_by_rank)
       hand.delete_if(&find_by_rank)
-      
+
       cards_of_rank
     end
 

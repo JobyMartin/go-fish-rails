@@ -13,13 +13,13 @@ RSpec.describe GoFish::Player, type: :model do
 
   describe '#add_cards' do
     it 'adds cards to the bottom of the deck' do
-      player.add_cards([card1, card2])
-      expect(player.hand).to eq [card1, card2]
+      player.add_cards([ card1, card2 ])
+      expect(player.hand).to eq [ card1, card2 ]
     end
 
     xcontext 'when the fourth card is added' do
       before do
-        player.add_cards([card6, card7, card8, card2])
+        player.add_cards([ card6, card7, card8, card2 ])
       end
 
       it 'makes a book' do
@@ -42,9 +42,8 @@ RSpec.describe GoFish::Player, type: :model do
     let(:rank_in_question) { 'A' }
 
     context 'the players hand contains the rank in question' do
-
       before do
-        player.add_cards([card1, card2, card3])
+        player.add_cards([ card1, card2, card3 ])
       end
 
       it 'deletes the card with the common rank' do
@@ -53,7 +52,7 @@ RSpec.describe GoFish::Player, type: :model do
       end
 
       it 'returns all of the cards with the common rank' do
-        expect(player.get_cards_by_rank(rank_in_question)).to match_array [card1, card3]
+        expect(player.get_cards_by_rank(rank_in_question)).to match_array [ card1, card3 ]
       end
 
       it 'does not return other cards' do
@@ -64,7 +63,7 @@ RSpec.describe GoFish::Player, type: :model do
 
     context 'the players hand does not contain the rank in question' do
       before do
-        player.add_cards([card2])
+        player.add_cards([ card2 ])
       end
 
       it 'returns and empty array' do
@@ -92,7 +91,7 @@ RSpec.describe GoFish::Player, type: :model do
 
   xdescribe '#formatted_hand' do
     it 'displays players hand' do
-      player.add_cards([card1, card2])
+      player.add_cards([ card1, card2 ])
       expect(player.formatted_hand).to eq "- A of Spades\n- K of Spades\n"
     end
   end
@@ -102,7 +101,7 @@ RSpec.describe GoFish::Player, type: :model do
 
     context 'when the player has four matching cards' do
       before do
-        player.add_cards([card1, card3, card4, card5])
+        player.add_cards([ card1, card3, card4, card5 ])
         player.make_book_if_possible(rank)
       end
 
@@ -116,7 +115,7 @@ RSpec.describe GoFish::Player, type: :model do
       before do
         player.make_book_if_possible(rank)
       end
-      
+
       it 'makes a book of four cards' do
         expect(player.books).to be_empty
       end
@@ -125,15 +124,15 @@ RSpec.describe GoFish::Player, type: :model do
 
   xdescribe '#formatted books' do
     it 'displays players books' do
-      player.books << GoFish::Book.new([card1, card5, card3, card4])
+      player.books << GoFish::Book.new([ card1, card5, card3, card4 ])
       expect(player.formatted_books).to eq "Books:\n- A\n"
     end
   end
 
   describe '#highest_book_value' do
     before do
-      player.books << GoFish::Book.new([card1, card5, card3, card4])
-      player.books << GoFish::Book.new([card2, card6, card7, card8])
+      player.books << GoFish::Book.new([ card1, card5, card3, card4 ])
+      player.books << GoFish::Book.new([ card2, card6, card7, card8 ])
     end
     it 'returns the highest book value of the player' do
       expect(player.highest_book_value).to eq 12
@@ -144,8 +143,8 @@ RSpec.describe GoFish::Player, type: :model do
     let(:book_size) { 2 }
 
     before do
-      player.books << GoFish::Book.new([card1, card5, card3, card4])
-      player.books << GoFish::Book.new([card2, card6, card7, card8])
+      player.books << GoFish::Book.new([ card1, card5, card3, card4 ])
+      player.books << GoFish::Book.new([ card2, card6, card7, card8 ])
     end
 
     it 'returns the size of the players books array' do

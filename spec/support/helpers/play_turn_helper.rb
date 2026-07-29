@@ -8,7 +8,7 @@ module PlayTurnHelper
   end
 
   def create_go_fish_round_result(game)
-    cards_exchanged = [Card.new('A', 'Spades'), Card.new('K', 'Spades'), Card.new('Q', 'Spades')]
+    cards_exchanged = [ Card.new('A', 'Spades'), Card.new('K', 'Spades'), Card.new('Q', 'Spades') ]
 
     GoFish::RoundResult.new(current_user: game.current_player,
                                 cards_exchanged: cards_exchanged,

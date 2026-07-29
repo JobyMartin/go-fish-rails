@@ -24,20 +24,11 @@ jobs:
       - name: Scan for known security vulnerabilities in gems used
         run: bin/bundler-audit
       
-  scan_js:
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          bundler-cache: true
-
-      - name: Scan for security vulnerabilities in JavaScript dependencies
-        run: bin/importmap audit
+  # No scan_js job: the Rails default template audits JS via `bin/importmap`, but
+  # this app bundles with jsbundling-rails + esbuild and has no importmap binstub,
+  # so the job could only ever fail. `yarn audit` is the right replacement, but it
+  # currently reports 3 High advisories, all transitive under the unused webpack
+  # devDependencies. Remove those first, then add the job back.
 
   lint:
     runs-on: ubuntu-latest
@@ -53,7 +44,7 @@ jobs:
           bundler-cache: true
 
       - name: Prepare RuboCop cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         env:
           DEPENDENCIES_HASH: ${{ hashFiles('.ruby-version', '**/.rubocop.yml', '**/.rubocop_todo.yml', 'Gemfile.lock') }}
         with:
@@ -65,3 +56,66 @@ jobs:
       - name: Lint code for consistent style
         run: bin/rubocop -f github
 
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
+
+    steps:
+      # xvfb: the :chrome specs in spec/system/offlines_spec.rb run *headful*
+      # Chrome (spec/support/capybara_drivers.rb drives them with
+      # `:selenium, using: :chrome`), which needs a display to attach to.
+      - name: Install packages
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libvips postgresql-client libpq-dev xvfb
+
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: .ruby-version
+          bundler-cache: true
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: yarn
+
+      - name: Install JavaScript dependencies
+        run: yarn install --frozen-lockfile
+
+      # app/assets/builds is gitignored, so the bundle does not exist in a fresh
+      # checkout. Propshaft raises MissingAssetError on every rendered page
+      # without it — this is not optional even for non-JS specs.
+      - name: Build JavaScript
+        run: yarn build
+
+      # The :js specs drive Playwright's own Chromium (see
+      # spec/support/capybara_drivers.rb), which google-chrome-stable does not
+      # provide. Version is pinned in package.json to match playwright-ruby-client.
+      - name: Install Playwright browsers
+        run: yarn playwright install --with-deps chromium
+
+      - name: Run tests
+        env:
+          RAILS_ENV: test
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/game_platform_test
+        run: bin/rails db:test:prepare && xvfb-run -a bundle exec rspec
+
+      - name: Keep screenshots from failed system tests
+        uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: screenshots
+          path: ${{ github.workspace }}/tmp/capybara
+          if-no-files-found: ignore
