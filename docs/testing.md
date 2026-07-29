@@ -30,7 +30,12 @@ The specs mirror the two-layer architecture (see `docs/architecture.md`):
 - `spec/models/go_fish/`, `spec/models/crazy_eights/` — the plain-Ruby domain objects.
   This is where the bulk of the coverage lives.
 - `spec/system/` — Capybara feature specs (the user's-perspective layer).
-- `spec/requests/`, `spec/views/`, `spec/helpers/`, `spec/jobs/` — as named.
+- `spec/requests/`, `spec/views/`, `spec/helpers/`, `spec/jobs/` — as named. There is exactly
+  **one** request spec, and it names its own justification at the top: `spec/requests/games_spec.rb`
+  covers the crafted-POST bypass of the player-count guard on `start`. Capybara can only issue
+  a POST by driving a form, and the form's button is disabled precisely when the guard matters,
+  so no system spec can reach it. That is the bar for adding a second one — a server-side rule
+  with **no GET and no clickable path** to it, not merely a rule that's awkward to click to.
 - `spec/support/helpers/` — reusable helpers (`create_game_helper`, `play_turn_helper`,
   `sign_in_helper`, `sign_up_helper`, `playwright_helper`, etc.). Reach for these instead
   of re-writing setup.
@@ -46,6 +51,20 @@ Setting up a started game trips people up because of the STI + serialization spl
 - Add players with `create(:player, game:)` (the `:player` factory auto-creates a `User`).
   A `game_state` only exists after `game.start`, which builds the domain object, deals, and
   **already calls `save!`** — no separate save needed.
+- **`game.start` needs `Game::MINIMUM_PLAYERS` (2) and fails *silently* below it**, returning
+  `false` rather than raising. Seat both players — `create_list(:player, Game::MINIMUM_PLAYERS,
+  game:)` — or every later line reads a `nil` `game_state` and you debug
+  `undefined method 'current_player' for nil` instead of the real cause. Derive the count from
+  the constant so the spec follows if the minimum ever changes.
+- **In a system spec, the button is disabled until the table is full**, so a spec that signs in
+  one user can't click its way to a started game. `start_game_with_opponent`
+  (`spec/support/helpers/create_game_helper.rb`) seats the missing players, re-visits, and
+  clicks. It waits on `have_button('Start game', disabled: :all)` first — under `:js` the
+  create request may still be in flight, and `Game.last` would otherwise be `nil`.
+- **With two seats, `current_player` moves.** An assertion about the acting user's hand *after*
+  a turn ends must go through `state.find_player(user.id)`; `state.current_player` is the
+  opponent by then. Both Go Fish and Rummy specs had this bug the moment a second player
+  existed, and it reads as a domain failure rather than a spec pointing at the wrong player.
 - `game.game_state` returns the **same in-memory domain object** on every call until
   `game.reload` (the `serialize` coder caches the deserialized value). So you can grab it
   once, mutate a hand (e.g. `state.current_player.hand = []`), and `play_turn` sees it.
@@ -126,9 +145,17 @@ Playwright timing under full-suite load, but that is inference, not a diagnosis.
 If you hit it, **capture the whole failure message** — the first sighting was lost to a
 `| tail -6` on the suite output, which is why there's nothing better written here.
 
-This session added a **second** `:js` sighting of the same shape, at `spec/system/offlines_spec.rb:33`
-("renders an offline alert"), failing on `click_on 'Start game'`. It passed 2 of 3 isolated runs
-and has not recurred. Same inference — Playwright timing, not a diagnosis.
+A **second** `:js` sighting of the same shape lives at `spec/system/offlines_spec.rb`
+("renders an offline alert"), failing while starting the game (the call there is now
+`start_game_with_opponent`). It passed 2 of 3 isolated runs and has not recurred. Same
+inference — Playwright timing, not a diagnosis.
+
+**Not every Rummy `:js` flake is one of these.** A burst of them in 2026-07 traced to
+nondeterministic seat order, which is now fixed by an association scope — the diagnosis and the
+reason not to remove the scope are in `docs/architecture.md`. Before filing a new intermittent,
+check the screenshot for *which* player holds the turn; that one showed a 10-card hand under
+"Your Hand" while the players panel gave the turn to a 4-card hand, which named the cause
+outright.
 
 ## N+1 queries fail the suite
 
@@ -258,6 +285,29 @@ deriving expected counts/deltas from the test's own setup (e.g. `hand_before - 1
 `change { ... }.by(1)` block) over hardcoding the resulting number — it documents *why* the
 number is what it is and survives changes to deal sizes or setup data.
 
+## Asserting a Turbo broadcast in a model spec
+
+A broadcast is a side effect with no DOM to assert against, and a `:js` spec proving the page
+updates doesn't prove *which* model sent it. `TurboBroadcastHelper#turbo_stream_broadcasts_for`
+(`spec/support/helpers/turbo_broadcast_helper.rb`, included in model specs) reads the test
+cable adapter directly:
+
+```ruby
+expect { create(:player, game:, user:) }
+  .to change { turbo_stream_broadcasts_for(game).size }.by(1)
+expect(turbo_stream_broadcasts_for(game).last).to include 'action="refresh"'
+```
+
+Two things that cost time here. The stream name is the streamable's `to_gid_param` —
+`Turbo::Streams::StreamName#stream_name_from` is **private**, so don't try to call it. And the
+test adapter stores each payload **JSON-encoded**, so a raw `broadcasts(...)` entry reads
+`"\"\\u003cturbo-stream action=\\\"refresh\\\"…"` and every plain-text match fails; the helper
+`JSON.parse`es each entry so assertions can be written against the markup.
+
+Worth knowing for *why* this works at all: `after_create_commit` callbacks **do** fire under
+`use_transactional_fixtures`. Rails opens the wrapping transaction as `joinable: false`, so a
+`save` inside it commits a real savepoint and the commit callbacks run.
+
 ## Tightening a client-side guard can strand a server-validation spec
 
 A spec that drives a **disabled-until-valid** button to reach *server* validation is coupled to
@@ -270,6 +320,12 @@ This is not hypothetical: raising the Rummy meld button's threshold from "≥ 1 
 selecting **two** mismatched cards to trigger `Rummy::InvalidMove`. The fix is to keep the
 spec's original intent — three still-invalid cards, so it clears the button and *still* exercises
 the server path — not to relax the guard or retarget the spec at the button.
+
+The second instance was larger and worth sizing: disabling `Start game` below two players
+stranded **28 specs at once**, because nearly every game spec reached a started game by
+clicking that button with a single seat. The repair was one shared helper
+(`start_game_with_opponent`), not 28 edits — when a guard strands a crowd, look for the setup
+step they all share before touching them individually.
 
 So: after changing any client-side enable rule, **run the whole suite, not just the specs you
 wrote.** The casualty is by definition in a spec you weren't thinking about, and both specs are

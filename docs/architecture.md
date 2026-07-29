@@ -73,8 +73,30 @@ serialized `round_results` inside `game_state`.
 - **Start/play**: `GamesController#start` builds the domain game and calls `deal!`;
   `#play` delegates to the STI subclass's `play_turn`, then `save!`s (which re-serializes
   `game_state`).
+- **Starting needs `Game::MINIMUM_PLAYERS` (2).** `Game#start` returns `false` and does
+  nothing below that — it does **not** raise, so a caller that ignores the return value just
+  ends up with a `nil` `game_state`. `GamesController#start` flashes
+  `Game::NOT_ENOUGH_PLAYERS_MESSAGE` on `false`; the waiting room also renders the button
+  `disabled`, but the model is the real guard (see "Seat order" below and `docs/testing.md`).
 - **Turbo Streams**: `Game` broadcasts on commit (`after_create_commit` /
   `after_update_commit`) to update the lobby list and refresh in-progress games live.
+- **A joining player broadcasts its own refresh.** `Game`'s `after_update_commit` refresh
+  can't cover joins — seating a player inserts a `Player` row and never touches the `Game`
+  row, so nothing committed on `Game` and the waiting room went stale until a manual reload.
+  `Player`'s `after_create_commit { broadcast_refresh_to game }` fills that gap, riding the
+  `turbo_stream_from @game` already on the show page. It is deliberately **not** the
+  `_later` variant: the test env's ActiveJob adapter never performs enqueued jobs, so a
+  deferred broadcast is untestable here.
+
+### Seat order is join order, and the association scope is what guarantees it
+
+`has_many :players, -> { order(:id) }` on `Game`. Without that scope Postgres may return the
+join rows in **any** order, and since `Game#start` builds the domain players straight from
+`game.players`, both the waiting-room roster *and* which user becomes `current_player` at
+index 0 become nondeterministic. That was invisible while every game in the specs had a
+single player; the moment a second seat existed it flaked roughly two full-suite runs in
+three (Rummy `:js` specs stage `state.current_player`'s hand, then find the buttons disabled
+because the *other* player holds the turn). Don't tidy the scope away.
 - **Status** is derived from timestamps: no `started_at` → *Waiting*; started, not ended →
   *In progress*; `ended_at` present → *Finished*.
 - **Archiving**: `ArchiveGameJob` marks any non-archived game whose `updated_at` is 2+ days
@@ -95,6 +117,19 @@ convention for auto-linking every file under `app/assets/stylesheets` — drop a
 manifest, and `webpack.config.js` is a **dead** toolchain: `bin/dev` only runs esbuild
 (`yarn build`, JS only, via `Procfile.dev`), so the PostCSS/SCSS compilation `webpack.config.js`
 implies never actually runs. Ignore both when adding CSS.
+
+### Motion is finite and gated
+
+The app has exactly **one** animation — the Rummy post-draw card pulse. It runs a finite
+iteration count, sits inside `@media (prefers-reduced-motion: no-preference)`, and is paired
+with a non-motion cue carrying the same message, so nothing is communicated by movement alone.
+Hold new motion to that bar.
+
+Prefer a local `@keyframes` over an animation library. `animate.css` was weighed and **rejected**
+twice over: Propshaft auto-links every stylesheet with no tree-shaking, so the whole library
+would ship for one effect, and its utility class names fight the BEM convention used everywhere
+else. (`docs/mobile-responsive-plan.md` mentions animate.css only as a *symptom* to rule out when
+a `position: fixed` element misbehaves — it is not a dependency.)
 
 **Every Optics spacing token here is 2× its documented value.** `application.css` sets
 `--op-space-scale-unit: 2rem` against Optics' own `1rem`, and the whole scale is

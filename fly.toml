@@ -1,0 +1,38 @@
+app = "game-platform"
+primary_region = "dfw"
+console_command = "/rails/bin/rails console"
+
+# Rails 8 + Puma in 512MB is workable but tight; swap absorbs the spikes
+# instead of OOM-killing the machine.
+swap_size_mb = 512
+
+[build]
+  dockerfile = "Dockerfile"
+
+# Secrets are NOT set here — this file is committed. Use `fly secrets set` for
+# RAILS_MASTER_KEY, DATABASE_URL, and REDIS_URL.
+[env]
+  GOOD_JOB_EXECUTION_MODE = "async"
+  GOOD_JOB_ENABLE_CRON = "true"
+
+# Runs once per deploy. A failed migration aborts the deploy instead of
+# crash-looping the machine, which is much easier to read in `fly logs`.
+[deploy]
+  release_command = "bin/rails db:prepare"
+
+[http_service]
+  # 80, not Fly's 8080 default: the Dockerfile's CMD is `./bin/thrust`, and
+  # Thruster listens on 80.
+  internal_port = 80
+  force_https = true
+  auto_start_machines = true
+  # Stop the machine when idle. This is what keeps the bill near zero, and it
+  # also lets a scale-to-zero database (Neon) actually sleep — GoodJob's async
+  # poller would otherwise hold it awake and burn the free compute-hour quota.
+  auto_stop_machines = "stop"
+  min_machines_running = 0
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory = "512mb"
