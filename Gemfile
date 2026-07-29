@@ -79,7 +79,7 @@ gem "slim-rails", "~> 4.0"
 
 gem "capybara", "~> 3.40"
 
-gem "selenium-webdriver", "~> 4.45"
+gem "selenium-webdriver", "~> 4.46"
 
 group :development, :test do
   gem "rspec-rails"
