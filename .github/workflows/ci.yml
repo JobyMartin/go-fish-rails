@@ -70,8 +70,11 @@ jobs:
         options: --health-cmd="pg_isready" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
+      # xvfb: the :chrome specs in spec/system/offlines_spec.rb run *headful*
+      # Chrome (spec/support/capybara_drivers.rb drives them with
+      # `:selenium, using: :chrome`), which needs a display to attach to.
       - name: Install packages
-        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libvips postgresql-client libpq-dev
+        run: sudo apt-get update && sudo apt-get install --no-install-recommends -y google-chrome-stable curl libjemalloc2 libvips postgresql-client libpq-dev xvfb
 
       - name: Checkout code
         uses: actions/checkout@v6
@@ -107,7 +110,7 @@ jobs:
         env:
           RAILS_ENV: test
           DATABASE_URL: postgres://postgres:postgres@localhost:5432/game_platform_test
-        run: bin/rails db:test:prepare && bundle exec rspec
+        run: bin/rails db:test:prepare && xvfb-run -a bundle exec rspec
 
       - name: Keep screenshots from failed system tests
         uses: actions/upload-artifact@v4
