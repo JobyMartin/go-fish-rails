@@ -1,0 +1,25 @@
+.panel--filters {
+  inline-size: calc(var(--op-size-unit) * 54);
+}
+
+.panel.panel--filters .panel__content {
+  padding-inline: var(--op-space-x-small);
+}
+
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--op-space-2x-small);
+}
+
+.filters__actions {
+  display: flex;
+  gap: var(--op-space-3x-small);
+  margin-block-start: var(--op-space-2x-small);
+}
+
+.leaderboard__empty {
+  color: var(--op-color-neutral-on-plus-max);
+  padding-block: var(--op-space-small);
+  text-align: center;
+}

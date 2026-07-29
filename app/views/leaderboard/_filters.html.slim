@@ -1,0 +1,18 @@
+.panel.panel--filters
+  .panel__header
+    | Filters
+  .panel__content
+    = search_form_for @search, url: leaderboard_path, builder: SimpleForm::FormBuilder, html: { class: 'filters' } do |f|
+      - if requested_sort
+        = hidden_field_tag 'q[s]', requested_sort
+
+      = f.input :username_i_cont, label: 'Player name', required: false
+      = f.input :games_played_gteq, label: 'Fewest games', as: :integer, required: false
+      = f.input :games_played_lteq, label: 'Most games', as: :integer, required: false
+      = f.input :user_country_eq, label: 'Country', as: :select, required: false,
+                collection: Data::Country.all, label_method: :name, value_method: :id,
+                include_blank: 'Anywhere'
+
+      .filters__actions
+        = f.submit 'Filter', class: 'btn btn--primary'
+        = link_to 'Clear', leaderboard_path, class: 'btn btn--no-border'

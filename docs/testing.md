@@ -100,6 +100,81 @@ for s in $(seq 1 30); do bundle exec rspec spec/models/game_spec.rb:124 --seed $
 
 The fix is to pin that spec's deck the way the Rummy helpers do; carded, not done.
 
+### Known flake: `spec/system/games_spec.rb:157` (Crazy Eights)
+
+"shows the turn in the turn results" — clicks `Place card` and asserts the hand shrinks by one
+and the discard pile grows by one. Seen **once in roughly six full-suite runs**; green 5/5 run
+alone and 3/3 across its own file.
+
+**It is not a browser race**, which is the useful part: the Crazy Eights context carries no `:js`
+tag, so it runs under `rack_test`. That rules out the Playwright-timing explanation that covers
+the two `:js` intermittents below and points back at the unpinned deck — whether the card the
+form places is legal against `william.active_card` depends on the deal.
+
+That last step is inference, not a diagnosis, because **the failure message was lost again** —
+this time to a `grep` on the suite output rather than the `tail -6` described below. Two sightings,
+two filtered pipes. Pipe the full output to a file and grep the *file*.
+
+### Undiagnosed: a `:js` intermittent in `spec/system/games_spec.rb`
+
+`games_spec.rb:309` (Rummy, "taking from the discard pile shows the move in the game feed")
+failed once in three consecutive full-suite runs and has never reproduced — not in isolation,
+and not across the whole file at the original seed. **It is not the staged-deck flake above**:
+that spec goes through `start_rummy_game_with_state`, which prunes the duplicates. Most likely
+Playwright timing under full-suite load, but that is inference, not a diagnosis.
+
+If you hit it, **capture the whole failure message** — the first sighting was lost to a
+`| tail -6` on the suite output, which is why there's nothing better written here.
+
+This session added a **second** `:js` sighting of the same shape, at `spec/system/offlines_spec.rb:33`
+("renders an offline alert"), failing on `click_on 'Start game'`. It passed 2 of 3 isolated runs
+and has not recurred. Same inference — Playwright timing, not a diagnosis.
+
+## N+1 queries fail the suite
+
+`config/environments/test.rb` sets `Bullet.raise = true` with **no safelist**, so any N+1,
+unused eager load, or missing counter cache that a spec exercises raises
+`Bullet::Notification::UnoptimizedQueryError` and fails that example. This is the project's
+only automated guard against N+1s: Bullet is **off by default in development**
+(`BULLET=1 bin/dev` opts in), so the suite is where you find out.
+
+Two consequences worth knowing:
+
+- **A red spec pointing into a view is often a Bullet finding, not a broken expectation.** The
+  message names the model and association and suggests the `includes`.
+- **Bullet needs two or more records to see a pattern.** A spec with a single record cannot
+  trigger it, so passing specs are not proof a page is N+1-free at scale — that is what
+  `perf:measure` is for (`docs/leaderboard.md`).
+
+A safelist existed briefly while the leaderboard was deliberately N+1. It is gone, and it
+should stay gone: safelists are scoped by association, not by request path, so they silence
+every page at once.
+
+## Arranging a *finished* game in a spec
+
+Leaderboard/stats specs need games with `started_at` **and** `ended_at`, which the `:player`
+factory's `:in_finished_game` trait provides. It updates the game *after* creating the player,
+because `Player`'s `not_started` validation rejects joining a game that has already started —
+the same order the real app uses.
+
+Its duration is `FinishedGame::DURATION` (`spec/support/finished_game.rb`), shared with every
+spec that asserts on the resulting time. **Derive expected times from that constant**, never
+hardcode them: `'120h 0m'` silently encoded "5 games × 24 hours" with the 24 living in a
+different file, so changing the trait would have broken specs for no visible reason.
+
+## Beware substring matches in `have_content`
+
+`expect(page).to have_content '0%'` **passes on a page showing `100%`** — it's a substring
+match, so a win-percentage assertion like this can assert essentially nothing. Row-scoping
+doesn't save you either. Match the cell exactly:
+
+```ruby
+expect(find('tr', text: username)).to have_selector 'td', exact_text: text
+```
+
+Worth mutation-testing any assertion of this shape: change the fixture so it *should* fail,
+and confirm it does. This one was caught only that way, after passing for several runs.
+
 ## Drivers and the `:js` gotcha
 
 System specs default to `rack_test`. Tags switch the driver
@@ -154,6 +229,23 @@ values — but Propshaft fingerprints every asset with a content hash
 Strip the hash instead of hand-rolling a regex inline in the spec: see
 `RummyTurnHelper#hand_card_prefixes`/`#card_filename_prefix`
 (`spec/support/helpers/rummy_turn_helper.rb`) for the pattern.
+
+## Assert URLs with route helpers, not percent-encoded regexes
+
+Query-param assertions read as encoding noise when written literally —
+`have_current_path(/q%5Bs%5D=games_played/)` is Ransack's `q[s]` with escaped brackets, and a
+reader has to decode it before they know what the spec claims. Pass the params to the route
+helper and let Rails encode:
+
+```ruby
+expect(page).to have_current_path leaderboard_path(q: { s: 'games_played desc' }, page: 2)
+```
+
+Besides reading as intent, it asserts *more*: the substring regex above silently ignored the sort
+direction. The tradeoff is that the route-helper form compares the **whole** path, so it pins
+param order too — fine where the app builds the URL (Ransack's `sort_link`, Kaminari's page
+links), but a filter that appends params in a different order will fail on ordering alone. Fall
+back to comparing a decoded query string there, not to re-encoding brackets by hand.
 
 ## Assert persisted state, not just the DOM, for actions that write to the database
 

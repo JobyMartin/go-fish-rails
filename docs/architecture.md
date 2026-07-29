@@ -95,3 +95,10 @@ convention for auto-linking every file under `app/assets/stylesheets` — drop a
 manifest, and `webpack.config.js` is a **dead** toolchain: `bin/dev` only runs esbuild
 (`yarn build`, JS only, via `Procfile.dev`), so the PostCSS/SCSS compilation `webpack.config.js`
 implies never actually runs. Ignore both when adding CSS.
+
+**Every Optics spacing token here is 2× its documented value.** `application.css` sets
+`--op-space-scale-unit: 2rem` against Optics' own `1rem`, and the whole scale is
+`calc(scale-unit * n)` — so `--op-space-medium` is 3.2rem, not 1.6rem. Reach one or two steps
+smaller than the name suggests, and check spacing in a browser rather than trusting the token
+name. Optics ships from a **CDN pinned in `application.css`** (`@rolemodel/optics@2.3.1`), not
+from `node_modules`, so grep that URL — not `package.json` — to see what a class actually does.

@@ -28,6 +28,7 @@ prefer following them over "better" alternatives.
 ```sh
 bin/setup    # install deps, prepare DB, boot the dev server
 bin/dev      # foreman: rails server + `yarn build --watch` + good_job worker
+BULLET=1 bin/dev   # ...with Bullet's N+1 warnings; off by default, and very slow on perf-seeded data
 ```
 
 ## Testing
@@ -99,11 +100,15 @@ See `docs/architecture.md` for the full model map and serialization details.
 - **Reuse before building.** Reach for an existing Optics component or custom
   `simple_form` input before hand-writing markup or a new component.
 - **BEM** for CSS class naming; component styles live in `app/assets/stylesheets/components/`.
+- **Optics' root font size is 10px**, so an `18rem` panel renders 180px and `--op-space-scale-unit: 2rem` is 20px. Measure widths; don't eyeball.
 - **Motion is finite and gated.** The app has exactly one animation (the Rummy post-draw card
   pulse): finite iteration count, wrapped in `prefers-reduced-motion: no-preference`, with a
   non-motion cue carrying the same message. Hold new motion to that bar, and prefer a local
   `@keyframes` over an animation library — `animate.css` was weighed and rejected (it doesn't
   fit Propshaft's no-tree-shaking auto-linking, and its classes fight BEM).
+- **`.count` always issues SQL; `.size` reads a loaded association.** One such word cost the
+  leaderboard 1,004 queries. Bullet flags it *Need Counter Cache*, not *USE eager loading*.
+  `.empty?` is the same trap: on an unloaded relation it fires its own `SELECT`. `.load` first.
 - Ruby's implicit block parameter `it` is used throughout (e.g. `players.find { it.id == x }`).
 - **Comments are a last resort, not a courtesy.** Before writing one, ask: can this be
   induced by reading the code? If yes, the comment is dead weight — delete it, or better,
@@ -115,43 +120,40 @@ See `docs/architecture.md` for the full model map and serialization details.
 
 ## Gotchas
 
-- **`William` is the discard pile, not an AI.** In Crazy Eights, `CrazyEights::William` is
-  simply the collection of placed cards; `william.active_card` is the top of the discard
-  pile. The name is an inside joke.
-- **Game state is one jsonb blob.** History/replay lives entirely inside the serialized
-  `game_state` column, not in normalized tables — adding a field means updating the
-  domain object's `as_json`/`from_json`/`load`/`dump`.
+- **`William` is the discard pile, not an AI.** In Crazy Eights, `CrazyEights::William` is simply
+  the collection of placed cards; `william.active_card` is the top of the pile. Inside joke.
+- **Game state is one jsonb blob.** History/replay lives inside the serialized `game_state`
+  column, not normalized tables — a new field means updating `as_json`/`from_json`/`load`/`dump`.
 - **Deal counts depend on player count** in all three games (see the game docs).
-- `ArchiveGameJob` auto-archives any game untouched for 2+ days, on a GoodJob schedule.
-- **Routes are inconsistent** — they grew through the apprenticeship's learning phases
-  (e.g. `users/show` as a GET path, repeated `member` blocks). Don't treat existing route
-  style as the intended convention.
+- `ArchiveGameJob` auto-archives any game untouched for 2+ days (GoodJob schedule) — but the
+  lobby never filters on `archived_at`, so `/games` shows every game ever. See `docs/leaderboard.md`.
+- **Routes are inconsistent** (e.g. `users/show` as a GET path, repeated `member` blocks) — they grew through the apprenticeship's phases; not the convention.
 - **`GamesController#play` checks `game_over?` *before* playing the turn**, so the turn that
   *ends* a game redirects to the game page, not the winner screen — the winner screen is only
-  reached on a later request against an already-over game. (The `CrazyEights::Game#winner`
-  `NoMethodError` this used to trip over is fixed as of Improvement 2.)
+  reached on a later request against an already-over game. It re-checks *after* the turn to call
+  `finish!`, so the win is recorded on the ending turn even though the redirect lags a request.
 - **`GoFishGame#play_turn` truncates the rank** via `params[:rank].chars.first`, so a `'10'`
   ask silently becomes `'1'` — invalid. Latent bug, still open; single-char ranks are fine.
 - **`CrazyEightsGame#play_turn` computes its own `active_card`** (always `william.active_card`)
-  and reads `params[:rank]` as the placed card; a **blank `:rank`** triggers the
-  `draw_until_playable` loop — drawing from the deck until a card matches the active card's
-  suit or rank. Both subclasses now share one polymorphic `play_turn(params)` signature but
-  read different keys (Go Fish: `:player`/`:rank`; Crazy Eights: `:rank`/`:suit`).
-- **Game-over is computed but never persisted.** `Game#end` (sets `ended_at`) has no caller and
-  `players.winner` is never written — only the in-memory domain `winner`, for the winner screen.
-  So `Game#status` never returns `Finished` and `StatsController` win % is permanently `0%`.
-  Surfaced by the rails-audit, still deferred; the Rummy feed is now the de facto win report for
-  meld-outs, which *raises* the case for persisting (see `docs/improvement-cards.md`).
+  and reads `params[:rank]` as the placed card; a **blank `:rank`** triggers `draw_until_playable`,
+  drawing until a card matches the active card's suit or rank. Both subclasses share one
+  `play_turn(params)` signature but read different keys (Go Fish `:player`/`:rank`; CE `:rank`/`:suit`).
+- **Game-over is persisted.** `Game#finish!` sets `ended_at` and writes `players.winner`, from
+  `GamesController#play` once `game_state.game_over?`. Only games finished *after* this landed
+  count — older rows have a `nil` `ended_at`. See `docs/leaderboard.md`.
+- **`Player`'s `not_started` validation is `on: :create` deliberately.** Unscoped it runs on every
+  save, so `player.update!(winner: true)` failed with "This game has started" — it made recording
+  a winner impossible. Don't tidy the scope away.
+- **`uniqueness: { case_insensitive: true }` is not a Rails option** and is silently ignored.
+  `User#email_address` still carries it, so that check is case-*sensitive* (harmless only because
+  `normalizes` downcases first). `username` uses the real key, `case_sensitive: false`.
 - **Whose turn it is, and turn *order*, are enforced only in the view.** `drawn_this_turn` is
   serialized but never validated — it only sets `disabled:` on buttons — and no controller
   checks that the submitter is `current_player`. A crafted POST can discard before drawing, or
   act on **another player's hand**. Both open cards in `docs/improvement-cards.md`.
-- **Game actions are participant-gated; `join` is not.** `GamesController` runs `set_game` then
-  `require_participation` (`before_action`, `only: %i[show start play winner]`) — a non-participant
-  is redirected to the lobby with a flash instead of reading state or hitting the old `show`
-  `NoMethodError` (`find_player` → `nil` → `current_player.hand`). `PlayersController#create` (join)
-  is **deliberately left open** — joining is a non-participant action by nature. Card 3 of
-  `docs/improvement-cards.md`, **complete** (see `docs/brave-card-3-authorize-game-actions.md`).
+- **Game actions are participant-gated; `join` is deliberately not.** `require_participation`
+  (`before_action, only: %i[show start play winner]`) redirects non-participants to the lobby;
+  joining is a non-participant action by nature. `docs/brave-card-3-authorize-game-actions.md`.
 
 ## Key context
 
@@ -159,42 +161,40 @@ See `docs/architecture.md` for the full model map and serialization details.
 - `docs/testing.md` — TDD workflow and spec organization
 - `docs/games/go-fish.md` — Go Fish rules and implementation notes
 - `docs/games/crazy-eights.md` — Crazy Eights rules, William, and implementation notes
-- `docs/improvement-plan.md` + `docs/improvement-1-breakdown.md` +
-  `docs/improvement-2-breakdown.md` — foundation work for adding a third game, **all complete**:
-  Improvement 1 locked the shared "game contract" with tests (STI subclass specs, serialization
-  round-trips, the shared `"a persisted card game"` example); Improvement 2 replaced
-  type-branching with polymorphic dispatch + `Game::PLAYABLE_TYPES`. **No `type ==` remains.**
-- `docs/improvement-cards.md` — post-Improvement-2 scoped round, **all three done**: the
-  `RoundResult` feed presenter, the shared `Card`/`Deck` extraction, authorization on game
-  actions. `RAILS_AUDIT_REPORT.md` (repo root) is the audit behind them; its one remaining High
-  finding (game-over persistence) maps to the gotcha above.
-- `docs/brave-card-1-round-feed-presenter.md` — Card 1 (the feed presenter), **complete**.
-  `RoundFeed` (+ `FeedLine`) at `app/models/round_feed.rb` is a namespace-neutral presentation
-  seam; every game partial iterates `result.feed_lines`. **Roles are positional** — first line
-  `action`, last `game_response`, middles `player_response`. The `count == 3` path is dead.
-- `docs/brave-card-2-shared-card-deck.md` — BRAVE breakdown for Card 2 (shared `Card`/`Deck`),
-  **complete**. `Card`/`Deck` live at top level; bare refs inside `module GoFish` /
-  `module CrazyEights` resolve there via constant lookup.
-- `docs/brave-card-3-authorize-game-actions.md` — BRAVE breakdown for Card 3 (authorize game
-  actions), **complete**; the gotcha above is the short version. The doc holds the decisions
-  (include `winner`, leave `join` open, redirect-with-flash over 404) and why non-participant
-  coverage is system-spec-on-the-GETs only.
-- `docs/games/rummy.md` — **Rummy, the third game: wired in, with real turn logic.**
-  Registered in `Game::PLAYABLE_TYPES`, real `Rummy::*` domain objects, draw/meld/lay-off/
-  discard all implemented, click-to-select hand UI via a Stimulus controller, and a real
-  per-player-count `deal!` (2p → 10, 3–4p → 7, 5–6p → 6). `mockup-html/rummy.html` remains
-  the visual mockup reference. **Invalid moves raise `Rummy::InvalidMove`** (the app's one
-  turn-validation exception), surfaced as an auto-dismissing flash toast — see "Surfacing
-  invalid moves". The mid-turn "you've drawn, now pick a card" step is cued by a header
-  change plus the pulse — see "Prompting the …". **The stock refills from the discard pile,
-  turned over and deliberately *unshuffled*** (Bicycle) — see "The stock refills …". The feed
-  narrates all four actions — see the next bullet.
-- `docs/brave-rummy-feed-completeness.md` — BRAVE breakdown, **complete**. `Rummy::RoundResult`
-  carries a `move` discriminator (`:took`/`:melded`/`:laid_off`/`:discarded`); one private
-  `Game#record_move` sets `going_out` for **every** logged action, so all three Bicycle
-  going-out routes announce themselves. **`record_move` must precede `end_turn` in `#discard`**
-  — `switch_turns` reassigns `current_player`. See `docs/games/rummy.md` "Game feed".
-- **Two known spec flakes, both unpinned random decks** — a red suite here is often not your
-  change. Staging a hand leaves duplicates in the stock (~8%; stage through
-  `start_rummy_game_with_state`), and Go Fish `spec/models/game_spec.rb:124` asserts a hand
-  size that depends on the opponent holding exactly one Ace (~7%). See `docs/testing.md`.
+- `docs/improvement-plan.md` + `improvement-1-breakdown.md` + `improvement-2-breakdown.md` —
+  third-game foundations, **all complete**: the shared "game contract" (incl. the
+  `"a persisted card game"` shared example), then polymorphic dispatch + `Game::PLAYABLE_TYPES`.
+  **No `type ==` remains.**
+- `docs/improvement-cards.md` — post-Improvement-2 round, **all three done** (feed presenter,
+  shared `Card`/`Deck`, game-action authorization). `RAILS_AUDIT_REPORT.md` is the audit behind
+  them; its last High finding (game-over persistence) is **closed**.
+- `docs/leaderboard.md` — the `/leaderboard` page, winner persistence, and the **performance week**:
+  3,014 queries / 4,115 ms → **3 / 25 ms** via a **Scenic database view** (read-only
+  `LeaderboardEntry`); Ransack sorting and filtering plus Kaminari pagination ride along for free.
+  Aggregation in the view, display rules in Ruby. **Never edit `_v01.sql` in place** — `rails g
+  scenic:view leaderboard_entries` versions it. Country filtering joins `belongs_to :user`, so
+  **`User.ransackable_attributes` must stay `%w[country]`** or it becomes a password-digest oracle.
+  Also holds `perf:seed`/`perf:measure`, Bullet's cost model, indexes *measured and rejected*, the **`RANK()` column**, the filter panel, and `/games`.
+- `docs/brave-card-1-round-feed-presenter.md` — **complete**. `RoundFeed` (+ `FeedLine`) at
+  `app/models/round_feed.rb` is a namespace-neutral seam; every game partial iterates
+  `result.feed_lines`. **Roles are positional** — first `action`, last `game_response`, middles between.
+- `docs/brave-card-2-shared-card-deck.md` — Card 2 (shared `Card`/`Deck`), **complete**. Both live
+  at top level; bare refs inside `module GoFish` / `module CrazyEights` resolve via constant lookup.
+- `docs/brave-card-3-authorize-game-actions.md` — Card 3 (authorize game actions), **complete**;
+  the gotcha above is the short version. The doc holds the decisions (include `winner`, leave
+  `join` open, redirect-with-flash over 404) and why coverage is system-spec-on-the-GETs only.
+- `docs/games/rummy.md` — **Rummy, the third game: wired in, with real turn logic.** Registered
+  in `Game::PLAYABLE_TYPES`, real `Rummy::*` domain objects, draw/meld/lay-off/discard all
+  implemented, click-to-select hand UI via a Stimulus controller, per-player-count `deal!`.
+  **Invalid moves raise `Rummy::InvalidMove`** — the app's one turn-validation exception,
+  surfaced as a flash toast. **The stock refills from the discard pile, turned over and
+  deliberately *unshuffled*** (Bicycle). The doc covers all of it; `mockup-html/rummy.html`
+  is the visual reference.
+- `docs/brave-rummy-feed-completeness.md` — **complete**. `Rummy::RoundResult` carries a `move`
+  discriminator; one private `Game#record_move` sets `going_out` for **every** logged action.
+  **`record_move` must precede `end_turn` in `#discard`** — `switch_turns` reassigns `current_player`.
+- **Known spec flakes — a red suite here is often not your change.** Three unpinned random decks,
+  two undiagnosed `:js` intermittents; reproduce before blaming your diff, and **capture the full
+  failure message** — two sightings have died in a filtered pipe.
+- **N+1s fail the suite.** `test.rb` runs `Bullet.raise` with no safelist, and Bullet is off in dev,
+  so specs are the only guard. Both notes: `docs/testing.md`.

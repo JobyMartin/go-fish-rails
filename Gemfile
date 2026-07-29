@@ -6,6 +6,12 @@ gem "rails", "~> 8.1.3"
 gem "propshaft"
 # Use postgresql as the database for Active Record
 gem "pg", "~> 1.1"
+# Versioned database views, managed from db/views [https://github.com/scenic-views/scenic]
+gem "scenic"
+# Sortable/searchable columns from query params [https://github.com/activerecord-hackery/ransack]
+gem "ransack"
+# Paginated scopes and page links [https://github.com/kaminari/kaminari]
+gem "kaminari"
 # Use the Puma web server [https://github.com/puma/puma]
 gem "puma", ">= 5.0"
 # Use JavaScript with ESM import maps [https://github.com/rails/importmap-rails]
@@ -52,6 +58,8 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   gem 'selenium-devtools'
+
+  gem 'bullet'
 end
 
 group :development do

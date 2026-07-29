@@ -1,0 +1,39 @@
+.op-page
+  .op-page__sidebar
+    = render "sidebar"
+
+  .op-page__main
+    main.op-page__main-content
+      header.content-header
+        .content-header__details
+          h1.content-header__title
+            | Leaderboard
+
+      - entries = paged_entries(@search).load
+
+      - if entries.empty?
+        p.leaderboard__empty No players match those filters.
+      - else
+        table.table.table--container.table--odd-striped
+          thead
+            tr
+              th = sort_link @search, :rank, 'Rank'
+              th = sort_link @search, :username, 'Player'
+              th = sort_link @search, :games_played, 'Games played', default_order: :desc
+              th = sort_link @search, :games_won, 'Wins', default_order: :desc
+              th = sort_link @search, :win_percentage, 'Win %', default_order: :desc
+              th = sort_link @search, :time_played, 'Time played', default_order: :desc
+          tbody
+            - entries.each do |entry|
+              tr
+                td = rank_for(entry)
+                td = entry.username
+                td = entry.games_played
+                td = entry.games_won
+                td = win_percentage_for(entry)
+                td = time_played_for(entry)
+
+        = paginate entries
+
+  aside.op-page__sidebar.op-page__sidebar--right
+    = render 'filters'

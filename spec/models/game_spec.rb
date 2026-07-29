@@ -136,4 +136,44 @@ RSpec.describe Game, type: :model do
       expect(game.ended_at).not_to be_nil
     end
   end
+
+  describe '#duration' do
+    it 'is the span between starting and ending' do
+      player = create(:player, :in_finished_game)
+      expect(player.game.reload.duration).to eq FinishedGame::DURATION
+    end
+
+    it 'is nil while the game is unfinished' do
+      expect(create(:game, :in_progress).duration).to be_nil
+    end
+  end
+
+  describe '#finish!' do
+    let(:game) { create(:game) }
+    let(:player_count) { 2 }
+    let(:expected_winners) { 1 }
+    let!(:players) { create_list(:player, player_count, game: game) }
+
+    before do
+      game.start
+      game.finish!
+    end
+
+    it 'records the end time' do
+      expect(game.reload.ended_at).not_to be_nil
+    end
+
+    it 'marks the winning player' do
+      winning_user_id = game.game_state.winner.id
+      expect(game.players.find_by(user_id: winning_user_id)).to be_winner
+    end
+
+    it 'leaves the other players unmarked' do
+      expect(game.players.count(&:winner)).to eq expected_winners
+    end
+
+    it 'does not overwrite an already finished game' do
+      expect { game.finish! }.not_to change { game.reload.ended_at }
+    end
+  end
 end

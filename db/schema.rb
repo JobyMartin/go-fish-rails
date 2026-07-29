@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_15_194058) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_28_184003) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -152,10 +152,32 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_15_194058) do
     t.string "password_digest", null: false
     t.string "state"
     t.datetime "updated_at", null: false
+    t.string "username", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
+    t.index ["username"], name: "index_users_on_username", unique: true
   end
 
   add_foreign_key "players", "games"
   add_foreign_key "players", "users"
   add_foreign_key "sessions", "users"
+
+  create_view "leaderboard_entries", sql_definition: <<-SQL
+      SELECT users.id,
+      users.username,
+      count(players.id) AS games_played,
+      count(players.id) FILTER (WHERE players.winner) AS games_won,
+          CASE
+              WHEN (count(players.id) > 0) THEN rank() OVER (ORDER BY (count(players.id) FILTER (WHERE players.winner)) DESC)
+              ELSE NULL::bigint
+          END AS rank,
+          CASE
+              WHEN (count(players.id) >= 5) THEN (round((((count(players.id) FILTER (WHERE players.winner))::numeric / (count(players.id))::numeric) * (100)::numeric)))::integer
+              ELSE NULL::integer
+          END AS win_percentage,
+      (COALESCE(sum(EXTRACT(epoch FROM (games.ended_at - games.started_at))), (0)::numeric))::double precision AS time_played
+     FROM ((users
+       LEFT JOIN players ON ((players.user_id = users.id)))
+       LEFT JOIN games ON (((games.id = players.game_id) AND (games.started_at IS NOT NULL) AND (games.ended_at IS NOT NULL))))
+    GROUP BY users.id, users.username;
+  SQL
 end

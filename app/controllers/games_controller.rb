@@ -39,14 +39,16 @@ class GamesController < ApplicationController
   end
 
   def history
-    @user_games = Current.session.user.games
+    @user_games = Current.session.user.games.includes(players: :user)
   end
+
   def play
     redirect_to winner_game_path(@game) and return if @game.game_state.game_over?
 
     @game.play_turn(play_turn_params)
 
     @game.save!
+    @game.finish! if @game.game_state.game_over?
     redirect_to game_path(@game)
   rescue Rummy::InvalidMove => e
     redirect_to game_path(@game), alert: e.message
